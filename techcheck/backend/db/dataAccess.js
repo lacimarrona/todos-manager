@@ -53,6 +53,40 @@ function deleteEquipo(id) {
   return true;
 }
 
+// ─── PROYECTOS ─────────────────────────────────────────────
+function getProyectos() {
+  return readDB().proyectos;
+}
+
+function getProyectoById(id) {
+  return readDB().proyectos.find(p => p.id === id) || null;
+}
+
+function createProyecto(proyecto) {
+  const db = readDB();
+  db.proyectos.push(proyecto);
+  writeDB(db);
+  return proyecto;
+}
+
+function updateProyecto(id, datos) {
+  const db = readDB();
+  const idx = db.proyectos.findIndex(p => p.id === id);
+  if (idx === -1) return null;
+  db.proyectos[idx] = { ...db.proyectos[idx], ...datos, actualizadoEn: new Date().toISOString() };
+  writeDB(db);
+  return db.proyectos[idx];
+}
+
+function deleteProyecto(id) {
+  const db = readDB();
+  const idx = db.proyectos.findIndex(p => p.id === id);
+  if (idx === -1) return false;
+  db.proyectos.splice(idx, 1);
+  writeDB(db);
+  return true;
+}
+
 // ─── PLANTILLAS ─────────────────────────────────────────────
 function getPlantillas() {
   return readDB().plantillas;
@@ -160,6 +194,8 @@ function deleteRevision(id) {
 }
 
 module.exports = {
+  // Proyectos
+  getProyectos, getProyectoById, createProyecto, updateProyecto, deleteProyecto,
   // Equipos
   getEquipos, getEquipoById, createEquipo, updateEquipo, deleteEquipo,
   // Plantillas

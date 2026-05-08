@@ -4,17 +4,26 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../db/dataAccess');
 
 // GET /api/equipos
-router.get('/', (req, res) => {
+router.get('/:id/equipos', (req, res) => {
   try {
-    const equipos = db.getEquipos();
-    // Enriquecer con datos de última revisión
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    const equipos = db.getEquipos().filter(e => e.proyectoIds && e.proyectoIds.includes(req.params.id));
     const revisiones = db.getRevisiones();
-    const equiposEnriquecidos = equipos.map(e => {
+    const enriquecidos = equipos.map(e => {
       const revsEquipo = revisiones.filter(r => r.equipoId === e.id);
       const ultima = revsEquipo[0] || null;
       return { ...e, ultimaRevision: ultima, totalRevisiones: revsEquipo.length };
     });
-    res.json({ success: true, data: equiposEnriquecidos });
+    // Solo mostrar equipos cuya ultima revision NO este completa o no tengan revision
+    const pendientes = enriquecidos.filter(e => {
+      if (!e.ultimaRevision) return true;
+      const total = e.items.length;
+      if (total === 0) return true;
+      const completados = e.ultimaRevision.items.filter((i) => i.checked).length;
+      return completados < total;
+    });
+    res.json({ success: true, data: pendientes });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -34,7 +43,7 @@ router.get('/:id', (req, res) => {
 // POST /api/equipos
 router.post('/', (req, res) => {
   try {
-    const { nombre, descripcion, items, plantillaId } = req.body;
+    const { nombre, descripcion, items, plantillaId, proyectoIds } = req.body;
     if (!nombre) return res.status(400).json({ success: false, message: 'El nombre es requerido' });
 
     let itemsFinales = items || [];
@@ -49,6 +58,7 @@ router.post('/', (req, res) => {
       descripcion: descripcion?.trim() || '',
       items: itemsFinales,
       plantillaId: plantillaId || null,
+      proyectoIds: proyectoIds || [],
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString()
     };
