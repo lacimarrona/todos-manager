@@ -1,0 +1,272 @@
+{
+  "equipos": [
+    {
+      "id": "404c7bf4-18f2-4871-9852-f0290e633085",
+      "nombre": "HW-00041(Apoyo Operativo 1)",
+      "descripcion": "",
+      "items": [
+        "Revisar que OneDrive esté sincronizado",
+        "Revisar vida útil de discos duros (CrystalDiskInfo)",
+        "Verificar antivirus actualizado y sin amenazas",
+        "Revisar que las copias de seguridad se estén ejecutando",
+        "Verificar actualizaciones de Windows pendientes",
+        "Limpiar archivos temporales y papelera",
+        "Verificar memoria RAM disponible",
+        "Revisar estado de la red y conectividad",
+        "Revisar que OneDrive esté sincronizado",
+        "Revisar vida útil de discos duros (CrystalDiskInfo)",
+        "Verificar antivirus actualizado y sin amenazas",
+        "Revisar que las copias de seguridad se estén ejecutando",
+        "Verificar actualizaciones de Windows pendientes",
+        "Limpiar archivos temporales y papelera",
+        "Verificar memoria RAM disponible",
+        "Revisar estado de la red y conectividad"
+      ],
+      "plantillaId": "plantilla-1",
+      "creadoEn": "2026-05-08T13:04:13.036Z",
+      "actualizadoEn": "2026-05-08T13:04:13.036Z"
+    }
+  ],
+  "plantillas": [
+    {
+      "id": "plantilla-1",
+      "nombre": "Mantenimiento PC",
+      "descripcion": "Revisión estándar de equipos de cómputo",
+      "items": [
+        "Revisar que OneDrive esté sincronizado",
+        "Revisar vida útil de discos duros (CrystalDiskInfo)",
+        "Verificar antivirus actualizado y sin amenazas",
+        "Revisar que las copias de seguridad se estén ejecutando",
+        "Verificar actualizaciones de Windows pendientes",
+        "Limpiar archivos temporales y papelera",
+        "Verificar memoria RAM disponible",
+        "Revisar estado de la red y conectividad"
+      ],
+      "creadoEn": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "plantilla-2",
+      "nombre": "Revisión de Red",
+      "descripcion": "Revisión de infraestructura de red",
+      "items": [
+        "Verificar puntos de red activos",
+        "Revisar switch y patch panel",
+        "Probar velocidad de conexión",
+        "Verificar DNS y gateway",
+        "Revisar cables y conectores RJ45",
+        "Verificar VLAN y segmentación"
+      ],
+      "creadoEn": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "plantilla-3",
+      "nombre": "Revisión UPS",
+      "descripcion": "Mantenimiento de sistemas de alimentación ininterrumpida",
+      "items": [
+        "Verificar nivel de carga de batería",
+        "Probar tiempo de respaldo real",
+        "Revisar alarmas activas en el software",
+        "Verificar conexiones eléctricas",
+        "Revisar fecha de última calibración",
+        "Verificar temperatura del equipo"
+      ],
+      "creadoEn": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "tecnicos": [
+    {
+      "id": "tecnico-1",
+      "nombre": "Administrador",
+      "email": "admin@empresa.com",
+      "creadoEn": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "revisiones": [
+    {
+      "id": "7be56c03-86ee-47b7-931c-00cce0119e06",
+      "equipoId": "404c7bf4-18f2-4871-9852-f0290e633085",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "Revisar que OneDrive esté sincronizado",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar vida útil de discos duros (CrystalDiskInfo)",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar antivirus actualizado y sin amenazas",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que las copias de seguridad se estén ejecutando",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Verificar actualizaciones de Windows pendientes",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Limpiar archivos temporales y papelera",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Revisar estado de la red y conectividad",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que OneDrive esté sincronizado",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Revisar vida útil de discos duros (CrystalDiskInfo)",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Verificar antivirus actualizado y sin amenazas",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que las copias de seguridad se estén ejecutando",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Verificar actualizaciones de Windows pendientes",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Limpiar archivos temporales y papelera",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": false,
+          "nota": ""
+        },
+        {
+          "label": "Revisar estado de la red y conectividad",
+          "checked": false,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-08T13:04:55.080Z",
+      "actualizadoEn": "2026-05-08T13:04:55.080Z"
+    },
+    {
+      "id": "611232ff-704f-4fe2-a603-1939d50650ca",
+      "equipoId": "404c7bf4-18f2-4871-9852-f0290e633085",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "Revisar que OneDrive esté sincronizado",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar vida útil de discos duros (CrystalDiskInfo)",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar antivirus actualizado y sin amenazas",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que las copias de seguridad se estén ejecutando",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar actualizaciones de Windows pendientes",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Limpiar archivos temporales y papelera",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar estado de la red y conectividad",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que OneDrive esté sincronizado",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar vida útil de discos duros (CrystalDiskInfo)",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar antivirus actualizado y sin amenazas",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar que las copias de seguridad se estén ejecutando",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar actualizaciones de Windows pendientes",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Limpiar archivos temporales y papelera",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "Revisar estado de la red y conectividad",
+          "checked": true,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-08T13:13:33.619Z",
+      "actualizadoEn": "2026-05-08T13:13:33.619Z"
+    }
+  ]
+}
