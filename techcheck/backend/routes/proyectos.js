@@ -42,6 +42,19 @@ router.get('/:id/equipos', (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+
+// GET /api/proyectos/:id/todos-equipos — todos sin filtrar por revision
+router.get('/:id/todos-equipos', (req, res) => {
+  try {
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    const equipos = db.getEquipos().filter(e => e.proyectoIds && e.proyectoIds.includes(req.params.id));
+    res.json({ success: true, data: equipos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 });
 
 router.post('/', (req, res) => {

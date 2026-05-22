@@ -10,23 +10,69 @@
   ],
   "equipos": [
     {
-      "id": "40246678-fc05-4082-b85d-07b19263bce5",
-      "nombre": "HW-0041",
+      "id": "d31eb49a-758e-4561-8fa1-9c9e09f3ba2e",
+      "nombre": "fghf",
       "descripcion": "",
       "items": [
-        "fdhdf",
-        "fjgjdh",
-        "fgjgfjdtg"
+        "fghfg"
       ],
       "plantillaId": null,
       "proyectoIds": [
         "4c17cab7-75f6-4902-839e-4a15139bda20"
       ],
-      "creadoEn": "2026-05-08T20:46:56.405Z",
-      "actualizadoEn": "2026-05-08T20:47:09.917Z"
+      "creadoEn": "2026-05-12T14:04:48.821Z",
+      "actualizadoEn": "2026-05-12T14:04:48.821Z"
+    },
+    {
+      "id": "d89b5b19-be0d-4ec3-add3-98a5f13f428b",
+      "nombre": "hola",
+      "descripcion": "",
+      "items": [
+        "fdgggg",
+        "gggggg",
+        "ggggg"
+      ],
+      "plantillaId": null,
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-05-12T14:05:15.809Z",
+      "actualizadoEn": "2026-05-12T14:05:15.809Z"
+    },
+    {
+      "id": "4e0c7003-b0dc-42b2-88cc-ec687964631c",
+      "nombre": "klñkl",
+      "descripcion": "",
+      "items": [
+        "hjkhj",
+        "hgggggggj",
+        "tyeu",
+        "hjkhj",
+        "hgggggggj",
+        "tyeu"
+      ],
+      "plantillaId": "95abbe59-ae21-4afc-8598-01ef290a5458",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-05-19T15:41:39.168Z",
+      "actualizadoEn": "2026-05-19T15:41:39.168Z"
     }
   ],
-  "plantillas": [],
+  "plantillas": [
+    {
+      "id": "95abbe59-ae21-4afc-8598-01ef290a5458",
+      "nombre": "juyi",
+      "descripcion": "kjjhk",
+      "items": [
+        "hjkhj",
+        "hgggggggj",
+        "tyeu"
+      ],
+      "creadoEn": "2026-05-19T15:41:27.053Z",
+      "actualizadoEn": "2026-05-19T15:41:27.053Z"
+    }
+  ],
   "tecnicos": [
     {
       "id": "tecnico-1",
@@ -91,6 +137,98 @@
       "fotos": [],
       "creadoEn": "2026-05-08T20:47:21.981Z",
       "actualizadoEn": "2026-05-08T20:47:21.981Z"
+    },
+    {
+      "id": "82d81d3e-cf1a-4658-9dc5-ed2f93782296",
+      "equipoId": "40246678-fc05-4082-b85d-07b19263bce5",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "fdhdf",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "fjgjdh",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "fgjgfjdtg",
+          "checked": true,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-12T13:48:21.968Z",
+      "actualizadoEn": "2026-05-12T13:48:21.968Z"
+    },
+    {
+      "id": "5e552591-e035-474b-9567-ea411352fe1f",
+      "equipoId": "88d6daa1-6ff0-4aac-8c0a-13522f56fdd1",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "GGGG",
+          "checked": true,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-12T13:48:54.271Z",
+      "actualizadoEn": "2026-05-12T13:48:54.271Z"
+    },
+    {
+      "id": "1f597649-69cb-4b84-a6e1-94cc6d181da5",
+      "equipoId": "d31eb49a-758e-4561-8fa1-9c9e09f3ba2e",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "fghfg",
+          "checked": true,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-12T14:04:51.818Z",
+      "actualizadoEn": "2026-05-12T14:04:51.818Z"
+    },
+    {
+      "id": "996cba91-532d-438d-9f41-fa527c96a533",
+      "equipoId": "d89b5b19-be0d-4ec3-add3-98a5f13f428b",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "fdgggg",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "gggggg",
+          "checked": true,
+          "nota": ""
+        },
+        {
+          "label": "ggggg",
+          "checked": false,
+          "nota": ""
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-05-19T16:57:26.638Z",
+      "actualizadoEn": "2026-05-19T16:57:26.638Z"
     }
   ]
 }

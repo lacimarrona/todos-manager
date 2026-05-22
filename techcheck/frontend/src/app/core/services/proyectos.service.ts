@@ -22,6 +22,10 @@ export class ProyectosService {
     return this.http.get<ApiResponse<Equipo[]>>(`${this.url}/${proyectoId}/equipos`).pipe(map(r => r.data || []));
   }
 
+  getTodosEquipos(proyectoId: string): Observable<Equipo[]> {
+  return this.http.get<ApiResponse<Equipo[]>>(`${this.url}/${proyectoId}/todos-equipos`).pipe(map(r => r.data || []));
+}
+
   create(form: ProyectoForm): Observable<Proyecto> {
     return this.http.post<ApiResponse<Proyecto>>(this.url, form).pipe(map(r => r.data!));
   }
@@ -33,4 +37,5 @@ export class ProyectosService {
   delete(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }
+  
 }
