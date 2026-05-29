@@ -128,6 +128,16 @@
           <div>
             <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
             <div *ngIf="item.nota" class="text-xs text-gray-500 mt-0.5">💬 {{ item.nota }}</div>
+<div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2 mt-1">
+  <div *ngFor="let archivo of item.archivos" class="relative">
+    <img *ngIf="archivo.startsWith('data:image')" [src]="archivo"
+      class="w-12 h-12 object-cover rounded-md border border-gray-200 cursor-pointer"
+      (click)="abrirArchivo(archivo)">
+    <div *ngIf="!archivo.startsWith('data:image')"
+      (click)="abrirArchivo(archivo)"
+      class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg cursor-pointer">📄</div>
+  </div>
+</div>
           </div>
         </div>
       </div>
@@ -138,7 +148,7 @@
       <div *ngIf="r.fotos?.length">
         <h4 class="text-sm font-semibold text-gray-600 mb-2">Evidencia fotografica</h4>
         <div class="flex flex-wrap gap-2">
-          <img *ngFor="let foto de r.fotos" [src]="foto" class="w-20 h-20 object-cover rounded-lg border border-gray-200" alt="Evidencia">
+          <img *ngFor="let foto of r.fotos" [src]="foto" class="w-20 h-20 object-cover rounded-lg border border-gray-200" alt="Evidencia">
         </div>
       </div>
     </div>

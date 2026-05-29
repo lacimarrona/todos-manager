@@ -71,6 +71,7 @@ export interface ItemRevision {
   label: string;
   checked: boolean;
   nota: string;
+  archivos: string[];
 }
 
 export interface Revision {

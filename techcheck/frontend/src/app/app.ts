@@ -20,18 +20,6 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
             </a>
           </li>
           <li>
-            <a routerLink="/revisiones" routerLinkActive="bg-blue-600 !text-white"
-               class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all text-sm">
-              <span>🔍</span> Nueva Revisión
-            </a>
-          </li>
-          <li>
-            <a routerLink="/historial" routerLinkActive="bg-blue-600 !text-white"
-               class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all text-sm">
-              <span>📋</span> Historial
-            </a>
-          </li>
-          <li>
             <a routerLink="/plantillas" routerLinkActive="bg-blue-600 !text-white"
                class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all text-sm">
               <span>📄</span> Plantillas

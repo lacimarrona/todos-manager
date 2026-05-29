@@ -38,4 +38,7 @@ export class ProyectosService {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }
   
+  getEquiposFiltrados(proyectoId: string, estado: string): Observable<Equipo[]> {
+  return this.http.get<ApiResponse<Equipo[]>>(`${this.url}/${proyectoId}/equipos?estado=${estado}`).pipe(map(r => r.data || []));
+}
 }

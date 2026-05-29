@@ -7,6 +7,8 @@ import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { TecnicosService, RevisionesService } from '../../../core/services/otros.services';
 
+type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado';
+
 @Component({
   selector: 'app-equipos-list',
   standalone: true,
@@ -24,6 +26,8 @@ export class EquiposListComponent implements OnInit {
   cargando = signal(true);
   error = signal('');
 
+  filtroActivo = signal<FiltroEstado>('pendiente');
+
   mostrarModalProyecto = signal(false);
   modoEdicionProyecto = signal(false);
   proyectoEditandoId = '';
@@ -35,23 +39,22 @@ export class EquiposListComponent implements OnInit {
   nuevoItem = '';
   formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [] };
 
-  // Revisión
   mostrarModalRevision = signal(false);
   equipoRevisando = signal<Equipo | null>(null);
   guardandoRevision = signal(false);
-  exitoRevision = signal(false);
   tecnicoId = '';
   estado: EstadoRevision = 'ok';
   observacionGeneral = '';
   itemsRevision = signal<ItemRevision[]>([]);
   fotosBase64: string[] = [];
+  revisionRetomadaId = '';
 
   constructor(
     private proyectosSvc: ProyectosService,
     private equiposSvc: EquiposService,
     private plantillasSvc: PlantillasService,
     private tecnicosSvc: TecnicosService,
-    private revisionesSvc: RevisionesService
+    private revisionesSvc: RevisionesService,
   ) {}
 
   ngOnInit() {
@@ -71,7 +74,8 @@ export class EquiposListComponent implements OnInit {
   entrarProyecto(proyecto: Proyecto) {
     this.proyectoActual.set(proyecto);
     this.vista.set('equipos');
-    this.cargarEquiposDelProyecto(proyecto.id);
+    this.filtroActivo.set('pendiente');
+    this.cargarEquiposFiltrados('pendiente');
   }
 
   volverAProyectos() {
@@ -80,6 +84,20 @@ export class EquiposListComponent implements OnInit {
     this.equipos.set([]);
     this.cargarProyectos();
   }
+
+  cambiarFiltro(filtro: FiltroEstado) {
+    this.filtroActivo.set(filtro);
+    this.cargarEquiposFiltrados(filtro);
+  }
+
+  cargarEquiposFiltrados(filtro: FiltroEstado) {
+  this.cargando.set(true);
+  const proyectoId = this.proyectoActual()!.id;
+  this.proyectosSvc.getEquiposFiltrados(proyectoId, filtro).subscribe({
+    next: d => { this.equipos.set(d); this.cargando.set(false); },
+    error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
+  });
+}
 
   abrirModalNuevoProyecto() {
     this.formProyecto = { nombre: '', descripcion: '' };
@@ -113,14 +131,6 @@ export class EquiposListComponent implements OnInit {
     event.stopPropagation();
     if (!confirm('Eliminar este proyecto? Los equipos asociados no se eliminaran.')) return;
     this.proyectosSvc.delete(id).subscribe({ next: () => this.cargarProyectos() });
-  }
-
-  cargarEquiposDelProyecto(proyectoId: string) {
-    this.cargando.set(true);
-    this.proyectosSvc.getEquipos(proyectoId).subscribe({
-      next: d => { this.equipos.set(d); this.cargando.set(false); },
-      error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
-    });
   }
 
   abrirModalNuevoEquipo() {
@@ -166,11 +176,11 @@ export class EquiposListComponent implements OnInit {
     if (!this.formEquipo.nombre.trim()) return;
     if (this.modoEdicionEquipo()) {
       this.equiposSvc.update(this.equipoEditandoId, this.formEquipo).subscribe({
-        next: () => { this.mostrarModalEquipo.set(false); this.cargarEquiposDelProyecto(this.proyectoActual()!.id); }
+        next: () => { this.mostrarModalEquipo.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); }
       });
     } else {
       this.equiposSvc.create(this.formEquipo).subscribe({
-        next: () => { this.mostrarModalEquipo.set(false); this.cargarEquiposDelProyecto(this.proyectoActual()!.id); }
+        next: () => { this.mostrarModalEquipo.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); }
       });
     }
   }
@@ -178,19 +188,34 @@ export class EquiposListComponent implements OnInit {
   eliminarEquipo(id: string) {
     if (!confirm('Eliminar este equipo?')) return;
     this.equiposSvc.delete(id).subscribe({
-      next: () => this.cargarEquiposDelProyecto(this.proyectoActual()!.id)
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
     });
   }
 
-  // ─── REVISION ───────────────────────────────────────────
   abrirModalRevision(equipo: Equipo) {
     this.equipoRevisando.set(equipo);
     this.tecnicoId = '';
     this.estado = 'ok';
     this.observacionGeneral = '';
     this.fotosBase64 = [];
-    this.exitoRevision.set(false);
-    this.itemsRevision.set(equipo.items.map(label => ({ label, checked: false, nota: '' })));
+    if (equipo.ultimaRevision) {
+      const ultima = equipo.ultimaRevision;
+      const completados = ultima.items.filter(i => i.checked).length;
+      const total = ultima.items.length;
+      if (total > 0 && completados < total) {
+        this.itemsRevision.set(ultima.items.map(i => ({ ...i, archivos: i.archivos || [] })));
+        this.tecnicoId = ultima.tecnicoId || '';
+        this.estado = ultima.estado;
+        this.observacionGeneral = ultima.observacionGeneral || '';
+        this.revisionRetomadaId = ultima.id;
+      } else {
+        this.itemsRevision.set(equipo.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
+        this.revisionRetomadaId = '';
+      }
+    } else {
+      this.itemsRevision.set(equipo.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
+      this.revisionRetomadaId = '';
+    }
     this.mostrarModalRevision.set(true);
   }
 
@@ -217,6 +242,26 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
+  onArchivoItemChange(idx: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+    const updated = [...this.itemsRevision()];
+    Array.from(input.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        updated[idx] = { ...updated[idx], archivos: [...(updated[idx].archivos || []), e.target!.result as string] };
+        this.itemsRevision.set([...updated]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  eliminarArchivoItem(idx: number, archivoIdx: number) {
+    const updated = [...this.itemsRevision()];
+    updated[idx] = { ...updated[idx], archivos: updated[idx].archivos.filter((_, i) => i !== archivoIdx) };
+    this.itemsRevision.set(updated);
+  }
+
   get itemsCompletados(): number { return this.itemsRevision().filter(i => i.checked).length; }
   get totalItemsRevision(): number { return this.itemsRevision().length; }
   get revisionCompleta(): boolean { return this.totalItemsRevision > 0 && this.itemsCompletados === this.totalItemsRevision; }
@@ -235,15 +280,27 @@ export class EquiposListComponent implements OnInit {
       fotos: this.fotosBase64
     };
     this.guardandoRevision.set(true);
-    this.revisionesSvc.create(form).subscribe({
-      next: () => {
-        this.guardandoRevision.set(false);
-        this.mostrarModalRevision.set(false);
-        // Si la revision esta completa, recargar para que desaparezca del proyecto
-        this.cargarEquiposDelProyecto(this.proyectoActual()!.id);
-      },
-      error: () => { this.guardandoRevision.set(false); }
-    });
+
+    const guardar = () => {
+      this.revisionesSvc.create(form).subscribe({
+        next: () => {
+          this.guardandoRevision.set(false);
+          this.mostrarModalRevision.set(false);
+          this.revisionRetomadaId = '';
+          this.cargarEquiposFiltrados(this.filtroActivo());
+        },
+        error: () => { this.guardandoRevision.set(false); }
+      });
+    };
+
+    if (this.revisionRetomadaId) {
+      this.revisionesSvc.delete(this.revisionRetomadaId).subscribe({
+        next: () => guardar(),
+        error: () => guardar()
+      });
+    } else {
+      guardar();
+    }
   }
 
   progreso(equipo: Equipo): number {

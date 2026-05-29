@@ -50,6 +50,7 @@ export class HistorialListComponent implements OnInit {
     this.revisiones.set([]);
     this.cargarProyectos();
   }
+
 cargarRevisionesProyecto(proyectoId: string) {
   this.cargando.set(true);
   this.proyectosSvc.getTodosEquipos(proyectoId).subscribe({
@@ -57,7 +58,13 @@ cargarRevisionesProyecto(proyectoId: string) {
       this.revisionesSvc.getAll().subscribe({
         next: revisiones => {
           const equipoIds = equipos.map(e => e.id);
-          const delProyecto = revisiones.filter(r => equipoIds.includes(r.equipoId));
+          const delProyecto = revisiones.filter(r => {
+            if (!equipoIds.includes(r.equipoId)) return false;
+            // Solo revisiones donde todos los items estan marcados
+            if (r.items.length === 0) return false;
+            const completados = r.items.filter(i => i.checked).length;
+            return completados === r.items.length;
+          });
           this.revisiones.set(delProyecto);
           this.cargando.set(false);
         },
@@ -92,4 +99,12 @@ cargarRevisionesProyecto(proyectoId: string) {
   }
 
   trackById(_: number, r: any) { return r.id; }
+
+  abrirArchivo(archivo: string) {
+  const win = window.open();
+  if (win) {
+    win.document.write(`<img src="${archivo}" style="max-width:100%">`);
+  }
+}
+
 }

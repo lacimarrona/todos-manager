@@ -17,16 +17,7 @@ router.get('/', (req, res) => {
   }
 });
 
-router.get('/:id', (req, res) => {
-  try {
-    const proyecto = db.getProyectoById(req.params.id);
-    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
-    res.json({ success: true, data: proyecto });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
+// Solo equipos pendientes (sin revision completa)
 router.get('/:id/equipos', (req, res) => {
   try {
     const proyecto = db.getProyectoById(req.params.id);
@@ -35,15 +26,42 @@ router.get('/:id/equipos', (req, res) => {
     const revisiones = db.getRevisiones();
     const enriquecidos = equipos.map(e => {
       const revsEquipo = revisiones.filter(r => r.equipoId === e.id);
-      const ultima = revsEquipo[0] || null;
+      const ultima = revsEquipo.length > 0
+        ? revsEquipo.reduce((a, b) => new Date(a.creadoEn) > new Date(b.creadoEn) ? a : b)
+        : null;
       return { ...e, ultimaRevision: ultima, totalRevisiones: revsEquipo.length };
     });
-    res.json({ success: true, data: enriquecidos });
+
+    const filtro = req.query.estado;
+    let resultado = enriquecidos;
+
+    if (filtro === 'pendiente') {
+      resultado = enriquecidos.filter(e => !e.ultimaRevision);
+    } else if (filtro === 'en_proceso') {
+      resultado = enriquecidos.filter(e => {
+        if (!e.ultimaRevision) return false;
+        const total = e.items.length;
+        if (total === 0) return false;
+        const completados = e.ultimaRevision.items.filter(i => i.checked).length;
+        return completados > 0 && completados < total;
+      });
+    } else if (filtro === 'terminado') {
+      resultado = enriquecidos.filter(e => {
+        if (!e.ultimaRevision) return false;
+        const total = e.items.length;
+        if (total === 0) return false;
+        const completados = e.ultimaRevision.items.filter(i => i.checked).length;
+        return completados === total;
+      });
+    }
+
+    res.json({ success: true, data: resultado });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
 
-// GET /api/proyectos/:id/todos-equipos — todos sin filtrar por revision
+// Todos los equipos sin filtrar (para historial)
 router.get('/:id/todos-equipos', (req, res) => {
   try {
     const proyecto = db.getProyectoById(req.params.id);
@@ -55,6 +73,14 @@ router.get('/:id/todos-equipos', (req, res) => {
   }
 });
 
+router.get('/:id', (req, res) => {
+  try {
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    res.json({ success: true, data: proyecto });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 router.post('/', (req, res) => {

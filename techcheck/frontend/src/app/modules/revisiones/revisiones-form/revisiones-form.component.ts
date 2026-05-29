@@ -42,7 +42,7 @@ export class RevisionesFormComponent implements OnInit {
     const eq = this.equipos().find(e => e.id === this.equipoSeleccionadoId);
     this.equipoSeleccionado.set(eq || null);
     if (eq) {
-      this.items.set(eq.items.map(label => ({ label, checked: false, nota: '' })));
+      this.items.set(eq.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
     } else {
       this.items.set([]);
     }
