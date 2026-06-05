@@ -37,7 +37,7 @@ export class EquiposListComponent implements OnInit {
   modoEdicionEquipo = signal(false);
   equipoEditandoId = '';
   nuevoItem = '';
-  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [] };
+  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: ''  };
 
   mostrarModalRevision = signal(false);
   equipoRevisando = signal<Equipo | null>(null);
@@ -147,7 +147,8 @@ export class EquiposListComponent implements OnInit {
       descripcion: equipo.descripcion,
       items: [...equipo.items],
       plantillaId: equipo.plantillaId || '',
-      proyectoIds: equipo.proyectoIds || []
+      proyectoIds: equipo.proyectoIds || [],
+      tecnicoAsignadoId: equipo.tecnicoAsignadoId || ''
     };
     this.equipoEditandoId = equipo.id;
     this.modoEdicionEquipo.set(true);

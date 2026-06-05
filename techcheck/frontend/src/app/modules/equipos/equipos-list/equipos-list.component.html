@@ -44,7 +44,7 @@
     <span>/</span>
     <span class="text-gray-700 font-medium">{{ proyectoActual()?.nombre }}</span>
   </div>
-  <div class="flex items-start justify-between mb-6">
+  <div class="flex items-start justify-between mb-5">
     <div>
       <h1 class="text-2xl font-semibold text-gray-800">{{ proyectoActual()?.nombre }}</h1>
       <p *ngIf="proyectoActual()?.descripcion" class="text-sm text-gray-400 mt-1">{{ proyectoActual()?.descripcion }}</p>
@@ -54,13 +54,16 @@
       <button (click)="abrirModalNuevoEquipo()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo equipo</button>
     </div>
   </div>
+  <div class="flex gap-2 mb-6">
+    <button (click)="cambiarFiltro('pendiente')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Pendientes</button>
+    <button (click)="cambiarFiltro('en_proceso')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'en_proceso' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">En proceso</button>
+    <button (click)="cambiarFiltro('terminado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'terminado' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Terminados</button>
+  </div>
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
   <div *ngIf="!cargando() && equipos().length === 0" class="text-center py-16 text-gray-400">
     <div class="text-5xl mb-4">💻</div>
-    <h3 class="text-base font-medium text-gray-500 mb-1">No hay equipos pendientes en este proyecto</h3>
-    <p class="text-sm mb-4">Agrega un equipo o revisa el historial</p>
-    <button (click)="abrirModalNuevoEquipo()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Crear equipo</button>
+    <h3 class="text-base font-medium text-gray-500 mb-1">No hay equipos en este filtro</h3>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando()">
     <div *ngFor="let equipo of equipos(); trackBy: trackById" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
@@ -73,6 +76,7 @@
       </div>
       <div class="flex flex-wrap gap-x-3 gap-y-1 mb-3">
         <span class="text-xs text-gray-500">📋 {{ equipo.items.length }} items</span>
+        <span *ngIf="equipo.tecnicoAsignadoNombre" class="text-xs text-gray-500">👤 {{ equipo.tecnicoAsignadoNombre }}</span>
         <span *ngIf="equipo.ultimaRevision" class="text-xs text-gray-500">🕐 {{ equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm' }}</span>
       </div>
       <div *ngIf="equipo.ultimaRevision" class="mb-3">
@@ -82,9 +86,9 @@
         <p class="text-xs text-gray-400 mt-1">{{ progreso(equipo) }}% completado</p>
       </div>
       <div class="flex gap-2 pt-3 border-t border-gray-100">
-        <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">🔍 Revisar</button>
-        <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">✏️ Editar</button>
-        <button (click)="eliminarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
+        <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+        <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+        <button (click)="eliminarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
       </div>
     </div>
   </div>
@@ -95,7 +99,7 @@
   <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">{{ modoEdicionProyecto() ? 'Editar proyecto' : 'Nuevo proyecto' }}</h2>
-      <button (click)="mostrarModalProyecto.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+      <button (click)="mostrarModalProyecto.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-4">
       <div>
@@ -119,7 +123,7 @@
   <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">{{ modoEdicionEquipo() ? 'Editar equipo' : 'Nuevo equipo' }}</h2>
-      <button (click)="mostrarModalEquipo.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+      <button (click)="mostrarModalEquipo.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-4">
       <div>
@@ -128,10 +132,17 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Descripcion</label>
-        <input type="text" [(ngModel)]="formEquipo.descripcion" placeholder="Ej: Dell OptiPlex 7090, i7, 16GB RAM" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" [(ngModel)]="formEquipo.descripcion" placeholder="Ej: Dell OptiPlex 7090" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
+      <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1.5">Asignar a tecnico</label>
+      <select [(ngModel)]="formEquipo.tecnicoAsignadoId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">Sin asignar</option>
+        <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
+      </select>
+    </div>
       <div *ngIf="!modoEdicionEquipo() && plantillas().length">
-        <label class="block text-xs font-medium text-gray-600 mb-1.5">Aplicar plantilla de checklist</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Aplicar plantilla</label>
         <select [(ngModel)]="formEquipo.plantillaId" (change)="onPlantillaChange()" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">Sin plantilla</option>
           <option *ngFor="let p of plantillas()" [value]="p.id">{{ p.nombre }}</option>
@@ -142,7 +153,7 @@
         <div class="border border-gray-200 rounded-lg mb-2 max-h-48 overflow-y-auto divide-y divide-gray-100">
           <div *ngFor="let item of formEquipo.items; let i = index" class="flex items-center justify-between px-3 py-2">
             <span class="text-sm text-gray-700">{{ item }}</span>
-            <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
+            <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">X</button>
           </div>
           <div *ngIf="formEquipo.items.length === 0" class="px-3 py-3 text-xs text-gray-400 text-center">No hay items aun</div>
         </div>
@@ -163,8 +174,8 @@
 <div *ngIf="mostrarModalRevision()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-      <h2 class="text-base font-semibold text-gray-800">Revision — {{ equipoRevisando()?.nombre }}</h2>
-      <button (click)="mostrarModalRevision.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+      <h2 class="text-base font-semibold text-gray-800">Revision - {{ equipoRevisando()?.nombre }}</h2>
+      <button (click)="mostrarModalRevision.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-5">
       <div class="grid grid-cols-2 gap-4">
@@ -184,44 +195,35 @@
           </select>
         </div>
       </div>
-
       <div>
         <div class="flex items-center gap-3 mb-3">
           <h3 class="text-sm font-semibold text-gray-600">Checklist</h3>
           <span class="bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded-full">{{ itemsCompletados }}/{{ totalItemsRevision }}</span>
           <span *ngIf="revisionCompleta" class="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">Completa</span>
         </div>
-        <div *ngIf="itemsRevision().length === 0" class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-lg">Este equipo no tiene items en su checklist</div>
+        <div *ngIf="itemsRevision().length === 0" class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-lg">Sin items</div>
         <div class="space-y-2">
           <div *ngFor="let item of itemsRevision(); let i = index" class="border rounded-lg p-3 transition-colors" [ngClass]="item.checked ? 'bg-green-50 border-green-200' : 'border-gray-200'">
             <div class="flex items-center gap-3 mb-2">
               <button (click)="toggleItem(i)" class="w-6 h-6 rounded-md border-2 flex items-center justify-center text-white text-sm shrink-0 transition-all" [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'">
-                <span *ngIf="item.checked">✓</span>
+                <span *ngIf="item.checked">ok</span>
               </button>
               <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
             </div>
-           <div class="pl-9 space-y-2">
-  <input type="text" [value]="item.nota" (input)="updateNota(i, $any($event.target).value)"
-    placeholder="Observacion (opcional)..."
-    class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-  <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
-    (change)="onArchivoItemChange(i, $event)"
-    class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
-  <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2">
-    <div *ngFor="let archivo of item.archivos; let ai = index" class="relative group">
-      <img *ngIf="archivo.startsWith('data:image')" [src]="archivo"
-        class="w-12 h-12 object-cover rounded-md border border-gray-200">
-      <div *ngIf="!archivo.startsWith('data:image')"
-        class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
-      <button (click)="eliminarArchivoItem(i, ai)"
-        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-    </div>
-  </div>
-</div>
+            <div class="pl-9 space-y-2">
+              <input type="text" [value]="item.nota" (input)="updateNota(i, $any($event.target).value)" placeholder="Observacion..." class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+              <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple (change)="onArchivoItemChange(i, $event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+              <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2">
+                <div *ngFor="let archivo of item.archivos; let ai = index" class="relative group">
+                  <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-gray-200">
+                  <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">doc</div>
+                  <button (click)="eliminarArchivoItem(i, ai)" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Observacion general</label>
         <textarea [(ngModel)]="observacionGeneral" rows="2" placeholder="Notas generales..." class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>

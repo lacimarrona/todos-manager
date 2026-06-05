@@ -25,6 +25,8 @@ export interface Equipo {
   actualizadoEn: string;
   ultimaRevision?: Revision | null;
   totalRevisiones?: number;
+  tecnicoAsignadoId: string | null;
+  tecnicoAsignadoNombre?: string;
 }
 
 export interface EquipoForm {
@@ -33,6 +35,7 @@ export interface EquipoForm {
   items: string[];
   plantillaId?: string;
   proyectoIds?: string[];
+  tecnicoAsignadoId?: string;
 }
 
 // ─── PLANTILLA ──────────────────────────────────────────────

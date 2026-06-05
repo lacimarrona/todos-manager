@@ -6,6 +6,13 @@
       "descripcion": "",
       "creadoEn": "2026-05-08T20:46:48.621Z",
       "actualizadoEn": "2026-05-08T20:46:48.621Z"
+    },
+    {
+      "id": "d913fcf6-ede6-4819-8fac-39db2d1eb971",
+      "nombre": "FOR THE EMPEROR",
+      "descripcion": "",
+      "creadoEn": "2026-06-01T15:48:51.135Z",
+      "actualizadoEn": "2026-06-01T15:48:51.135Z"
     }
   ],
   "equipos": [
@@ -87,6 +94,36 @@
       ],
       "creadoEn": "2026-05-29T18:55:10.169Z",
       "actualizadoEn": "2026-05-29T19:07:33.684Z"
+    },
+    {
+      "id": "088c9443-4532-4763-928b-fd6878c61353",
+      "nombre": "hola",
+      "descripcion": "",
+      "items": [
+        "HOLA",
+        "HOLA"
+      ],
+      "plantillaId": "ca5e8847-1f7d-46ad-83d7-ccfdff0749be",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-01T13:17:36.810Z",
+      "actualizadoEn": "2026-06-01T13:17:36.810Z"
+    },
+    {
+      "id": "7f85c262-8d01-42f7-bbb4-bd51e41d4cd4",
+      "nombre": "hola",
+      "descripcion": "",
+      "items": [
+        "HOLA",
+        "HOLA"
+      ],
+      "plantillaId": "ca5e8847-1f7d-46ad-83d7-ccfdff0749be",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-01T13:37:26.531Z",
+      "actualizadoEn": "2026-06-01T13:37:26.531Z"
     }
   ],
   "plantillas": [
@@ -99,6 +136,84 @@
       ],
       "creadoEn": "2026-05-29T18:58:02.687Z",
       "actualizadoEn": "2026-05-29T18:58:02.687Z"
+    },
+    {
+      "id": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "nombre": "Mantenimiento PC",
+      "descripcion": "Revision periodica de equipos de computo",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.121Z",
+      "actualizadoEn": "2026-06-05T13:05:06.121Z"
+    },
+    {
+      "id": "60044690-17dd-48ed-a2e4-9d1d4c8fcbfc",
+      "nombre": "Revision de Red",
+      "descripcion": "Revision de infraestructura de red",
+      "items": [
+        "Verificar puntos de red activos",
+        "Revisar switch y patch panel",
+        "Probar velocidad de conexion",
+        "Verificar DNS y gateway",
+        "Revisar cables y conectores RJ45",
+        "Verificar configuracion de VLAN"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.124Z",
+      "actualizadoEn": "2026-06-05T13:05:06.125Z"
+    },
+    {
+      "id": "f8d0c433-c216-4f2b-a428-bc107ef53723",
+      "nombre": "Revision Servidor",
+      "descripcion": "Mantenimiento de servidores fisicos y virtuales",
+      "items": [
+        "Verificar espacio en disco disponible",
+        "Revisar logs de errores",
+        "Verificar servicios activos",
+        "Revisar backup del servidor",
+        "Verificar temperatura y ventilacion",
+        "Revisar actualizaciones pendientes",
+        "Verificar uso de CPU y RAM"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.130Z",
+      "actualizadoEn": "2026-06-05T13:05:06.130Z"
+    },
+    {
+      "id": "3196e445-ebba-4c15-88cd-8350201d6d0c",
+      "nombre": "Revision Impresoras",
+      "descripcion": "Mantenimiento de equipos de impresion",
+      "items": [
+        "Verificar nivel de toner o tinta",
+        "Limpiar cabezales de impresion",
+        "Revisar bandeja de papel",
+        "Verificar conectividad de red",
+        "Revisar cola de impresion",
+        "Actualizar drivers si es necesario"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.133Z",
+      "actualizadoEn": "2026-06-05T13:05:06.133Z"
+    },
+    {
+      "id": "e943ddaa-1aba-444c-ac43-bc51d8112487",
+      "nombre": "Revision UPS",
+      "descripcion": "Mantenimiento de sistemas de alimentacion ininterrumpida",
+      "items": [
+        "Verificar nivel de carga de bateria",
+        "Probar tiempo de respaldo",
+        "Revisar alarmas activas",
+        "Verificar conexiones electricas",
+        "Revisar fecha de ultima calibracion",
+        "Verificar temperatura del equipo"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.135Z",
+      "actualizadoEn": "2026-06-05T13:05:06.135Z"
     }
   ],
   "tecnicos": [
@@ -492,6 +607,62 @@
       "fotos": [],
       "creadoEn": "2026-05-29T19:07:37.243Z",
       "actualizadoEn": "2026-05-29T19:07:37.243Z"
+    },
+    {
+      "id": "6faf0a31-4ef8-4af6-8734-2e082e6951e0",
+      "equipoId": "088c9443-4532-4763-928b-fd6878c61353",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "HOLA",
+          "checked": true,
+          "nota": "",
+          "archivos": []
+        },
+        {
+          "label": "HOLA",
+          "checked": false,
+          "nota": "",
+          "archivos": []
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-06-01T13:17:42.327Z",
+      "actualizadoEn": "2026-06-01T13:17:42.327Z"
+    },
+    {
+      "id": "e952da71-44ec-45b7-95a0-d922334f62b3",
+      "equipoId": "d89b5b19-be0d-4ec3-add3-98a5f13f428b",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "fdgggg",
+          "checked": true,
+          "nota": "",
+          "archivos": []
+        },
+        {
+          "label": "gggggg",
+          "checked": false,
+          "nota": "",
+          "archivos": []
+        },
+        {
+          "label": "ggggg",
+          "checked": true,
+          "nota": "",
+          "archivos": []
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-06-01T15:36:56.425Z",
+      "actualizadoEn": "2026-06-01T15:36:56.425Z"
     }
   ]
 }

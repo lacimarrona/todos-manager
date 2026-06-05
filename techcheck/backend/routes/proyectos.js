@@ -29,7 +29,8 @@ router.get('/:id/equipos', (req, res) => {
       const ultima = revsEquipo.length > 0
         ? revsEquipo.reduce((a, b) => new Date(a.creadoEn) > new Date(b.creadoEn) ? a : b)
         : null;
-      return { ...e, ultimaRevision: ultima, totalRevisiones: revsEquipo.length };
+      const tecnico = e.tecnicoAsignadoId ? db.getTecnicoById(e.tecnicoAsignadoId) : null;
+      return { ...e, ultimaRevision: ultima, totalRevisiones: revsEquipo.length, tecnicoAsignadoNombre: tecnico?.nombre || '' };
     });
 
     const filtro = req.query.estado;

@@ -43,7 +43,7 @@ router.get('/:id', (req, res) => {
 // POST /api/equipos
 router.post('/', (req, res) => {
   try {
-    const { nombre, descripcion, items, plantillaId, proyectoIds } = req.body;
+    const { nombre, descripcion, items, plantillaId, proyectoIds,tecnicoAsignadoId } = req.body;
     if (!nombre) return res.status(400).json({ success: false, message: 'El nombre es requerido' });
 
     let itemsFinales = items || [];
@@ -60,7 +60,8 @@ router.post('/', (req, res) => {
       plantillaId: plantillaId || null,
       proyectoIds: proyectoIds || [],
       creadoEn: new Date().toISOString(),
-      actualizadoEn: new Date().toISOString()
+      actualizadoEn: new Date().toISOString(),
+      tecnicoAsignadoId: tecnicoAsignadoId || null,
     };
     const creado = db.createEquipo(nuevo);
     res.status(201).json({ success: true, data: creado });
@@ -72,8 +73,8 @@ router.post('/', (req, res) => {
 // PUT /api/equipos/:id
 router.put('/:id', (req, res) => {
   try {
-    const { nombre, descripcion, items } = req.body;
-    const actualizado = db.updateEquipo(req.params.id, { nombre, descripcion, items });
+    const { nombre, descripcion, items,tecnicoAsignadoId } = req.body;
+    const actualizado = db.updateEquipo(req.params.id, { nombre, descripcion, items, tecnicoAsignadoId });
     if (!actualizado) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
     res.json({ success: true, data: actualizado });
   } catch (err) {
