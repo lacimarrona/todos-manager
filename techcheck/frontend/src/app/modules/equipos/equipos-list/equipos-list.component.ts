@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Proyecto, ProyectoForm, Equipo, EquipoForm, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
@@ -37,7 +37,7 @@ export class EquiposListComponent implements OnInit {
   modoEdicionEquipo = signal(false);
   equipoEditandoId = '';
   nuevoItem = '';
-  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: ''  };
+  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: '' };
 
   mostrarModalRevision = signal(false);
   equipoRevisando = signal<Equipo | null>(null);
@@ -91,13 +91,13 @@ export class EquiposListComponent implements OnInit {
   }
 
   cargarEquiposFiltrados(filtro: FiltroEstado) {
-  this.cargando.set(true);
-  const proyectoId = this.proyectoActual()!.id;
-  this.proyectosSvc.getEquiposFiltrados(proyectoId, filtro).subscribe({
-    next: d => { this.equipos.set(d); this.cargando.set(false); },
-    error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
-  });
-}
+    this.cargando.set(true);
+    const proyectoId = this.proyectoActual()!.id;
+    this.proyectosSvc.getEquiposFiltrados(proyectoId, filtro).subscribe({
+      next: d => { this.equipos.set(d); this.cargando.set(false); },
+      error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
+    });
+  }
 
   abrirModalNuevoProyecto() {
     this.formProyecto = { nombre: '', descripcion: '' };
@@ -134,7 +134,7 @@ export class EquiposListComponent implements OnInit {
   }
 
   abrirModalNuevoEquipo() {
-    this.formEquipo = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [this.proyectoActual()!.id] };
+    this.formEquipo = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [this.proyectoActual()!.id], tecnicoAsignadoId: '' };
     this.modoEdicionEquipo.set(false);
     this.equipoEditandoId = '';
     this.nuevoItem = '';
@@ -145,7 +145,9 @@ export class EquiposListComponent implements OnInit {
     this.formEquipo = {
       nombre: equipo.nombre,
       descripcion: equipo.descripcion,
-      items: [...equipo.items],
+      items: equipo.items.map(i => typeof i === 'string'
+        ? { label: i, observacionGuia: '', archivosGuia: [] }
+        : { ...i, archivosGuia: i.archivosGuia || [] }),
       plantillaId: equipo.plantillaId || '',
       proyectoIds: equipo.proyectoIds || [],
       tecnicoAsignadoId: equipo.tecnicoAsignadoId || ''
@@ -159,18 +161,44 @@ export class EquiposListComponent implements OnInit {
   onPlantillaChange() {
     if (!this.formEquipo.plantillaId) return;
     const p = this.plantillas().find(x => x.id === this.formEquipo.plantillaId);
-    if (p) this.formEquipo.items = [...p.items];
+    if (p) this.formEquipo.items = p.items.map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
   }
 
   agregarItem() {
     const t = this.nuevoItem.trim();
     if (!t) return;
-    this.formEquipo.items = [...this.formEquipo.items, t];
+    this.formEquipo.items = [...this.formEquipo.items, { label: t, observacionGuia: '', archivosGuia: [] }];
     this.nuevoItem = '';
   }
 
   quitarItem(idx: number) {
     this.formEquipo.items = this.formEquipo.items.filter((_, i) => i !== idx);
+  }
+
+  updateObservacionGuia(idx: number, valor: string) {
+    const updated = [...this.formEquipo.items];
+    updated[idx] = { ...updated[idx], observacionGuia: valor };
+    this.formEquipo.items = [...updated];
+  }
+
+  onArchivoGuiaChange(idx: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+    const updated = [...this.formEquipo.items];
+    Array.from(input.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        updated[idx] = { ...updated[idx], archivosGuia: [...(updated[idx].archivosGuia || []), e.target!.result as string] };
+        this.formEquipo.items = [...updated];
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  eliminarArchivoGuia(idx: number, archivoIdx: number) {
+    const updated = [...this.formEquipo.items];
+    updated[idx] = { ...updated[idx], archivosGuia: updated[idx].archivosGuia.filter((_, i) => i !== archivoIdx) };
+    this.formEquipo.items = [...updated];
   }
 
   guardarEquipo() {
@@ -210,11 +238,25 @@ export class EquiposListComponent implements OnInit {
         this.observacionGeneral = ultima.observacionGeneral || '';
         this.revisionRetomadaId = ultima.id;
       } else {
-        this.itemsRevision.set(equipo.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
+        this.itemsRevision.set(equipo.items.map(i => ({
+          label: typeof i === 'string' ? i : i.label,
+          checked: false,
+          nota: '',
+          archivos: [],
+          observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
+          archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+        })));
         this.revisionRetomadaId = '';
       }
     } else {
-      this.itemsRevision.set(equipo.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
+      this.itemsRevision.set(equipo.items.map(i => ({
+        label: typeof i === 'string' ? i : i.label,
+        checked: false,
+        nota: '',
+        archivos: [],
+        observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
+        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+      })));
       this.revisionRetomadaId = '';
     }
     this.mostrarModalRevision.set(true);
@@ -322,4 +364,10 @@ export class EquiposListComponent implements OnInit {
   }
 
   trackById(_: number, e: any) { return e.id; }
+
+  abrirArchivo(archivo: string) {
+  const win = window.open();
+  if (win) win.document.write(`<img src="${archivo}" style="max-width:100%">`);
+}
+
 }

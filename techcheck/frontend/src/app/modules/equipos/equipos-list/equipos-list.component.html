@@ -151,10 +151,25 @@
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Items del checklist</label>
         <div class="border border-gray-200 rounded-lg mb-2 max-h-48 overflow-y-auto divide-y divide-gray-100">
-          <div *ngFor="let item of formEquipo.items; let i = index" class="flex items-center justify-between px-3 py-2">
-            <span class="text-sm text-gray-700">{{ item }}</span>
-            <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">X</button>
-          </div>
+          <div *ngFor="let item of formEquipo.items; let i = index" class="px-3 py-2 space-y-2">
+  <div class="flex items-center justify-between">
+    <span class="text-sm text-gray-700 font-medium">{{ item.label }}</span>
+    <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">X</button>
+  </div>
+  <input type="text" [(ngModel)]="formEquipo.items[i].observacionGuia"
+    placeholder="Observacion de guia (opcional)..."
+    class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+  <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
+    (change)="onArchivoGuiaChange(i, $event)"
+    class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+  <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2">
+    <div *ngFor="let archivo of item.archivosGuia; let ai = index" class="relative group">
+      <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-gray-200">
+      <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
+      <button (click)="eliminarArchivoGuia(i, ai)" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+    </div>
+  </div>
+</div>
           <div *ngIf="formEquipo.items.length === 0" class="px-3 py-3 text-xs text-gray-400 text-center">No hay items aun</div>
         </div>
         <div class="flex gap-2">
@@ -211,7 +226,16 @@
               <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
             </div>
             <div class="pl-9 space-y-2">
-              <input type="text" [value]="item.nota" (input)="updateNota(i, $any($event.target).value)" placeholder="Observacion..." class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+              <div *ngIf="item.observacionGuia" class="p-2 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-700">
+  📋 Guia: {{ item.observacionGuia }}
+</div>
+<div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2 mb-1">
+  <div *ngFor="let archivo of item.archivosGuia" class="cursor-pointer" (click)="abrirArchivo(archivo)">
+    <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-blue-200">
+    <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-blue-50 rounded-md border border-blue-200 flex items-center justify-center text-lg">📄</div>
+  </div>
+</div>
+              <input type="text" [(ngModel)]="itemsRevision()[i].nota" placeholder="Observacion..." class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
               <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple (change)="onArchivoItemChange(i, $event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
               <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2">
                 <div *ngFor="let archivo of item.archivos; let ai = index" class="relative group">

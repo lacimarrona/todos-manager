@@ -42,7 +42,14 @@ export class RevisionesFormComponent implements OnInit {
     const eq = this.equipos().find(e => e.id === this.equipoSeleccionadoId);
     this.equipoSeleccionado.set(eq || null);
     if (eq) {
-      this.items.set(eq.items.map(label => ({ label, checked: false, nota: '', archivos: [] })));
+      this.items.set(eq.items.map(i => ({
+  label: typeof i === 'string' ? i : i.label,
+  checked: false,
+  nota: '',
+  archivos: [],
+  observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
+  archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+})));
     } else {
       this.items.set([]);
     }

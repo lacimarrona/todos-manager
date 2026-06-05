@@ -14,11 +14,18 @@ export interface ProyectoForm {
 }
 
 // ─── EQUIPO ─────────────────────────────────────────────────
+
+export interface ItemEquipo {
+  label: string;
+  observacionGuia: string;
+  archivosGuia: string[];
+}
+
 export interface Equipo {
   id: string;
   nombre: string;
   descripcion: string;
-  items: string[];
+  items: ItemEquipo[];
   proyectoIds: string[];
   plantillaId: string | null;
   creadoEn: string;
@@ -32,7 +39,7 @@ export interface Equipo {
 export interface EquipoForm {
   nombre: string;
   descripcion: string;
-  items: string[];
+  items: ItemEquipo[];
   plantillaId?: string;
   proyectoIds?: string[];
   tecnicoAsignadoId?: string;
@@ -75,6 +82,8 @@ export interface ItemRevision {
   checked: boolean;
   nota: string;
   archivos: string[];
+  observacionGuia?: string;
+  archivosGuia?: string[];
 }
 
 export interface Revision {
