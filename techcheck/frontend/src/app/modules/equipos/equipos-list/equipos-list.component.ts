@@ -25,6 +25,8 @@ export class EquiposListComponent implements OnInit {
   tecnicos = signal<Tecnico[]>([]);
   cargando = signal(true);
   error = signal('');
+  importandoProyecto = signal(false);
+  exitoImport = signal('');
 
   filtroActivo = signal<FiltroEstado>('pendiente');
 
@@ -368,6 +370,54 @@ export class EquiposListComponent implements OnInit {
   abrirArchivo(archivo: string) {
   const win = window.open();
   if (win) win.document.write(`<img src="${archivo}" style="max-width:100%">`);
+}
+
+exportarProyecto(proyecto: Proyecto, event: Event) {
+  event.stopPropagation();
+  this.proyectosSvc.exportarProyecto(proyecto.id).subscribe({
+    next: datos => {
+      const json = JSON.stringify(datos, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${proyecto.nombre.replace(/\s+/g, '_')}_techcheck.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  });
+}
+
+onImportarProyecto(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  this.importandoProyecto.set(true);
+  this.exitoImport.set('');
+  this.error.set('');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const datos = JSON.parse(e.target!.result as string);
+      this.proyectosSvc.importarProyecto(datos).subscribe({
+        next: () => {
+          this.importandoProyecto.set(false);
+          this.exitoImport.set('Proyecto importado correctamente');
+          this.cargarProyectos();
+          setTimeout(() => this.exitoImport.set(''), 3000);
+        },
+        error: () => {
+          this.importandoProyecto.set(false);
+          this.error.set('Error al importar el proyecto');
+        }
+      });
+    } catch {
+      this.importandoProyecto.set(false);
+      this.error.set('El archivo no es un JSON valido');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
 }

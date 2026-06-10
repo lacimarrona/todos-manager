@@ -1,207 +1,321 @@
-/**
- * CAPA DE ACCESO A DATOS
- * Esta capa abstrae el origen de datos.
- * Cuando se migre a base de datos, solo se modifica este archivo.
- * Las rutas y servicios NO cambian.
- */
-
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../data/db.json');
+const GLOBAL_PATH = path.join(__dirname, '../data/global.json');
+const PROYECTOS_DIR = path.join(__dirname, '../data/proyectos');
 
-function readDB() {
-  const raw = fs.readFileSync(DB_PATH, 'utf-8');
-  return JSON.parse(raw);
+// Crear directorio si no existe
+if (!fs.existsSync(PROYECTOS_DIR)) fs.mkdirSync(PROYECTOS_DIR, { recursive: true });
+
+// ─── GLOBAL (proyectos, tecnicos, plantillas) ────────────────
+function readGlobal() {
+  if (!fs.existsSync(GLOBAL_PATH)) {
+    const empty = { proyectos: [], tecnicos: [], plantillas: [] };
+    fs.writeFileSync(GLOBAL_PATH, JSON.stringify(empty, null, 2));
+    return empty;
+  }
+  return JSON.parse(fs.readFileSync(GLOBAL_PATH, 'utf-8'));
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+function writeGlobal(data) {
+  fs.writeFileSync(GLOBAL_PATH, JSON.stringify(data, null, 2));
 }
 
-// ─── EQUIPOS ────────────────────────────────────────────────
-function getEquipos() {
-  return readDB().equipos;
+// ─── PROYECTO DATA (equipos + revisiones por proyecto) ───────
+function getProyectoPath(proyectoId) {
+  return path.join(PROYECTOS_DIR, `${proyectoId}.json`);
 }
 
-function getEquipoById(id) {
-  return readDB().equipos.find(e => e.id === id) || null;
+function readProyectoData(proyectoId) {
+  const p = getProyectoPath(proyectoId);
+  if (!fs.existsSync(p)) return { equipos: [], revisiones: [] };
+  return JSON.parse(fs.readFileSync(p, 'utf-8'));
 }
 
-function createEquipo(equipo) {
-  const db = readDB();
-  db.equipos.push(equipo);
-  writeDB(db);
-  return equipo;
+function writeProyectoData(proyectoId, data) {
+  fs.writeFileSync(getProyectoPath(proyectoId), JSON.stringify(data, null, 2));
 }
 
-function updateEquipo(id, datos) {
-  const db = readDB();
-  const idx = db.equipos.findIndex(e => e.id === id);
-  if (idx === -1) return null;
-  db.equipos[idx] = { ...db.equipos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeDB(db);
-  return db.equipos[idx];
-}
-
-function deleteEquipo(id) {
-  const db = readDB();
-  const idx = db.equipos.findIndex(e => e.id === id);
-  if (idx === -1) return false;
-  db.equipos.splice(idx, 1);
-  writeDB(db);
-  return true;
-}
-
-// ─── PROYECTOS ─────────────────────────────────────────────
-function getProyectos() {
-  return readDB().proyectos;
-}
+// ─── PROYECTOS ───────────────────────────────────────────────
+function getProyectos() { return readGlobal().proyectos; }
 
 function getProyectoById(id) {
-  return readDB().proyectos.find(p => p.id === id) || null;
+  return readGlobal().proyectos.find(p => p.id === id) || null;
 }
 
 function createProyecto(proyecto) {
-  const db = readDB();
-  db.proyectos.push(proyecto);
-  writeDB(db);
+  const g = readGlobal();
+  g.proyectos.push(proyecto);
+  writeGlobal(g);
+  writeProyectoData(proyecto.id, { equipos: [], revisiones: [] });
   return proyecto;
 }
 
 function updateProyecto(id, datos) {
-  const db = readDB();
-  const idx = db.proyectos.findIndex(p => p.id === id);
+  const g = readGlobal();
+  const idx = g.proyectos.findIndex(p => p.id === id);
   if (idx === -1) return null;
-  db.proyectos[idx] = { ...db.proyectos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeDB(db);
-  return db.proyectos[idx];
+  g.proyectos[idx] = { ...g.proyectos[idx], ...datos, actualizadoEn: new Date().toISOString() };
+  writeGlobal(g);
+  return g.proyectos[idx];
 }
 
 function deleteProyecto(id) {
-  const db = readDB();
-  const idx = db.proyectos.findIndex(p => p.id === id);
+  const g = readGlobal();
+  const idx = g.proyectos.findIndex(p => p.id === id);
   if (idx === -1) return false;
-  db.proyectos.splice(idx, 1);
-  writeDB(db);
+  g.proyectos.splice(idx, 1);
+  writeGlobal(g);
+  const p = getProyectoPath(id);
+  if (fs.existsSync(p)) fs.unlinkSync(p);
   return true;
 }
 
-// ─── PLANTILLAS ─────────────────────────────────────────────
-function getPlantillas() {
-  return readDB().plantillas;
+// ─── EQUIPOS ────────────────────────────────────────────────
+function getEquipos() {
+  const proyectos = getProyectos();
+  let todos = [];
+  proyectos.forEach(p => {
+    const data = readProyectoData(p.id);
+    todos = todos.concat(data.equipos);
+  });
+  return todos;
 }
 
-function getPlantillaById(id) {
-  return readDB().plantillas.find(p => p.id === id) || null;
+function getEquipoById(id) {
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const equipo = data.equipos.find(e => e.id === id);
+    if (equipo) return equipo;
+  }
+  return null;
 }
 
-function createPlantilla(plantilla) {
-  const db = readDB();
-  db.plantillas.push(plantilla);
-  writeDB(db);
-  return plantilla;
+function getEquiposByProyecto(proyectoId) {
+  return readProyectoData(proyectoId).equipos;
 }
 
-function updatePlantilla(id, datos) {
-  const db = readDB();
-  const idx = db.plantillas.findIndex(p => p.id === id);
-  if (idx === -1) return null;
-  db.plantillas[idx] = { ...db.plantillas[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeDB(db);
-  return db.plantillas[idx];
+function createEquipo(equipo) {
+  const proyectoId = equipo.proyectoIds && equipo.proyectoIds[0];
+  if (!proyectoId) return equipo;
+  const data = readProyectoData(proyectoId);
+  data.equipos.push(equipo);
+  writeProyectoData(proyectoId, data);
+  return equipo;
 }
 
-function deletePlantilla(id) {
-  const db = readDB();
-  const idx = db.plantillas.findIndex(p => p.id === id);
-  if (idx === -1) return false;
-  db.plantillas.splice(idx, 1);
-  writeDB(db);
-  return true;
+function updateEquipo(id, datos) {
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const idx = data.equipos.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      data.equipos[idx] = { ...data.equipos[idx], ...datos, actualizadoEn: new Date().toISOString() };
+      writeProyectoData(p.id, data);
+      return data.equipos[idx];
+    }
+  }
+  return null;
 }
 
-// ─── TÉCNICOS ───────────────────────────────────────────────
-function getTecnicos() {
-  return readDB().tecnicos;
-}
-
-function getTecnicoById(id) {
-  return readDB().tecnicos.find(t => t.id === id) || null;
-}
-
-function createTecnico(tecnico) {
-  const db = readDB();
-  db.tecnicos.push(tecnico);
-  writeDB(db);
-  return tecnico;
-}
-
-function updateTecnico(id, datos) {
-  const db = readDB();
-  const idx = db.tecnicos.findIndex(t => t.id === id);
-  if (idx === -1) return null;
-  db.tecnicos[idx] = { ...db.tecnicos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeDB(db);
-  return db.tecnicos[idx];
-}
-
-function deleteTecnico(id) {
-  const db = readDB();
-  const idx = db.tecnicos.findIndex(t => t.id === id);
-  if (idx === -1) return false;
-  db.tecnicos.splice(idx, 1);
-  writeDB(db);
-  return true;
+function deleteEquipo(id) {
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const idx = data.equipos.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      data.equipos.splice(idx, 1);
+      writeProyectoData(p.id, data);
+      return true;
+    }
+  }
+  return false;
 }
 
 // ─── REVISIONES ─────────────────────────────────────────────
 function getRevisiones(filtros = {}) {
-  let revisiones = readDB().revisiones;
-  if (filtros.equipoId) revisiones = revisiones.filter(r => r.equipoId === filtros.equipoId);
-  if (filtros.tecnicoId) revisiones = revisiones.filter(r => r.tecnicoId === filtros.tecnicoId);
-  if (filtros.estado) revisiones = revisiones.filter(r => r.estado === filtros.estado);
-  return revisiones.sort((a, b) => new Date(b.creadoEn) - new Date(a.creadoEn));
+  const proyectos = getProyectos();
+  let todas = [];
+  proyectos.forEach(p => {
+    const data = readProyectoData(p.id);
+    todas = todas.concat(data.revisiones);
+  });
+  if (filtros.equipoId) todas = todas.filter(r => r.equipoId === filtros.equipoId);
+  if (filtros.tecnicoId) todas = todas.filter(r => r.tecnicoId === filtros.tecnicoId);
+  if (filtros.estado) todas = todas.filter(r => r.estado === filtros.estado);
+  return todas.sort((a, b) => new Date(b.creadoEn) - new Date(a.creadoEn));
+}
+
+function getRevisionesByProyecto(proyectoId) {
+  return readProyectoData(proyectoId).revisiones;
 }
 
 function getRevisionById(id) {
-  return readDB().revisiones.find(r => r.id === id) || null;
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const revision = data.revisiones.find(r => r.id === id);
+    if (revision) return revision;
+  }
+  return null;
 }
 
 function createRevision(revision) {
-  const db = readDB();
-  db.revisiones.push(revision);
-  writeDB(db);
+  // Encontrar el proyecto del equipo
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const equipo = data.equipos.find(e => e.id === revision.equipoId);
+    if (equipo) {
+      data.revisiones.push(revision);
+      writeProyectoData(p.id, data);
+      return revision;
+    }
+  }
   return revision;
 }
 
 function updateRevision(id, datos) {
-  const db = readDB();
-  const idx = db.revisiones.findIndex(r => r.id === id);
-  if (idx === -1) return null;
-  db.revisiones[idx] = { ...db.revisiones[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeDB(db);
-  return db.revisiones[idx];
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const idx = data.revisiones.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      data.revisiones[idx] = { ...data.revisiones[idx], ...datos, actualizadoEn: new Date().toISOString() };
+      writeProyectoData(p.id, data);
+      return data.revisiones[idx];
+    }
+  }
+  return null;
 }
 
 function deleteRevision(id) {
-  const db = readDB();
-  const idx = db.revisiones.findIndex(r => r.id === id);
+  const proyectos = getProyectos();
+  for (const p of proyectos) {
+    const data = readProyectoData(p.id);
+    const idx = data.revisiones.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      data.revisiones.splice(idx, 1);
+      writeProyectoData(p.id, data);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ─── PLANTILLAS ─────────────────────────────────────────────
+function getPlantillas() { return readGlobal().plantillas; }
+
+function getPlantillaById(id) {
+  return readGlobal().plantillas.find(p => p.id === id) || null;
+}
+
+function createPlantilla(plantilla) {
+  const g = readGlobal();
+  g.plantillas.push(plantilla);
+  writeGlobal(g);
+  return plantilla;
+}
+
+function updatePlantilla(id, datos) {
+  const g = readGlobal();
+  const idx = g.plantillas.findIndex(p => p.id === id);
+  if (idx === -1) return null;
+  g.plantillas[idx] = { ...g.plantillas[idx], ...datos, actualizadoEn: new Date().toISOString() };
+  writeGlobal(g);
+  return g.plantillas[idx];
+}
+
+function deletePlantilla(id) {
+  const g = readGlobal();
+  const idx = g.plantillas.findIndex(p => p.id === id);
   if (idx === -1) return false;
-  db.revisiones.splice(idx, 1);
-  writeDB(db);
+  g.plantillas.splice(idx, 1);
+  writeGlobal(g);
   return true;
 }
 
+// ─── TECNICOS ───────────────────────────────────────────────
+function getTecnicos() { return readGlobal().tecnicos; }
+
+function getTecnicoById(id) {
+  return readGlobal().tecnicos.find(t => t.id === id) || null;
+}
+
+function createTecnico(tecnico) {
+  const g = readGlobal();
+  g.tecnicos.push(tecnico);
+  writeGlobal(g);
+  return tecnico;
+}
+
+function updateTecnico(id, datos) {
+  const g = readGlobal();
+  const idx = g.tecnicos.findIndex(t => t.id === id);
+  if (idx === -1) return null;
+  g.tecnicos[idx] = { ...g.tecnicos[idx], ...datos, actualizadoEn: new Date().toISOString() };
+  writeGlobal(g);
+  return g.tecnicos[idx];
+}
+
+function deleteTecnico(id) {
+  const g = readGlobal();
+  const idx = g.tecnicos.findIndex(t => t.id === id);
+  if (idx === -1) return false;
+  g.tecnicos.splice(idx, 1);
+  writeGlobal(g);
+  return true;
+}
+
+// ─── EXPORTAR / IMPORTAR PROYECTO ───────────────────────────
+function exportarProyecto(proyectoId) {
+  const proyecto = getProyectoById(proyectoId);
+  if (!proyecto) return null;
+  const data = readProyectoData(proyectoId);
+  const tecnicos = getTecnicos();
+  return { proyecto, equipos: data.equipos, revisiones: data.revisiones, tecnicos };
+}
+
+function importarProyecto(datos) {
+  const { v4: uuidv4 } = require('uuid');
+  const { proyecto, equipos, revisiones, tecnicos } = datos;
+
+  // Crear proyecto con nuevo ID
+  const nuevoProyectoId = uuidv4();
+  const nuevoProyecto = {
+    ...proyecto,
+    id: nuevoProyectoId,
+    creadoEn: new Date().toISOString(),
+    actualizadoEn: new Date().toISOString()
+  };
+  const g = readGlobal();
+  g.proyectos.push(nuevoProyecto);
+
+  // Importar tecnicos que no existan
+  const tecnicosExistentes = g.tecnicos.map(t => t.email);
+  (tecnicos || []).forEach(t => {
+    if (!tecnicosExistentes.includes(t.email)) {
+      g.tecnicos.push({ ...t, id: uuidv4(), creadoEn: new Date().toISOString() });
+    }
+  });
+  writeGlobal(g);
+
+  // Crear archivo del proyecto con equipos y revisiones
+  writeProyectoData(nuevoProyectoId, {
+    equipos: (equipos || []).map(e => ({ ...e, proyectoIds: [nuevoProyectoId] })),
+    revisiones: revisiones || []
+  });
+
+  return nuevoProyecto;
+}
+
 module.exports = {
-  // Proyectos
   getProyectos, getProyectoById, createProyecto, updateProyecto, deleteProyecto,
-  // Equipos
-  getEquipos, getEquipoById, createEquipo, updateEquipo, deleteEquipo,
-  // Plantillas
+  getEquipos, getEquipoById, getEquiposByProyecto, createEquipo, updateEquipo, deleteEquipo,
   getPlantillas, getPlantillaById, createPlantilla, updatePlantilla, deletePlantilla,
-  // Técnicos
   getTecnicos, getTecnicoById, createTecnico, updateTecnico, deleteTecnico,
-  // Revisiones
-  getRevisiones, getRevisionById, createRevision, updateRevision, deleteRevision,
+  getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,
+  exportarProyecto, importarProyecto,
+  readProyectoData, writeProyectoData,
 };

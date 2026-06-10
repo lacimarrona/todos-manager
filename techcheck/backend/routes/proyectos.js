@@ -122,4 +122,27 @@ router.delete('/:id', (req, res) => {
   }
 });
 
+// Exportar proyecto como JSON
+router.get('/:id/exportar', (req, res) => {
+  try {
+    const datos = db.exportarProyecto(req.params.id);
+    if (!datos) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    res.json({ success: true, data: datos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Importar proyecto desde JSON
+router.post('/importar', (req, res) => {
+  try {
+    const datos = req.body;
+    if (!datos || !datos.proyecto) return res.status(400).json({ success: false, message: 'Datos invalidos' });
+    const nuevo = db.importarProyecto(datos);
+    res.status(201).json({ success: true, data: nuevo });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

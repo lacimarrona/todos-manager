@@ -41,4 +41,12 @@ export class ProyectosService {
   getEquiposFiltrados(proyectoId: string, estado: string): Observable<Equipo[]> {
   return this.http.get<ApiResponse<Equipo[]>>(`${this.url}/${proyectoId}/equipos?estado=${estado}`).pipe(map(r => r.data || []));
 }
+
+exportarProyecto(proyectoId: string): Observable<any> {
+  return this.http.get<any>(`${this.url}/${proyectoId}/exportar`).pipe(map(r => r.data));
+}
+
+importarProyecto(datos: any): Observable<Proyecto> {
+  return this.http.post<ApiResponse<Proyecto>>(`${this.url}/importar`, datos).pipe(map(r => r.data!));
+}
 }

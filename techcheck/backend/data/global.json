@@ -1,0 +1,123 @@
+{
+  "proyectos": [
+    {
+      "id": "4c17cab7-75f6-4902-839e-4a15139bda20",
+      "nombre": "Computadoras",
+      "descripcion": "",
+      "creadoEn": "2026-05-08T20:46:48.621Z",
+      "actualizadoEn": "2026-05-08T20:46:48.621Z"
+    },
+    {
+      "id": "d913fcf6-ede6-4819-8fac-39db2d1eb971",
+      "nombre": "FOR THE EMPEROR",
+      "descripcion": "",
+      "creadoEn": "2026-06-01T15:48:51.135Z",
+      "actualizadoEn": "2026-06-01T15:48:51.135Z"
+    },
+    {
+      "id": "ebb897ed-238c-483d-909b-cf8336e51e04",
+      "nombre": "Black Templar",
+      "descripcion": "",
+      "creadoEn": "2026-06-09T13:29:25.570Z",
+      "actualizadoEn": "2026-06-09T13:29:25.570Z"
+    }
+  ],
+  "tecnicos": [
+    {
+      "id": "tecnico-1",
+      "nombre": "Administrador",
+      "email": "admin@empresa.com",
+      "creadoEn": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "plantillas": [
+    {
+      "id": "ca5e8847-1f7d-46ad-83d7-ccfdff0749be",
+      "nombre": "hOLA",
+      "descripcion": "",
+      "items": [
+        "HOLA"
+      ],
+      "creadoEn": "2026-05-29T18:58:02.687Z",
+      "actualizadoEn": "2026-05-29T18:58:02.687Z"
+    },
+    {
+      "id": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "nombre": "Mantenimiento PC",
+      "descripcion": "Revision periodica de equipos de computo",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.121Z",
+      "actualizadoEn": "2026-06-05T13:05:06.121Z"
+    },
+    {
+      "id": "60044690-17dd-48ed-a2e4-9d1d4c8fcbfc",
+      "nombre": "Revision de Red",
+      "descripcion": "Revision de infraestructura de red",
+      "items": [
+        "Verificar puntos de red activos",
+        "Revisar switch y patch panel",
+        "Probar velocidad de conexion",
+        "Verificar DNS y gateway",
+        "Revisar cables y conectores RJ45",
+        "Verificar configuracion de VLAN"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.124Z",
+      "actualizadoEn": "2026-06-05T13:05:06.125Z"
+    },
+    {
+      "id": "f8d0c433-c216-4f2b-a428-bc107ef53723",
+      "nombre": "Revision Servidor",
+      "descripcion": "Mantenimiento de servidores fisicos y virtuales",
+      "items": [
+        "Verificar espacio en disco disponible",
+        "Revisar logs de errores",
+        "Verificar servicios activos",
+        "Revisar backup del servidor",
+        "Verificar temperatura y ventilacion",
+        "Revisar actualizaciones pendientes",
+        "Verificar uso de CPU y RAM"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.130Z",
+      "actualizadoEn": "2026-06-05T13:05:06.130Z"
+    },
+    {
+      "id": "3196e445-ebba-4c15-88cd-8350201d6d0c",
+      "nombre": "Revision Impresoras",
+      "descripcion": "Mantenimiento de equipos de impresion",
+      "items": [
+        "Verificar nivel de toner o tinta",
+        "Limpiar cabezales de impresion",
+        "Revisar bandeja de papel",
+        "Verificar conectividad de red",
+        "Revisar cola de impresion",
+        "Actualizar drivers si es necesario"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.133Z",
+      "actualizadoEn": "2026-06-05T13:05:06.133Z"
+    },
+    {
+      "id": "e943ddaa-1aba-444c-ac43-bc51d8112487",
+      "nombre": "Revision UPS",
+      "descripcion": "Mantenimiento de sistemas de alimentacion ininterrumpida",
+      "items": [
+        "Verificar nivel de carga de bateria",
+        "Probar tiempo de respaldo",
+        "Revisar alarmas activas",
+        "Verificar conexiones electricas",
+        "Revisar fecha de ultima calibracion",
+        "Verificar temperatura del equipo"
+      ],
+      "creadoEn": "2026-06-05T13:05:06.135Z",
+      "actualizadoEn": "2026-06-05T13:05:06.135Z"
+    }
+  ]
+}

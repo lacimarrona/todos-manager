@@ -5,9 +5,16 @@
       <h1 class="text-2xl font-semibold text-gray-800">Proyectos</h1>
       <p class="text-sm text-gray-400 mt-1">Organiza tus equipos por proyecto</p>
     </div>
-    <button (click)="abrirModalNuevoProyecto()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo proyecto</button>
+    <div class="flex gap-2">
+  <label class="flex items-center gap-2 px-4 py-2 border border-green-200 text-green-700 text-sm rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
+    📂 {{ importandoProyecto() ? 'Importando...' : 'Importar proyecto' }}
+    <input type="file" accept=".json" (change)="onImportarProyecto($event)" class="hidden">
+  </label>
+  <button (click)="abrirModalNuevoProyecto()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo proyecto</button>
+</div>
   </div>
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
+  <div *ngIf="exitoImport()" class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{{ exitoImport() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando proyectos...</div>
   <div *ngIf="!cargando() && proyectos().length === 0" class="text-center py-16 text-gray-400">
     <div class="text-5xl mb-4">📁</div>
@@ -30,6 +37,7 @@
         <span class="text-xs text-gray-400">💻 {{ p.totalEquipos || 0 }} equipos</span>
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button (click)="abrirModalEditarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">✏️</button>
+          <button (click)="exportarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">⬇️</button>
           <button (click)="eliminarProyecto(p.id, $event)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
         </div>
       </div>
