@@ -1,0 +1,25 @@
+# Dependencias
+backend/node_modules/
+frontend/node_modules/
+
+# Build anterior
+frontend/dist/
+frontend/.angular/
+
+# Variables de entorno reales
+backend/.env
+
+# Datos locales (se montan como volumen)
+backend/data/
+
+# Git
+.git/
+.gitignore
+
+# Documentación
+*.md
+*.pdf
+
+# Sistema
+.DS_Store
+Thumbs.db
