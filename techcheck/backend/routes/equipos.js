@@ -83,7 +83,7 @@ router.put('/:id', (req, res) => {
 });
 
 // DELETE /api/equipos/:id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', (req, res) => {     
   try {
     const eliminado = db.deleteEquipo(req.params.id);
     if (!eliminado) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
