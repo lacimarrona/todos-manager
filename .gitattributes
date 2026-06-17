@@ -1,0 +1,6 @@
+# Forzar fin de línea LF en scripts y archivos de Docker.
+# Evita que en Windows se conviertan a CRLF y rompan el build/arranque en Linux/NAS.
+*.sh            text eol=lf
+docker-entrypoint.sh text eol=lf
+Dockerfile      text eol=lf
+*.dockerfile    text eol=lf

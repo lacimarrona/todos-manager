@@ -32,11 +32,11 @@ RUN sed -i "s|../frontend/dist/frontend/browser|./public|g" index.js
 # Crear directorio de datos
 RUN mkdir -p ./data/proyectos
 
-# Exponer puerto
-EXPOSE 3000
+# Exponer puerto (valor por defecto; el real se define por .env / docker-compose)
+EXPOSE 3010
 
 # Variables de entorno por defecto
-ENV PORT=3000
+ENV PORT=3010
 ENV NODE_ENV=production
 ENV DATA_SOURCE=json
 ENV APP_NAME=TechCheck
