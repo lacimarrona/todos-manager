@@ -48,6 +48,10 @@ export class RevisionesService {
     return this.http.post<ApiResponse<Revision>>(this.url, form).pipe(map(r => r.data!));
   }
 
+  update(id: string, form: Partial<RevisionForm>): Observable<Revision> {
+    return this.http.put<ApiResponse<Revision>>(`${this.url}/${id}`, form).pipe(map(r => r.data!));
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }

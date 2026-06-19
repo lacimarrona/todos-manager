@@ -1,13 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, ArchivoAdjunto } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { TecnicosService, RevisionesService } from '../../../core/services/otros.services';
+import { ArchivosService } from '../../../core/services/archivos.service';
 
-type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado';
+type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado';
 
 @Component({
   selector: 'app-equipos-list',
@@ -27,6 +28,14 @@ export class EquiposListComponent implements OnInit {
   error = signal('');
   importandoProyecto = signal(false);
   exitoImport = signal('');
+
+  mostrarModalImportarEquipos = signal(false);
+  importEquiposData: { nombre: string; descripcion: string }[] = [];
+  importEquiposTecnicoId = '';
+  importEquiposPlantillaId = '';
+  importandoEquipos = signal(false);
+  importEquiposExito = signal('');
+  importEquiposError = signal('');
 
   filtroActivo = signal<FiltroEstado>('pendiente');
 
@@ -48,8 +57,14 @@ export class EquiposListComponent implements OnInit {
   estado: EstadoRevision = 'ok';
   observacionGeneral = '';
   itemsRevision = signal<ItemRevision[]>([]);
-  fotosBase64: string[] = [];
+  fotosBase64: (ArchivoAdjunto | string)[] = [];
   revisionRetomadaId = '';
+
+  mostrarModalExportarEquipo = signal(false);
+  equipoExportando: Equipo | null = null;
+
+  mostrarModalExportarProyecto = signal(false);
+  proyectoExportando: Proyecto | null = null;
 
   constructor(
     private proyectosSvc: ProyectosService,
@@ -57,6 +72,7 @@ export class EquiposListComponent implements OnInit {
     private plantillasSvc: PlantillasService,
     private tecnicosSvc: TecnicosService,
     private revisionesSvc: RevisionesService,
+    private archivosSvc: ArchivosService,
   ) {}
 
   ngOnInit() {
@@ -163,7 +179,11 @@ export class EquiposListComponent implements OnInit {
   onPlantillaChange() {
     if (!this.formEquipo.plantillaId) return;
     const p = this.plantillas().find(x => x.id === this.formEquipo.plantillaId);
-    if (p) this.formEquipo.items = p.items.map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
+    if (p) this.formEquipo.items = p.items.map((i: any) => ({
+      label: typeof i === 'string' ? i : i.label,
+      observacionGuia: typeof i === 'string' ? '' : (i.observacionGuia || ''),
+      archivosGuia: typeof i === 'string' ? [] : [...(i.archivosGuia || [])]
+    }));
   }
 
   agregarItem() {
@@ -186,15 +206,7 @@ export class EquiposListComponent implements OnInit {
   onArchivoGuiaChange(idx: number, event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
-    const updated = [...this.formEquipo.items];
-    Array.from(input.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        updated[idx] = { ...updated[idx], archivosGuia: [...(updated[idx].archivosGuia || []), e.target!.result as string] };
-        this.formEquipo.items = [...updated];
-      };
-      reader.readAsDataURL(file);
-    });
+    Array.from(input.files).forEach(file => this.leerArchivoGuiaEquipo(idx, file));
   }
 
   eliminarArchivoGuia(idx: number, archivoIdx: number) {
@@ -223,6 +235,13 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
+  archivarEquipo(id: string) {
+    if (!confirm('¿Archivar este equipo? Ya no podrás modificarlo.')) return;
+    this.equiposSvc.archivar(id).subscribe({
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
+    });
+  }
+
   abrirModalRevision(equipo: Equipo) {
     this.equipoRevisando.set(equipo);
     this.tecnicoId = '';
@@ -233,11 +252,18 @@ export class EquiposListComponent implements OnInit {
       const ultima = equipo.ultimaRevision;
       const completados = ultima.items.filter(i => i.checked).length;
       const total = ultima.items.length;
-      if (total > 0 && completados < total) {
-        this.itemsRevision.set(ultima.items.map(i => ({ ...i, archivos: i.archivos || [] })));
+      if (total > 0) {
+        this.itemsRevision.set(ultima.items.map(i => ({
+          ...i,
+          nota: i.nota || '',
+          archivos: i.archivos || [],
+          observacionGuia: i.observacionGuia || '',
+          archivosGuia: i.archivosGuia || []
+        })));
         this.tecnicoId = ultima.tecnicoId || '';
         this.estado = ultima.estado;
         this.observacionGeneral = ultima.observacionGeneral || '';
+        this.fotosBase64 = [...(ultima.fotos || [])];
         this.revisionRetomadaId = ultima.id;
       } else {
         this.itemsRevision.set(equipo.items.map(i => ({
@@ -264,6 +290,24 @@ export class EquiposListComponent implements OnInit {
     this.mostrarModalRevision.set(true);
   }
 
+  cerrarModalRevision() {
+    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+      this.mostrarModalRevision.set(false);
+    }
+  }
+
+  cerrarModalEquipo() {
+    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+      this.mostrarModalEquipo.set(false);
+    }
+  }
+
+  cerrarModalProyecto() {
+    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+      this.mostrarModalProyecto.set(false);
+    }
+  }
+
   toggleItem(idx: number) {
     const updated = [...this.itemsRevision()];
     updated[idx] = { ...updated[idx], checked: !updated[idx].checked };
@@ -279,32 +323,163 @@ export class EquiposListComponent implements OnInit {
   onFotoChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
-    this.fotosBase64 = [];
-    Array.from(input.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => this.fotosBase64.push(e.target!.result as string);
-      reader.readAsDataURL(file);
-    });
+    Array.from(input.files).forEach(file => this.leerFotoRevision(file));
   }
 
   onArchivoItemChange(idx: number, event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
-    const updated = [...this.itemsRevision()];
-    Array.from(input.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        updated[idx] = { ...updated[idx], archivos: [...(updated[idx].archivos || []), e.target!.result as string] };
-        this.itemsRevision.set([...updated]);
-      };
-      reader.readAsDataURL(file);
-    });
+    Array.from(input.files).forEach(file => this.leerArchivoRevisionItem(idx, file));
   }
 
   eliminarArchivoItem(idx: number, archivoIdx: number) {
     const updated = [...this.itemsRevision()];
     updated[idx] = { ...updated[idx], archivos: updated[idx].archivos.filter((_, i) => i !== archivoIdx) };
     this.itemsRevision.set(updated);
+  }
+
+  // ── Paste / Drop — ítems del formulario de equipo ─────────────
+  draggingEquipoItemIdx: number | null = null;
+
+  onPasteEquipoItem(idx: number, event: ClipboardEvent) {
+    const clipItems = event.clipboardData?.items;
+    if (!clipItems) return;
+    for (let i = 0; i < clipItems.length; i++) {
+      if (clipItems[i].type.startsWith('image/')) {
+        event.preventDefault();
+        const file = clipItems[i].getAsFile();
+        if (file) this.leerArchivoGuiaEquipo(idx, file);
+      }
+    }
+  }
+
+  onDragOverEquipoItem(idx: number, event: DragEvent) {
+    event.preventDefault();
+    this.draggingEquipoItemIdx = idx;
+  }
+
+  onDragLeaveEquipoItem(event: DragEvent) {
+    if (!event.relatedTarget || !(event.currentTarget as Element).contains(event.relatedTarget as Element)) {
+      this.draggingEquipoItemIdx = null;
+    }
+  }
+
+  onDropEquipoItem(idx: number, event: DragEvent) {
+    event.preventDefault();
+    this.draggingEquipoItemIdx = null;
+    const files = event.dataTransfer?.files;
+    if (!files) return;
+    Array.from(files).forEach(f => this.leerArchivoGuiaEquipo(idx, f));
+  }
+
+  private leerArchivoGuiaEquipo(idx: number, file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+        next: (ref) => {
+          const updated = [...this.formEquipo.items];
+          updated[idx] = { ...updated[idx], archivosGuia: [...(updated[idx].archivosGuia || []), ref] };
+          this.formEquipo.items = [...updated];
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Paste / Drop — notas de ítems de revisión ─────────────────
+  draggingRevisionItemIdx: number | null = null;
+
+  onPasteRevisionItem(idx: number, event: ClipboardEvent) {
+    const clipItems = event.clipboardData?.items;
+    if (!clipItems) return;
+    for (let i = 0; i < clipItems.length; i++) {
+      if (clipItems[i].type.startsWith('image/')) {
+        event.preventDefault();
+        const file = clipItems[i].getAsFile();
+        if (file) this.leerArchivoRevisionItem(idx, file);
+      }
+    }
+  }
+
+  onDragOverRevisionItem(idx: number, event: DragEvent) {
+    event.preventDefault();
+    this.draggingRevisionItemIdx = idx;
+  }
+
+  onDragLeaveRevisionItem(event: DragEvent) {
+    if (!event.relatedTarget || !(event.currentTarget as Element).contains(event.relatedTarget as Element)) {
+      this.draggingRevisionItemIdx = null;
+    }
+  }
+
+  onDropRevisionItem(idx: number, event: DragEvent) {
+    event.preventDefault();
+    this.draggingRevisionItemIdx = null;
+    const files = event.dataTransfer?.files;
+    if (!files) return;
+    Array.from(files).forEach(f => this.leerArchivoRevisionItem(idx, f));
+  }
+
+  private leerArchivoRevisionItem(idx: number, file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+        next: (ref) => {
+          const updated = [...this.itemsRevision()];
+          updated[idx] = { ...updated[idx], archivos: [...(updated[idx].archivos || []), ref] };
+          this.itemsRevision.set([...updated]);
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Paste / Drop — observación general de revisión ────────────
+  draggingObsGeneral = false;
+
+  onPasteObsGeneral(event: ClipboardEvent) {
+    const clipItems = event.clipboardData?.items;
+    if (!clipItems) return;
+    for (let i = 0; i < clipItems.length; i++) {
+      if (clipItems[i].type.startsWith('image/')) {
+        event.preventDefault();
+        const file = clipItems[i].getAsFile();
+        if (file) this.leerFotoRevision(file);
+      }
+    }
+  }
+
+  onDragOverObsGeneral(event: DragEvent) {
+    event.preventDefault();
+    this.draggingObsGeneral = true;
+  }
+
+  onDragLeaveObsGeneral(event: DragEvent) {
+    if (!event.relatedTarget || !(event.currentTarget as Element).contains(event.relatedTarget as Element)) {
+      this.draggingObsGeneral = false;
+    }
+  }
+
+  onDropObsGeneral(event: DragEvent) {
+    event.preventDefault();
+    this.draggingObsGeneral = false;
+    const files = event.dataTransfer?.files;
+    if (!files) return;
+    Array.from(files).forEach(f => this.leerFotoRevision(f));
+  }
+
+  eliminarFotoRevision(idx: number) {
+    this.fotosBase64 = this.fotosBase64.filter((_, i) => i !== idx);
+  }
+
+  private leerFotoRevision(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+        next: (ref) => { this.fotosBase64 = [...this.fotosBase64, ref]; }
+      });
+    };
+    reader.readAsDataURL(file);
   }
 
   get itemsCompletados(): number { return this.itemsRevision().filter(i => i.checked).length; }
@@ -326,25 +501,23 @@ export class EquiposListComponent implements OnInit {
     };
     this.guardandoRevision.set(true);
 
-    const guardar = () => {
-      this.revisionesSvc.create(form).subscribe({
-        next: () => {
-          this.guardandoRevision.set(false);
-          this.mostrarModalRevision.set(false);
-          this.revisionRetomadaId = '';
-          this.cargarEquiposFiltrados(this.filtroActivo());
-        },
-        error: () => { this.guardandoRevision.set(false); }
-      });
+    const alTerminar = () => {
+      this.guardandoRevision.set(false);
+      this.mostrarModalRevision.set(false);
+      this.revisionRetomadaId = '';
+      this.cargarEquiposFiltrados(this.filtroActivo());
     };
 
     if (this.revisionRetomadaId) {
-      this.revisionesSvc.delete(this.revisionRetomadaId).subscribe({
-        next: () => guardar(),
-        error: () => guardar()
+      this.revisionesSvc.update(this.revisionRetomadaId, form).subscribe({
+        next: () => alTerminar(),
+        error: () => { this.guardandoRevision.set(false); }
       });
     } else {
-      guardar();
+      this.revisionesSvc.create(form).subscribe({
+        next: () => alTerminar(),
+        error: () => { this.guardandoRevision.set(false); }
+      });
     }
   }
 
@@ -367,26 +540,300 @@ export class EquiposListComponent implements OnInit {
 
   trackById(_: number, e: any) { return e.id; }
 
-  abrirArchivo(archivo: string) {
-  const win = window.open();
-  if (win) win.document.write(`<img src="${archivo}" style="max-width:100%">`);
-}
+  abrirModalImportarEquipos() {
+    this.importEquiposData = [];
+    this.importEquiposTecnicoId = '';
+    this.importEquiposPlantillaId = '';
+    this.importEquiposExito.set('');
+    this.importEquiposError.set('');
+    this.mostrarModalImportarEquipos.set(true);
+  }
 
-exportarProyecto(proyecto: Proyecto, event: Event) {
-  event.stopPropagation();
-  this.proyectosSvc.exportarProyecto(proyecto.id).subscribe({
-    next: datos => {
-      const json = JSON.stringify(datos, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${proyecto.nombre.replace(/\s+/g, '_')}_techcheck.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+  onExcelEquiposChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    this.importEquiposError.set('');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target!.result as ArrayBuffer);
+        const XLSX = (window as any).XLSX;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const result: { nombre: string; descripcion: string }[] = [];
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || !row[0]) continue;
+          const nombre = String(row[0]).trim();
+          const descripcion = row[1] ? String(row[1]).trim() : '';
+          if (nombre) result.push({ nombre, descripcion });
+        }
+        this.importEquiposData = result;
+        if (result.length === 0) this.importEquiposError.set('No se encontraron equipos en el archivo.');
+      } catch {
+        this.importEquiposError.set('Error al leer el archivo. Verifica que sea un Excel valido.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    input.value = '';
+  }
+
+  confirmarImportarEquipos() {
+    if (!this.importEquiposData.length) return;
+    this.importandoEquipos.set(true);
+    this.importEquiposExito.set('');
+    this.importEquiposError.set('');
+
+    const plantilla = this.plantillas().find(p => p.id === this.importEquiposPlantillaId);
+    const items = plantilla
+      ? plantilla.items.map((i: any) => ({
+          label: typeof i === 'string' ? i : i.label,
+          observacionGuia: typeof i === 'string' ? '' : (i.observacionGuia || ''),
+          archivosGuia: typeof i === 'string' ? [] : [...(i.archivosGuia || [])]
+        }))
+      : [];
+
+    let creados = 0;
+    const total = this.importEquiposData.length;
+    this.importEquiposData.forEach(row => {
+      const form: EquipoForm = {
+        nombre: row.nombre,
+        descripcion: row.descripcion,
+        items: items.map((i: any) => ({ ...i })),
+        plantillaId: this.importEquiposPlantillaId || '',
+        proyectoIds: [this.proyectoActual()!.id],
+        tecnicoAsignadoId: this.importEquiposTecnicoId || ''
+      };
+      this.equiposSvc.create(form).subscribe({
+        next: () => {
+          creados++;
+          if (creados === total) {
+            this.importandoEquipos.set(false);
+            this.importEquiposExito.set(`${creados} equipo(s) importados correctamente`);
+            this.importEquiposData = [];
+            this.cargarEquiposFiltrados(this.filtroActivo());
+            setTimeout(() => {
+              this.mostrarModalImportarEquipos.set(false);
+              this.importEquiposExito.set('');
+            }, 2000);
+          }
+        },
+        error: () => {
+          this.importandoEquipos.set(false);
+          this.importEquiposError.set('Error al importar algunos equipos.');
+        }
+      });
+    });
+  }
+
+  archivoData(a: ArchivoAdjunto | string): string {
+    if (typeof a === 'string') return a;
+    return a.url || a.data || '';
+  }
+
+  esImagenArchivo(a: ArchivoAdjunto | string): boolean {
+    if (typeof a === 'string') return a.startsWith('data:image');
+    return a.tipo.startsWith('image/');
+  }
+
+  puedeVerEnNavegador(a: ArchivoAdjunto | string): boolean {
+    if (typeof a === 'string') {
+      return a.startsWith('data:image') || a.startsWith('data:application/pdf') || a.startsWith('data:text/');
     }
-  });
-}
+    return a.tipo.startsWith('image/') || a.tipo === 'application/pdf' || a.tipo.startsWith('text/');
+  }
+
+  descargarArchivo(a: ArchivoAdjunto | string) {
+    const data = this.archivoData(a);
+    const nombre = typeof a === 'string' ? 'archivo_adjunto' : a.nombre;
+    const link = document.createElement('a');
+    link.href = data;
+    link.download = nombre;
+    link.click();
+  }
+
+  abrirArchivoAdjunto(a: ArchivoAdjunto | string) {
+    const data = this.archivoData(a);
+    const win = window.open();
+    if (win) {
+      if (this.esImagenArchivo(a)) {
+        win.document.write(`<img src="${data}" style="max-width:100%;display:block">`);
+      } else {
+        win.document.write(`<embed src="${data}" style="width:100%;height:100vh">`);
+      }
+      win.document.close();
+    }
+  }
+
+  abrirArchivo(archivo: string) {
+    const win = window.open();
+    if (win) {
+      win.document.write(`<img src="${archivo}" style="max-width:100%;display:block">`);
+      win.document.close();
+    }
+  }
+
+  abrirModalExportarProyecto(proyecto: Proyecto, event: Event) {
+    event.stopPropagation();
+    this.proyectoExportando = proyecto;
+    this.mostrarModalExportarProyecto.set(true);
+  }
+
+  exportarProyectoJSON(proyecto: Proyecto) {
+    this.proyectosSvc.exportarProyecto(proyecto.id).subscribe({
+      next: datos => {
+        this.descargar(
+          new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }),
+          `${proyecto.nombre.replace(/\s+/g, '_')}_proyecto_techcheck.json`
+        );
+        this.mostrarModalExportarProyecto.set(false);
+      }
+    });
+  }
+
+  exportarProyectoCSV(proyecto: Proyecto) {
+    this.proyectosSvc.exportarProyecto(proyecto.id).subscribe({
+      next: datos => {
+        const { equipos, revisiones, tecnicos } = datos;
+        const encabezado = ['Proyecto', 'Equipo', 'Descripcion', 'Tecnico Asignado', 'Fecha Revision', 'Tecnico que Reviso', 'Estado General', 'Item', 'Completado', 'Observacion', 'Tiene Archivos'];
+        const estadoMap: Record<string, string> = { ok: 'OK', observacion: 'Con observaciones', problema: 'Con problemas' };
+        const filas: string[][] = [];
+
+        equipos.forEach((equipo: any) => {
+          const tecnicoNombre = (tecnicos as any[]).find(t => t.id === equipo.tecnicoAsignadoId)?.nombre || '';
+          const revsEquipo = (revisiones as any[]).filter(r => r.equipoId === equipo.id);
+
+          if (revsEquipo.length === 0) {
+            const items = equipo.items.length > 0 ? equipo.items : [null];
+            items.forEach((item: any) => {
+              const label = !item ? '' : (typeof item === 'string' ? item : item.label);
+              filas.push([proyecto.nombre, equipo.nombre, equipo.descripcion || '', tecnicoNombre, '', '', '', label, '', '', '']);
+            });
+          } else {
+            revsEquipo.forEach((rev: any) => {
+              const fecha = new Date(rev.creadoEn).toLocaleString('es-ES');
+              const estado = estadoMap[rev.estado] || rev.estado;
+              rev.items.forEach((item: any) => {
+                filas.push([
+                  proyecto.nombre,
+                  equipo.nombre,
+                  equipo.descripcion || '',
+                  tecnicoNombre,
+                  fecha,
+                  rev.tecnicoNombre || '',
+                  estado,
+                  item.label,
+                  item.checked ? 'Si' : 'No',
+                  item.nota || '',
+                  (item.archivos && item.archivos.length > 0) ? 'Si' : 'No'
+                ]);
+              });
+            });
+          }
+        });
+
+        const csv = this.generarCSV(encabezado, filas);
+        this.descargar(
+          new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }),
+          `${proyecto.nombre.replace(/\s+/g, '_')}_proyecto_techcheck.csv`
+        );
+        this.mostrarModalExportarProyecto.set(false);
+      }
+    });
+  }
+
+  abrirModalExportarEquipo(equipo: Equipo, event: Event) {
+    event.stopPropagation();
+    this.equipoExportando = equipo;
+    this.mostrarModalExportarEquipo.set(true);
+  }
+
+  exportarEquipoJSON(equipo: Equipo) {
+    this.revisionesSvc.getAll({ equipoId: equipo.id }).subscribe({
+      next: revisiones => {
+        this.descargar(
+          new Blob([JSON.stringify({ equipo, revisiones }, null, 2)], { type: 'application/json' }),
+          `${equipo.nombre.replace(/\s+/g, '_')}_equipo_techcheck.json`
+        );
+        this.mostrarModalExportarEquipo.set(false);
+      }
+    });
+  }
+
+  exportarEquipoCSV(equipo: Equipo) {
+    this.revisionesSvc.getAll({ equipoId: equipo.id }).subscribe({
+      next: revisiones => {
+        const encabezado = ['Equipo', 'Descripcion', 'Tecnico Asignado', 'Fecha Revision', 'Tecnico que Reviso', 'Estado General', 'Item', 'Completado', 'Observacion', 'Tiene Archivos'];
+        const estadoMap: Record<string, string> = { ok: 'OK', observacion: 'Con observaciones', problema: 'Con problemas' };
+        const filas: string[][] = [];
+
+        if (revisiones.length === 0) {
+          const items = equipo.items.length > 0 ? equipo.items : [null as any];
+          items.forEach((item: any) => {
+            const label = !item ? '' : (typeof item === 'string' ? item : item.label);
+            filas.push([equipo.nombre, equipo.descripcion || '', equipo.tecnicoAsignadoNombre || '', '', '', '', label, '', '', '']);
+          });
+        } else {
+          revisiones.forEach(rev => {
+            const fecha = new Date(rev.creadoEn).toLocaleString('es-ES');
+            const estado = estadoMap[rev.estado] || rev.estado;
+            rev.items.forEach(item => {
+              filas.push([
+                equipo.nombre,
+                equipo.descripcion || '',
+                equipo.tecnicoAsignadoNombre || '',
+                fecha,
+                rev.tecnicoNombre || '',
+                estado,
+                item.label,
+                item.checked ? 'Si' : 'No',
+                item.nota || '',
+                (item.archivos && item.archivos.length > 0) ? 'Si' : 'No'
+              ]);
+            });
+          });
+        }
+
+        const csv = this.generarCSV(encabezado, filas);
+        this.descargar(
+          new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }),
+          `${equipo.nombre.replace(/\s+/g, '_')}_equipo_techcheck.csv`
+        );
+        this.mostrarModalExportarEquipo.set(false);
+      }
+    });
+  }
+
+  descargarPlantillaEquiposExcel() {
+    const XLSX = (window as any).XLSX;
+    const data = [
+      ['nombre', 'descripcion'],
+      ['PC-Recepcion-01', 'Dell OptiPlex, i5, 8GB RAM']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Equipos');
+    XLSX.writeFile(wb, 'plantilla_importar_equipos.xlsx');
+  }
+
+  private generarCSV(encabezado: string[], filas: string[][]): string {
+    const escapar = (v: string) => {
+      const s = String(v ?? '');
+      return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    return [encabezado, ...filas].map(fila => fila.map(escapar).join(',')).join('\r\n');
+  }
+
+  private descargar(blob: Blob, nombre: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
 onImportarProyecto(event: Event) {
   const input = event.target as HTMLInputElement;

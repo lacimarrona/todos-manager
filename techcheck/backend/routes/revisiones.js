@@ -79,8 +79,8 @@ router.post('/', (req, res) => {
 // PUT /api/revisiones/:id
 router.put('/:id', (req, res) => {
   try {
-    const { estado, items, observacionGeneral, fotos } = req.body;
-    const actualizada = db.updateRevision(req.params.id, { estado, items, observacionGeneral, fotos });
+    const { estado, items, observacionGeneral, fotos, tecnicoId, tecnicoNombre } = req.body;
+    const actualizada = db.updateRevision(req.params.id, { estado, items, observacionGeneral, fotos, tecnicoId, tecnicoNombre });
     if (!actualizada) return res.status(404).json({ success: false, message: 'Revisión no encontrada' });
     res.json({ success: true, data: actualizada });
   } catch (err) {

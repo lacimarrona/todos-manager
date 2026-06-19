@@ -37,7 +37,7 @@
         <span class="text-xs text-gray-400">💻 {{ p.totalEquipos || 0 }} equipos</span>
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button (click)="abrirModalEditarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">✏️</button>
-          <button (click)="exportarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">⬇️</button>
+          <button (click)="abrirModalExportarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">⬇️</button>
           <button (click)="eliminarProyecto(p.id, $event)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
         </div>
       </div>
@@ -59,6 +59,7 @@
     </div>
     <div class="flex gap-2">
       <button (click)="volverAProyectos()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+      <button (click)="abrirModalImportarEquipos()" class="flex items-center gap-2 px-4 py-2 border border-green-200 text-green-700 text-sm rounded-lg hover:bg-green-50 transition-colors">📥 Importar equipos</button>
       <button (click)="abrirModalNuevoEquipo()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo equipo</button>
     </div>
   </div>
@@ -66,6 +67,7 @@
     <button (click)="cambiarFiltro('pendiente')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Pendientes</button>
     <button (click)="cambiarFiltro('en_proceso')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'en_proceso' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">En proceso</button>
     <button (click)="cambiarFiltro('terminado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'terminado' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Terminados</button>
+    <button (click)="cambiarFiltro('archivado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'archivado' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">📦 Archivados</button>
   </div>
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
@@ -94,8 +96,12 @@
         <p class="text-xs text-gray-400 mt-1">{{ progreso(equipo) }}% completado</p>
       </div>
       <div class="flex gap-2 pt-3 border-t border-gray-100">
-        <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
-        <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+        <ng-container *ngIf="!equipo.archivado">
+          <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+          <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+        </ng-container>
+        <button (click)="abrirModalExportarEquipo(equipo, $event)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
+        <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
         <button (click)="eliminarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
       </div>
     </div>
@@ -107,7 +113,7 @@
   <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">{{ modoEdicionProyecto() ? 'Editar proyecto' : 'Nuevo proyecto' }}</h2>
-      <button (click)="mostrarModalProyecto.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+      <button (click)="cerrarModalProyecto()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-4">
       <div>
@@ -120,7 +126,7 @@
       </div>
     </div>
     <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
-      <button (click)="mostrarModalProyecto.set(false)" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button (click)="cerrarModalProyecto()" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
       <button (click)="guardarProyecto()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">{{ modoEdicionProyecto() ? 'Guardar cambios' : 'Crear proyecto' }}</button>
     </div>
   </div>
@@ -131,7 +137,7 @@
   <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">{{ modoEdicionEquipo() ? 'Editar equipo' : 'Nuevo equipo' }}</h2>
-      <button (click)="mostrarModalEquipo.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+      <button (click)="cerrarModalEquipo()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-4">
       <div>
@@ -159,22 +165,37 @@
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Items del checklist</label>
         <div class="border border-gray-200 rounded-lg mb-2 max-h-48 overflow-y-auto divide-y divide-gray-100">
-          <div *ngFor="let item of formEquipo.items; let i = index" class="px-3 py-2 space-y-2">
+          <div *ngFor="let item of formEquipo.items; let i = index" class="px-3 py-2 space-y-1.5">
   <div class="flex items-center justify-between">
     <span class="text-sm text-gray-700 font-medium">{{ item.label }}</span>
     <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">X</button>
   </div>
-  <input type="text" [(ngModel)]="formEquipo.items[i].observacionGuia"
-    placeholder="Observacion de guia (opcional)..."
-    class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-  <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
-    (change)="onArchivoGuiaChange(i, $event)"
-    class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
-  <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2">
-    <div *ngFor="let archivo of item.archivosGuia; let ai = index" class="relative group">
-      <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-gray-200">
-      <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
-      <button (click)="eliminarArchivoGuia(i, ai)" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+  <div
+    class="rounded-lg transition-all space-y-1.5 p-1"
+    [class.ring-2]="draggingEquipoItemIdx === i"
+    [class.ring-blue-400]="draggingEquipoItemIdx === i"
+    [class.bg-blue-50]="draggingEquipoItemIdx === i"
+    (dragover)="onDragOverEquipoItem(i, $event)"
+    (dragleave)="onDragLeaveEquipoItem($event)"
+    (drop)="onDropEquipoItem(i, $event)"
+  >
+    <input type="text" [(ngModel)]="formEquipo.items[i].observacionGuia"
+      (paste)="onPasteEquipoItem(i, $event)"
+      placeholder="Observacion guia — escribe, pega imagen (Ctrl+V) o arrastra..."
+      class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+    <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
+      (change)="onArchivoGuiaChange(i, $event)"
+      class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+    <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2">
+      <div *ngFor="let archivo of item.archivosGuia; let ai = index" class="relative group">
+        <img *ngIf="esImagenArchivo(archivo)" [src]="archivoData(archivo)" class="w-12 h-12 object-cover rounded-md border border-gray-200">
+        <div *ngIf="!esImagenArchivo(archivo)" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
+        <div class="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+          <button *ngIf="puedeVerEnNavegador(archivo)" (click)="abrirArchivoAdjunto(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+          <button (click)="descargarArchivo(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+        </div>
+        <button (click)="eliminarArchivoGuia(i, ai); $event.stopPropagation()" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">X</button>
+      </div>
     </div>
   </div>
 </div>
@@ -187,8 +208,105 @@
       </div>
     </div>
     <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
-      <button (click)="mostrarModalEquipo.set(false)" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button (click)="cerrarModalEquipo()" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
       <button (click)="guardarEquipo()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">{{ modoEdicionEquipo() ? 'Guardar cambios' : 'Crear equipo' }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR EQUIPOS DESDE EXCEL -->
+<div *ngIf="mostrarModalImportarEquipos()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-800">Importar equipos desde Excel</h2>
+      <button (click)="mostrarModalImportarEquipos.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+        El Excel debe tener dos columnas: <strong>nombre</strong> y <strong>descripcion</strong> (la fila 1 es la cabecera).
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Archivo Excel *</label>
+        <input type="file" accept=".xlsx,.xls,.csv" (change)="onExcelEquiposChange($event)"
+          class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+      </div>
+      <div *ngIf="importEquiposData.length > 0" class="p-3 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">
+        ✅ {{ importEquiposData.length }} equipo(s) listos para importar
+      </div>
+      <div *ngIf="importEquiposError()" class="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">{{ importEquiposError() }}</div>
+      <div *ngIf="importEquiposExito()" class="p-3 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">{{ importEquiposExito() }}</div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Asignar tecnico (opcional)</label>
+        <select [(ngModel)]="importEquiposTecnicoId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Sin asignar</option>
+          <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Aplicar plantilla (opcional)</label>
+        <select [(ngModel)]="importEquiposPlantillaId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Sin plantilla</option>
+          <option *ngFor="let p of plantillas()" [value]="p.id">{{ p.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 px-6 py-4 border-t border-gray-100">
+      <button (click)="descargarPlantillaEquiposExcel()" class="mr-auto px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 flex items-center gap-1">📥 Plantilla Excel</button>
+      <button (click)="mostrarModalImportarEquipos.set(false)" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button (click)="confirmarImportarEquipos()" [disabled]="importEquiposData.length === 0 || importandoEquipos()"
+        class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+        {{ importandoEquipos() ? 'Importando...' : 'Importar ' + importEquiposData.length + ' equipo(s)' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORTAR PROYECTO -->
+<div *ngIf="mostrarModalExportarProyecto()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-800">Exportar proyecto</h2>
+      <button (click)="mostrarModalExportarProyecto.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-500 mb-4">Elige el formato para <strong class="text-gray-700">{{ proyectoExportando?.nombre }}</strong></p>
+      <div class="flex gap-3">
+        <button (click)="exportarProyectoJSON(proyectoExportando!)" class="flex-1 px-4 py-4 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-center">
+          <div class="text-2xl mb-1.5">📄</div>
+          <div class="font-medium text-gray-700">JSON</div>
+          <div class="text-xs text-gray-400 mt-0.5">Datos completos</div>
+        </button>
+        <button (click)="exportarProyectoCSV(proyectoExportando!)" class="flex-1 px-4 py-4 text-sm border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors text-center">
+          <div class="text-2xl mb-1.5">📊</div>
+          <div class="font-medium">CSV</div>
+          <div class="text-xs text-blue-400 mt-0.5">Compatible con Excel</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORTAR EQUIPO -->
+<div *ngIf="mostrarModalExportarEquipo()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-800">Exportar equipo</h2>
+      <button (click)="mostrarModalExportarEquipo.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-500 mb-4">Elige el formato para <strong class="text-gray-700">{{ equipoExportando?.nombre }}</strong></p>
+      <div class="flex gap-3">
+        <button (click)="exportarEquipoJSON(equipoExportando!)" class="flex-1 px-4 py-4 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-center">
+          <div class="text-2xl mb-1.5">📄</div>
+          <div class="font-medium text-gray-700">JSON</div>
+          <div class="text-xs text-gray-400 mt-0.5">Datos completos</div>
+        </button>
+        <button (click)="exportarEquipoCSV(equipoExportando!)" class="flex-1 px-4 py-4 text-sm border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors text-center">
+          <div class="text-2xl mb-1.5">📊</div>
+          <div class="font-medium">CSV</div>
+          <div class="text-xs text-blue-400 mt-0.5">Compatible con Excel</div>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -198,7 +316,7 @@
   <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">Revision - {{ equipoRevisando()?.nombre }}</h2>
-      <button (click)="mostrarModalRevision.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+      <button (click)="cerrarModalRevision()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
     <div class="p-6 space-y-5">
       <div class="grid grid-cols-2 gap-4">
@@ -238,18 +356,39 @@
   📋 Guia: {{ item.observacionGuia }}
 </div>
 <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2 mb-1">
-  <div *ngFor="let archivo of item.archivosGuia" class="cursor-pointer" (click)="abrirArchivo(archivo)">
-    <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-blue-200">
-    <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-blue-50 rounded-md border border-blue-200 flex items-center justify-center text-lg">📄</div>
+  <div *ngFor="let archivo of item.archivosGuia" class="relative group cursor-pointer">
+    <img *ngIf="esImagenArchivo(archivo)" [src]="archivoData(archivo)" class="w-12 h-12 object-cover rounded-md border border-blue-200">
+    <div *ngIf="!esImagenArchivo(archivo)" class="w-12 h-12 bg-blue-50 rounded-md border border-blue-200 flex items-center justify-center text-lg">📄</div>
+    <div class="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+      <button *ngIf="puedeVerEnNavegador(archivo)" (click)="abrirArchivoAdjunto(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+      <button (click)="descargarArchivo(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+    </div>
   </div>
 </div>
-              <input type="text" [(ngModel)]="itemsRevision()[i].nota" placeholder="Observacion..." class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-              <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple (change)="onArchivoItemChange(i, $event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+              <div
+                class="rounded-lg transition-all space-y-1.5 p-1"
+                [class.ring-2]="draggingRevisionItemIdx === i"
+                [class.ring-blue-400]="draggingRevisionItemIdx === i"
+                [class.bg-blue-50]="draggingRevisionItemIdx === i"
+                (dragover)="onDragOverRevisionItem(i, $event)"
+                (dragleave)="onDragLeaveRevisionItem($event)"
+                (drop)="onDropRevisionItem(i, $event)"
+              >
+                <input type="text" [(ngModel)]="itemsRevision()[i].nota"
+                  (paste)="onPasteRevisionItem(i, $event)"
+                  placeholder="Observacion — escribe, pega imagen (Ctrl+V) o arrastra..."
+                  class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+                <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple (change)="onArchivoItemChange(i, $event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+              </div>
               <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2">
-                <div *ngFor="let archivo of item.archivos; let ai = index" class="relative group">
-                  <img *ngIf="archivo.startsWith('data:image')" [src]="archivo" class="w-12 h-12 object-cover rounded-md border border-gray-200">
-                  <div *ngIf="!archivo.startsWith('data:image')" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">doc</div>
-                  <button (click)="eliminarArchivoItem(i, ai)" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+                <div *ngFor="let archivo of item.archivos; let ai = index" class="relative group cursor-pointer">
+                  <img *ngIf="esImagenArchivo(archivo)" [src]="archivoData(archivo)" class="w-12 h-12 object-cover rounded-md border border-gray-200">
+                  <div *ngIf="!esImagenArchivo(archivo)" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
+                  <div class="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    <button *ngIf="puedeVerEnNavegador(archivo)" (click)="abrirArchivoAdjunto(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+                    <button (click)="descargarArchivo(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+                  </div>
+                  <button (click)="eliminarArchivoItem(i, ai); $event.stopPropagation()" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">X</button>
                 </div>
               </div>
             </div>
@@ -258,15 +397,38 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Observacion general</label>
-        <textarea [(ngModel)]="observacionGeneral" rows="2" placeholder="Notas generales..." class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+        <div
+          class="rounded-lg transition-all"
+          [class.ring-2]="draggingObsGeneral"
+          [class.ring-blue-400]="draggingObsGeneral"
+          [class.bg-blue-50]="draggingObsGeneral"
+          (dragover)="onDragOverObsGeneral($event)"
+          (dragleave)="onDragLeaveObsGeneral($event)"
+          (drop)="onDropObsGeneral($event)"
+        >
+          <textarea [(ngModel)]="observacionGeneral"
+            (paste)="onPasteObsGeneral($event)"
+            rows="2" placeholder="Notas generales — pega imagen (Ctrl+V) o arrastra archivos..."
+            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"></textarea>
+        </div>
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Fotos de evidencia (opcional)</label>
         <input type="file" accept="image/*" multiple (change)="onFotoChange($event)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100">
+        <div *ngIf="fotosBase64.length > 0" class="flex flex-wrap gap-2 mt-2">
+          <div *ngFor="let foto of fotosBase64; let fi = index" class="relative group">
+            <img [src]="archivoData(foto)" class="w-14 h-14 object-cover rounded-lg border border-gray-200">
+            <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+              <button (click)="abrirArchivoAdjunto(foto); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+              <button (click)="descargarArchivo(foto); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+            </div>
+            <button (click)="eliminarFotoRevision(fi); $event.stopPropagation()" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">X</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
-      <button (click)="mostrarModalRevision.set(false)" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button (click)="cerrarModalRevision()" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
       <button (click)="guardarRevision()" [disabled]="guardandoRevision()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">{{ guardandoRevision() ? 'Guardando...' : 'Guardar revision' }}</button>
     </div>
   </div>

@@ -62,6 +62,7 @@ router.post('/', (req, res) => {
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString(),
       tecnicoAsignadoId: tecnicoAsignadoId || null,
+      archivado: false,
     };
     const creado = db.createEquipo(nuevo);
     res.status(201).json({ success: true, data: creado });
@@ -70,12 +71,26 @@ router.post('/', (req, res) => {
   }
 });
 
+// PUT /api/equipos/:id/archivar
+router.put('/:id/archivar', (req, res) => {
+  try {
+    const equipo = db.getEquipoById(req.params.id);
+    if (!equipo) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
+    const actualizado = db.updateEquipo(req.params.id, { archivado: true });
+    res.json({ success: true, data: actualizado });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // PUT /api/equipos/:id
 router.put('/:id', (req, res) => {
   try {
-    const { nombre, descripcion, items,tecnicoAsignadoId } = req.body;
+    const equipo = db.getEquipoById(req.params.id);
+    if (!equipo) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
+    if (equipo.archivado) return res.status(403).json({ success: false, message: 'No se puede modificar un equipo archivado' });
+    const { nombre, descripcion, items, tecnicoAsignadoId } = req.body;
     const actualizado = db.updateEquipo(req.params.id, { nombre, descripcion, items, tecnicoAsignadoId });
-    if (!actualizado) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
     res.json({ success: true, data: actualizado });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

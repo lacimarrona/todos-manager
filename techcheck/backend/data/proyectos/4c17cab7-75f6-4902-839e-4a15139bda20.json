@@ -12,7 +12,8 @@
         "4c17cab7-75f6-4902-839e-4a15139bda20"
       ],
       "creadoEn": "2026-05-12T14:04:48.821Z",
-      "actualizadoEn": "2026-05-12T14:04:48.821Z"
+      "actualizadoEn": "2026-06-19T17:35:43.415Z",
+      "archivado": true
     },
     {
       "id": "d89b5b19-be0d-4ec3-add3-98a5f13f428b",
@@ -108,6 +109,2506 @@
       ],
       "creadoEn": "2026-06-01T13:37:26.531Z",
       "actualizadoEn": "2026-06-01T13:37:26.531Z"
+    },
+    {
+      "id": "eaec2e52-858e-4867-929c-bceabf0339ac",
+      "nombre": "PC-Recepcion-01",
+      "descripcion": "Dell OptiPlex 7090, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.215Z",
+      "actualizadoEn": "2026-06-18T12:31:07.216Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "41124b32-f5c6-4c90-9580-963ff7cf259b",
+      "nombre": "PC-Contabilidad-02",
+      "descripcion": "HP EliteDesk 800 G6, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.220Z",
+      "actualizadoEn": "2026-06-18T12:31:07.220Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "707c4e86-9b80-49d6-ac52-205ee7899e00",
+      "nombre": "PC-Recepcion-02",
+      "descripcion": "Dell OptiPlex 7090, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.222Z",
+      "actualizadoEn": "2026-06-18T12:31:07.222Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "8210c802-81a3-460d-a014-5c26357e4cd2",
+      "nombre": "PC-Contabilidad-01",
+      "descripcion": "HP EliteDesk 800 G6, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.226Z",
+      "actualizadoEn": "2026-06-18T12:31:07.226Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "a4f6acdf-53ce-4112-a47d-7920546ae2cf",
+      "nombre": "Laptop-Ventas-01",
+      "descripcion": "Dell Latitude 5520, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.237Z",
+      "actualizadoEn": "2026-06-18T12:31:07.237Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "dffc8125-689f-4b72-98cb-6ef1ff7e40e8",
+      "nombre": "PC-Gerencia-01",
+      "descripcion": "Lenovo ThinkCentre M90q, Intel i7, 32GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.243Z",
+      "actualizadoEn": "2026-06-18T12:31:07.243Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "1040a339-3d05-4dc9-8c6d-2309d837a524",
+      "nombre": "Laptop-Ventas-02",
+      "descripcion": "Dell Latitude 5520, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.251Z",
+      "actualizadoEn": "2026-06-18T12:31:07.251Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "c458f685-80da-4733-ba8e-fa7afad2000a",
+      "nombre": "Laptop-Soporte-01",
+      "descripcion": "Lenovo ThinkPad T14, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.256Z",
+      "actualizadoEn": "2026-06-18T12:31:07.256Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "ce46bc1a-114f-4f28-9d0c-34b5984fda40",
+      "nombre": "Servidor-Principal",
+      "descripcion": "Dell PowerEdge R740, Xeon 16 cores, 64GB RAM, Ubuntu 22.04",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.259Z",
+      "actualizadoEn": "2026-06-18T12:31:07.259Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "a284faa8-c2b4-4c79-92cf-71e9f3130bfb",
+      "nombre": "Servidor-Backup",
+      "descripcion": "HP ProLiant DL360 Gen10, Xeon 8 cores, 32GB RAM, Ubuntu 22.04",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.271Z",
+      "actualizadoEn": "2026-06-18T12:31:07.271Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "a1060baf-efe8-485a-9516-46db02a26be2",
+      "nombre": "Switch-Piso2",
+      "descripcion": "Cisco Catalyst 2960X-24, 24 puertos GbE, 4 SFP",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.279Z",
+      "actualizadoEn": "2026-06-18T12:31:07.279Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "b4dcfcce-7e2c-4bd8-92be-53afad0307ce",
+      "nombre": "Switch-Piso1",
+      "descripcion": "Cisco Catalyst 2960X-48, 48 puertos GbE, 4 SFP",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.286Z",
+      "actualizadoEn": "2026-06-18T12:31:07.286Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "0ce5d6ce-27cc-4b87-9e39-ccf0e234cb31",
+      "nombre": "Router-Principal",
+      "descripcion": "MikroTik RB4011, 10 puertos GbE, SFP+",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.291Z",
+      "actualizadoEn": "2026-06-18T12:31:07.291Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "5c0138aa-2958-4639-b0b1-6ae98f696524",
+      "nombre": "AP-Recepcion",
+      "descripcion": "Ubiquiti UniFi AP AC Pro, WiFi 5, doble banda",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.300Z",
+      "actualizadoEn": "2026-06-18T12:31:07.300Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "c486aeb8-1fa8-47d3-b05a-74cfbed57381",
+      "nombre": "AP-Sala-Reuniones",
+      "descripcion": "Ubiquiti UniFi AP AC Pro, WiFi 5, doble banda",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.303Z",
+      "actualizadoEn": "2026-06-18T12:31:07.303Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "c01396f1-0667-418e-bd4f-8f888e4cdc1f",
+      "nombre": "Impresora-Contabilidad",
+      "descripcion": "HP LaserJet Pro M404dn, monocromo, red LAN",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.309Z",
+      "actualizadoEn": "2026-06-18T12:31:07.309Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "55efd447-a342-49f1-bcbd-ae9278cc2f9b",
+      "nombre": "Impresora-Recepcion",
+      "descripcion": "Epson EcoTank L3250, color, WiFi",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.316Z",
+      "actualizadoEn": "2026-06-18T12:31:07.316Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "eb53c34c-3541-4aeb-864d-9453dfc60164",
+      "nombre": "UPS-Servidor",
+      "descripcion": "APC Smart-UPS 3000VA, 2700W, 8 salidas",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.319Z",
+      "actualizadoEn": "2026-06-18T12:31:07.319Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "7dfbc114-04f0-4438-9064-a7034877cde0",
+      "nombre": "UPS-Red",
+      "descripcion": "APC Back-UPS 1500VA, 865W, proteccion red",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.326Z",
+      "actualizadoEn": "2026-06-18T12:31:07.326Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "159171c8-2edb-44b1-a8e0-8df9f3ab6a7d",
+      "nombre": "NAS-Almacenamiento",
+      "descripcion": "Synology DS920+, 4 bahias, 32TB total, DSM 7.2",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-18T12:31:07.335Z",
+      "actualizadoEn": "2026-06-18T12:31:07.335Z",
+      "tecnicoAsignadoId": "tecnico-1"
+    },
+    {
+      "id": "f29249c9-1756-4786-af98-1da5b761e8fd",
+      "nombre": "PC-Recepcion-01",
+      "descripcion": "Dell OptiPlex 7090, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.337Z",
+      "actualizadoEn": "2026-06-19T17:58:07.337Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "6c26be3f-8ed5-4786-90e5-7717fb4624ef",
+      "nombre": "PC-Gerencia-01",
+      "descripcion": "Lenovo ThinkCentre M90q, Intel i7, 32GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.345Z",
+      "actualizadoEn": "2026-06-19T17:58:07.345Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "b912a6b5-a55c-4ac9-a6c0-632d0dc5c15f",
+      "nombre": "Laptop-Ventas-01",
+      "descripcion": "Dell Latitude 5520, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.350Z",
+      "actualizadoEn": "2026-06-19T17:58:07.350Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "96084f57-8088-4c56-9fa6-bfc1ac5a0ac5",
+      "nombre": "PC-Recepcion-02",
+      "descripcion": "Dell OptiPlex 7090, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.355Z",
+      "actualizadoEn": "2026-06-19T17:58:07.355Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "ddd11b93-ced2-4d88-be59-a447e20ea1a1",
+      "nombre": "PC-Contabilidad-02",
+      "descripcion": "HP EliteDesk 800 G6, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.361Z",
+      "actualizadoEn": "2026-06-19T17:58:07.361Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "e6f3c5db-3ad4-4298-96f3-0d4c8721d31b",
+      "nombre": "PC-Contabilidad-01",
+      "descripcion": "HP EliteDesk 800 G6, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.367Z",
+      "actualizadoEn": "2026-06-19T17:58:07.367Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "075fc549-b5fb-427b-8829-3b26831fe059",
+      "nombre": "Laptop-Ventas-02",
+      "descripcion": "Dell Latitude 5520, Intel i5, 8GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.375Z",
+      "actualizadoEn": "2026-06-19T17:58:07.375Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "d63f3f08-c237-4de1-a3bf-8c0a472a9f40",
+      "nombre": "Laptop-Soporte-01",
+      "descripcion": "Lenovo ThinkPad T14, Intel i7, 16GB RAM, Windows 11",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.383Z",
+      "actualizadoEn": "2026-06-19T17:58:07.383Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "413e7628-e3a3-4813-979a-5f977917d16b",
+      "nombre": "Servidor-Principal",
+      "descripcion": "Dell PowerEdge R740, Xeon 16 cores, 64GB RAM, Ubuntu 22.04",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.387Z",
+      "actualizadoEn": "2026-06-19T17:58:07.387Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "3d9184c9-eef9-4d7f-929e-081f51280eb5",
+      "nombre": "Servidor-Backup",
+      "descripcion": "HP ProLiant DL360 Gen10, Xeon 8 cores, 32GB RAM, Ubuntu 22.04",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.395Z",
+      "actualizadoEn": "2026-06-19T17:58:07.395Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "4a94ec11-faec-4d2d-abdf-0e5d6550035f",
+      "nombre": "Switch-Piso1",
+      "descripcion": "Cisco Catalyst 2960X-48, 48 puertos GbE, 4 SFP",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.402Z",
+      "actualizadoEn": "2026-06-19T17:58:07.402Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "a040bab9-d5cc-4334-b648-f4018ea3a1fa",
+      "nombre": "Switch-Piso2",
+      "descripcion": "Cisco Catalyst 2960X-24, 24 puertos GbE, 4 SFP",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.407Z",
+      "actualizadoEn": "2026-06-19T17:58:07.407Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "9795ddd0-8f7d-4061-8f73-a5c078bc8976",
+      "nombre": "Router-Principal",
+      "descripcion": "MikroTik RB4011, 10 puertos GbE, SFP+",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.416Z",
+      "actualizadoEn": "2026-06-19T17:58:07.416Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "47aeb8bc-20e2-415c-b336-fd7e835eaf6d",
+      "nombre": "AP-Recepcion",
+      "descripcion": "Ubiquiti UniFi AP AC Pro, WiFi 5, doble banda",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.429Z",
+      "actualizadoEn": "2026-06-19T17:58:07.429Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "70dbeaa6-606d-4a04-a6a2-11d3e250f7e6",
+      "nombre": "AP-Sala-Reuniones",
+      "descripcion": "Ubiquiti UniFi AP AC Pro, WiFi 5, doble banda",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.435Z",
+      "actualizadoEn": "2026-06-19T17:58:07.435Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "a38a6b96-025b-4022-8d22-7c3785e392c9",
+      "nombre": "Impresora-Contabilidad",
+      "descripcion": "HP LaserJet Pro M404dn, monocromo, red LAN",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.439Z",
+      "actualizadoEn": "2026-06-19T17:58:07.439Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "fea222f2-4610-4fea-af60-c935d19c71b1",
+      "nombre": "Impresora-Recepcion",
+      "descripcion": "Epson EcoTank L3250, color, WiFi",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.446Z",
+      "actualizadoEn": "2026-06-19T17:58:07.446Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "8e292597-ab2e-4d6d-b0ce-a40834d0d44d",
+      "nombre": "UPS-Servidor",
+      "descripcion": "APC Smart-UPS 3000VA, 2700W, 8 salidas",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.451Z",
+      "actualizadoEn": "2026-06-19T17:58:07.451Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "f99fc687-e0fb-4fcd-a3da-aa817323bee2",
+      "nombre": "UPS-Red",
+      "descripcion": "APC Back-UPS 1500VA, 865W, proteccion red",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.457Z",
+      "actualizadoEn": "2026-06-19T17:58:07.457Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
+    },
+    {
+      "id": "dd0a8463-91b9-442b-92f7-d1fe5e6dcea6",
+      "nombre": "NAS-Almacenamiento",
+      "descripcion": "Synology DS920+, 4 bahias, 32TB total, DSM 7.2",
+      "items": [
+        "Revisar que OneDrive este sincronizado",
+        "Revisar vida util de discos duros",
+        "Verificar antivirus actualizado",
+        "Revisar copias de seguridad",
+        "Verificar actualizaciones de Windows",
+        "Limpiar archivos temporales",
+        "Verificar memoria RAM disponible",
+        "Revisar conectividad de red",
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "plantillaId": "43127cce-8f0d-49e5-a0b5-f972e7c11683",
+      "proyectoIds": [
+        "4c17cab7-75f6-4902-839e-4a15139bda20"
+      ],
+      "creadoEn": "2026-06-19T17:58:07.464Z",
+      "actualizadoEn": "2026-06-19T17:58:07.464Z",
+      "tecnicoAsignadoId": "tecnico-1",
+      "archivado": false
     }
   ],
   "revisiones": [
@@ -420,33 +2921,38 @@
     {
       "id": "e952da71-44ec-45b7-95a0-d922334f62b3",
       "equipoId": "d89b5b19-be0d-4ec3-add3-98a5f13f428b",
-      "tecnicoId": null,
       "tecnicoNombre": "",
       "estado": "ok",
       "items": [
         {
           "label": "fdgggg",
-          "checked": true,
+          "checked": false,
           "nota": "",
-          "archivos": []
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
         },
         {
           "label": "gggggg",
-          "checked": false,
+          "checked": true,
           "nota": "",
-          "archivos": []
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
         },
         {
           "label": "ggggg",
           "checked": true,
           "nota": "",
-          "archivos": []
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
         }
       ],
       "observacionGeneral": "",
       "fotos": [],
       "creadoEn": "2026-06-01T15:36:56.425Z",
-      "actualizadoEn": "2026-06-01T15:36:56.425Z"
+      "actualizadoEn": "2026-06-19T17:57:20.235Z"
     },
     {
       "id": "9aa29a8a-688e-4ccd-ac09-39ecb4ef3a25",
@@ -476,6 +2982,231 @@
       "fotos": [],
       "creadoEn": "2026-06-09T13:28:41.554Z",
       "actualizadoEn": "2026-06-09T13:28:41.554Z"
+    },
+    {
+      "id": "bcb2f0b8-5b3d-4b1d-add0-ab0ac0565940",
+      "equipoId": "4e0c7003-b0dc-42b2-88cc-ec687964631c",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "hjkhj",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "hgggggggj",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "tyeu",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "hjkhj",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "hgggggggj",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "tyeu",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-06-18T12:46:17.843Z",
+      "actualizadoEn": "2026-06-18T12:46:17.843Z"
+    },
+    {
+      "id": "de3debcd-8594-464e-bb37-1f94d635d20e",
+      "equipoId": "864668f4-8bf5-4baf-8907-c2fe238844e1",
+      "tecnicoId": null,
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "HOLA MUNDO",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-06-18T12:46:31.849Z",
+      "actualizadoEn": "2026-06-18T12:46:31.849Z"
+    },
+    {
+      "id": "ce1b3ba7-4943-4fdb-a7b7-8f31e468841b",
+      "equipoId": "eaec2e52-858e-4867-929c-bceabf0339ac",
+      "tecnicoNombre": "",
+      "estado": "ok",
+      "items": [
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "checked": true,
+          "nota": "",
+          "archivos": [
+            "data:image/png;base64,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",
+            "data:image/png;base64,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"
+          ],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "checked": false,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar que OneDrive este sincronizado",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar vida util de discos duros",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar antivirus actualizado",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar copias de seguridad",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar actualizaciones de Windows",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Limpiar archivos temporales",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Verificar memoria RAM disponible",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        },
+        {
+          "label": "Revisar conectividad de red",
+          "checked": true,
+          "nota": "",
+          "archivos": [],
+          "observacionGuia": "",
+          "archivosGuia": []
+        }
+      ],
+      "observacionGeneral": "",
+      "fotos": [],
+      "creadoEn": "2026-06-18T12:49:19.625Z",
+      "actualizadoEn": "2026-06-19T14:51:59.820Z"
     }
   ]
 }

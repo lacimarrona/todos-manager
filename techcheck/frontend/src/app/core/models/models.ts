@@ -13,12 +13,21 @@ export interface ProyectoForm {
   descripcion: string;
 }
 
+// ─── ARCHIVO ADJUNTO ────────────────────────────────────────
+export interface ArchivoAdjunto {
+  nombre: string;
+  tipo: string;
+  data?: string;  // base64 data URL (legado / datos existentes)
+  id?: string;    // hash SHA-256 (nuevo)
+  url?: string;   // /api/archivos/{hash} (nuevo)
+}
+
 // ─── EQUIPO ─────────────────────────────────────────────────
 
 export interface ItemEquipo {
   label: string;
   observacionGuia: string;
-  archivosGuia: string[];
+  archivosGuia: (ArchivoAdjunto | string)[];
 }
 
 export interface Equipo {
@@ -34,6 +43,7 @@ export interface Equipo {
   totalRevisiones?: number;
   tecnicoAsignadoId: string | null;
   tecnicoAsignadoNombre?: string;
+  archivado?: boolean;
 }
 
 export interface EquipoForm {
@@ -46,11 +56,17 @@ export interface EquipoForm {
 }
 
 // ─── PLANTILLA ──────────────────────────────────────────────
+export interface ItemPlantilla {
+  label: string;
+  observacionGuia: string;
+  archivosGuia: (ArchivoAdjunto | string)[];
+}
+
 export interface Plantilla {
   id: string;
   nombre: string;
   descripcion: string;
-  items: string[];
+  items: ItemPlantilla[];
   creadoEn: string;
   actualizadoEn: string;
 }
@@ -58,7 +74,7 @@ export interface Plantilla {
 export interface PlantillaForm {
   nombre: string;
   descripcion: string;
-  items: string[];
+  items: ItemPlantilla[];
 }
 
 // ─── TÉCNICO ────────────────────────────────────────────────
@@ -81,9 +97,9 @@ export interface ItemRevision {
   label: string;
   checked: boolean;
   nota: string;
-  archivos: string[];
+  archivos: (ArchivoAdjunto | string)[];
   observacionGuia?: string;
-  archivosGuia?: string[];
+  archivosGuia?: (ArchivoAdjunto | string)[];
 }
 
 export interface Revision {
@@ -94,7 +110,7 @@ export interface Revision {
   estado: EstadoRevision;
   items: ItemRevision[];
   observacionGeneral: string;
-  fotos: string[];
+  fotos: (ArchivoAdjunto | string)[];
   creadoEn: string;
   actualizadoEn: string;
   equipoNombre?: string;
@@ -107,7 +123,7 @@ export interface RevisionForm {
   estado: EstadoRevision;
   items: ItemRevision[];
   observacionGeneral: string;
-  fotos: string[];
+  fotos: (ArchivoAdjunto | string)[];
 }
 
 // ─── API RESPONSE ────────────────────────────────────────────

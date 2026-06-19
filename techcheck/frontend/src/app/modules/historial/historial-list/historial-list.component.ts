@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Revision, Proyecto } from '../../../core/models/models';
+import { Revision, Proyecto, ArchivoAdjunto } from '../../../core/models/models';
 import { DonePipe } from '../../../shared/done.pipe';
 import { RevisionesService } from '../../../core/services/otros.services';
 import { ProyectosService } from '../../../core/services/proyectos.service';
@@ -100,11 +100,42 @@ cargarRevisionesProyecto(proyectoId: string) {
 
   trackById(_: number, r: any) { return r.id; }
 
-  abrirArchivo(archivo: string) {
-  const win = window.open();
-  if (win) {
-    win.document.write(`<img src="${archivo}" style="max-width:100%">`);
+  archivoData(a: ArchivoAdjunto | string): string {
+    if (typeof a === 'string') return a;
+    return a.url || a.data || '';
   }
-}
 
+  esImagenArchivo(a: ArchivoAdjunto | string): boolean {
+    if (typeof a === 'string') return a.startsWith('data:image');
+    return a.tipo.startsWith('image/');
+  }
+
+  puedeVerEnNavegador(a: ArchivoAdjunto | string): boolean {
+    if (typeof a === 'string') {
+      return a.startsWith('data:image') || a.startsWith('data:application/pdf') || a.startsWith('data:text/');
+    }
+    return a.tipo.startsWith('image/') || a.tipo === 'application/pdf' || a.tipo.startsWith('text/');
+  }
+
+  descargarArchivo(a: ArchivoAdjunto | string) {
+    const data = this.archivoData(a);
+    const nombre = typeof a === 'string' ? 'archivo_adjunto' : a.nombre;
+    const link = document.createElement('a');
+    link.href = data;
+    link.download = nombre;
+    link.click();
+  }
+
+  abrirArchivoAdjunto(a: ArchivoAdjunto | string) {
+    const data = this.archivoData(a);
+    const win = window.open();
+    if (win) {
+      if (this.esImagenArchivo(a)) {
+        win.document.write(`<img src="${data}" style="max-width:100%;display:block">`);
+      } else {
+        win.document.write(`<embed src="${data}" style="width:100%;height:100vh">`);
+      }
+      win.document.close();
+    }
+  }
 }

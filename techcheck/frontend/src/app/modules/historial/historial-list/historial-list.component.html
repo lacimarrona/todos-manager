@@ -129,13 +129,13 @@
             <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
             <div *ngIf="item.nota" class="text-xs text-gray-500 mt-0.5">💬 {{ item.nota }}</div>
 <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2 mt-1">
-  <div *ngFor="let archivo of item.archivos" class="relative">
-    <img *ngIf="archivo.startsWith('data:image')" [src]="archivo"
-      class="w-12 h-12 object-cover rounded-md border border-gray-200 cursor-pointer"
-      (click)="abrirArchivo(archivo)">
-    <div *ngIf="!archivo.startsWith('data:image')"
-      (click)="abrirArchivo(archivo)"
-      class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg cursor-pointer">📄</div>
+  <div *ngFor="let archivo of item.archivos" class="relative group cursor-pointer">
+    <img *ngIf="esImagenArchivo(archivo)" [src]="archivoData(archivo)" class="w-12 h-12 object-cover rounded-md border border-gray-200">
+    <div *ngIf="!esImagenArchivo(archivo)" class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-lg">📄</div>
+    <div class="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+      <button *ngIf="puedeVerEnNavegador(archivo)" (click)="abrirArchivoAdjunto(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+      <button (click)="descargarArchivo(archivo); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+    </div>
   </div>
 </div>
           </div>
@@ -148,7 +148,13 @@
       <div *ngIf="r.fotos?.length">
         <h4 class="text-sm font-semibold text-gray-600 mb-2">Evidencia fotografica</h4>
         <div class="flex flex-wrap gap-2">
-          <img *ngFor="let foto of r.fotos" [src]="foto" class="w-20 h-20 object-cover rounded-lg border border-gray-200" alt="Evidencia">
+          <div *ngFor="let foto of r.fotos" class="relative group cursor-pointer">
+            <img [src]="archivoData(foto)" class="w-20 h-20 object-cover rounded-lg border border-gray-200" alt="Evidencia">
+            <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+              <button (click)="abrirArchivoAdjunto(foto); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Ver">👁</button>
+              <button (click)="descargarArchivo(foto); $event.stopPropagation()" class="text-white text-base leading-none hover:scale-110 transition-transform" title="Descargar">⬇️</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

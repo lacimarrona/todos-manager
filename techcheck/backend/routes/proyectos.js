@@ -36,10 +36,13 @@ router.get('/:id/equipos', (req, res) => {
     const filtro = req.query.estado;
     let resultado = enriquecidos;
 
-    if (filtro === 'pendiente') {
-      resultado = enriquecidos.filter(e => !e.ultimaRevision);
+    if (filtro === 'archivado') {
+      resultado = enriquecidos.filter(e => e.archivado === true);
+    } else if (filtro === 'pendiente') {
+      resultado = enriquecidos.filter(e => !e.archivado && !e.ultimaRevision);
     } else if (filtro === 'en_proceso') {
       resultado = enriquecidos.filter(e => {
+        if (e.archivado) return false;
         if (!e.ultimaRevision) return false;
         const total = e.items.length;
         if (total === 0) return false;
@@ -48,6 +51,7 @@ router.get('/:id/equipos', (req, res) => {
       });
     } else if (filtro === 'terminado') {
       resultado = enriquecidos.filter(e => {
+        if (e.archivado) return false;
         if (!e.ultimaRevision) return false;
         const total = e.items.length;
         if (total === 0) return false;
