@@ -1,0 +1,70 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Asignar Admin</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()" fill="clear">Cancelar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <p class="modal-subtitle">
+    Crear nuevo administrador para <strong>{{ workspaceName }}</strong>
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ion-list lines="full" class="form-list">
+      <ion-item>
+        <ion-input
+          label="Nombre completo *"
+          labelPlacement="stacked"
+          formControlName="nombre"
+          placeholder="Nombre del admin"
+          autocomplete="name">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Email *"
+          labelPlacement="stacked"
+          type="email"
+          formControlName="email"
+          placeholder="correo@empresa.com"
+          autocomplete="email"
+          inputmode="email">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Contraseña *"
+          labelPlacement="stacked"
+          type="password"
+          formControlName="password"
+          placeholder="Mínimo 6 caracteres"
+          autocomplete="new-password">
+          <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+        </ion-input>
+      </ion-item>
+    </ion-list>
+
+    @if (error()) {
+      <ion-text color="danger">
+        <p class="form-error">{{ error() }}</p>
+      </ion-text>
+    }
+
+    <ion-button
+      expand="block"
+      type="submit"
+      class="ion-margin-top"
+      [disabled]="form.invalid || loading()">
+      @if (loading()) {
+        <ion-spinner name="crescent"></ion-spinner>
+      } @else {
+        Crear Admin
+      }
+    </ion-button>
+  </form>
+</ion-content>

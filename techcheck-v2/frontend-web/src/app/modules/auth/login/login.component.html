@@ -1,0 +1,78 @@
+<ion-content class="login-page">
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <!-- Logo + título -->
+      <div class="login-header">
+        <div class="login-logo-circle">
+          <ion-icon name="lock-closed-outline"></ion-icon>
+        </div>
+        <h1 class="login-title">TechCheck</h1>
+        <p class="login-subtitle">Plataforma de Mantenimiento</p>
+      </div>
+
+      <!-- Formulario -->
+      <div class="login-form">
+
+        <!-- Email -->
+        <div class="login-field">
+          <label class="login-label" for="login-email">Correo electrónico</label>
+          <div class="login-input-wrap">
+            <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+            <input
+              id="login-email"
+              class="login-input"
+              type="email"
+              placeholder="correo@empresa.com"
+              [value]="email()"
+              (input)="email.set($any($event.target).value)"
+              autocomplete="email"
+              inputmode="email">
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="login-field">
+          <label class="login-label" for="login-pwd">Contraseña</label>
+          <div class="login-input-wrap">
+            <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+            <input
+              id="login-pwd"
+              class="login-input"
+              [type]="showPwd() ? 'text' : 'password'"
+              placeholder="••••••••"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+              (keydown.enter)="submit()"
+              autocomplete="current-password">
+            <button class="pwd-toggle" type="button" (click)="togglePwd()" style="min-width:44px;min-height:44px;padding:10px;cursor:pointer;background:none;border:none;display:flex;align-items:center;justify-content:center;font-size:20px;">
+              <ion-icon [name]="showPwd() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error -->
+        @if (error()) {
+          <div class="login-error">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            {{ error() }}
+          </div>
+        }
+
+        <!-- Botón -->
+        <button
+          class="login-btn"
+          type="button"
+          [disabled]="!isValid() || loading()"
+          (click)="submit()">
+          @if (loading()) {
+            <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+          } @else {
+            Ingresar
+          }
+        </button>
+
+      </div>
+    </div>
+  </div>
+</ion-content>

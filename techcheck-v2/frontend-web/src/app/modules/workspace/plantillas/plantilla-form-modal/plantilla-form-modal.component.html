@@ -1,0 +1,98 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()" fill="clear">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ isEdit ? 'Editar' : 'Nueva' }} Plantilla</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="submit()" [disabled]="!isValid() || saving()" fill="clear">
+        @if (saving()) {
+          <ion-spinner name="crescent" style="width:18px;height:18px"></ion-spinner>
+        } @else {
+          Guardar
+        }
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list lines="full" class="form-list">
+    <ion-item>
+      <ion-input
+        label="Nombre *"
+        labelPlacement="stacked"
+        [value]="nombre()"
+        (ionInput)="nombre.set($event.detail.value ?? '')"
+        (ionBlur)="touched.set(true)"
+        placeholder="Nombre de la plantilla"
+        autocomplete="off">
+      </ion-input>
+    </ion-item>
+    @if (touched() && !isValid()) {
+      <ion-note color="danger" class="form-error">El nombre es requerido</ion-note>
+    }
+    <ion-item>
+      <ion-textarea
+        label="Descripción"
+        labelPlacement="stacked"
+        [value]="descripcion()"
+        (ionInput)="descripcion.set($event.detail.value ?? '')"
+        placeholder="(opcional)"
+        [rows]="2"
+        autoGrow="true">
+      </ion-textarea>
+    </ion-item>
+  </ion-list>
+
+  <!-- Items -->
+  <div class="plantilla-items-header">
+    <h3 class="plantilla-items-title">Ítems de revisión ({{ items().length }})</h3>
+    <ion-button fill="outline" size="small" (click)="triggerImport()" [disabled]="importing()">
+      @if (importing()) {
+        <ion-spinner name="crescent" style="width:14px;height:14px;margin-right:6px"></ion-spinner>
+      } @else {
+        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+      }
+      Importar Excel
+    </ion-button>
+    <input id="excel-import" type="file" accept=".xlsx,.xls" style="display:none" (change)="onExcelSelected($event)">
+  </div>
+
+  <ion-list lines="full">
+    @for (item of items(); track $index) {
+      <ion-item class="item-row" style="flex-direction:column;align-items:flex-start;padding:8px 0">
+        <div style="display:flex;align-items:center;width:100%;gap:8px">
+          <ion-label style="flex:1;font-weight:500">{{ $index + 1 }}. {{ item.label }}</ion-label>
+          <ion-button fill="clear" size="small" color="danger" (click)="removeItem($index)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </div>
+        @if (item.observacion_guia) {
+          <div style="font-size:0.78rem;color:#64748b;padding:2px 16px 4px;width:100%">
+            💡 {{ item.observacion_guia }}
+          </div>
+        }
+      </ion-item>
+    }
+
+    <!-- Campo nuevo ítem -->
+    <ion-item>
+      <ion-input
+        [value]="newItem()"
+        (ionInput)="newItem.set($event.detail.value ?? '')"
+        placeholder="Agregar ítem y presionar +"
+        (keydown.enter)="addItem()">
+      </ion-input>
+      <ion-button fill="clear" slot="end" (click)="addItem()" [disabled]="addingItem()">
+        @if (addingItem()) {
+          <ion-spinner name="crescent" style="width:16px;height:16px"></ion-spinner>
+        } @else {
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        }
+      </ion-button>
+    </ion-item>
+  </ion-list>
+</ion-content>

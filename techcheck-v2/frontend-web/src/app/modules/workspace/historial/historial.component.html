@@ -1,0 +1,171 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/workspace/proyectos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Historial</ion-title>
+  </ion-toolbar>
+
+  <!-- Barra de búsqueda -->
+  <ion-toolbar>
+    <ion-searchbar
+      [value]="filtroTexto()"
+      (ionInput)="filtroTexto.set($event.detail.value ?? '')"
+      placeholder="Buscar por equipo, técnico..."
+      debounce="300">
+    </ion-searchbar>
+  </ion-toolbar>
+
+  <!-- Filtros de calidad -->
+  <ion-toolbar>
+    <div class="filtros-calidad">
+      <ion-chip
+        [color]="filtroCalidad() === 'todos' ? 'primary' : 'medium'"
+        [outline]="filtroCalidad() !== 'todos'"
+        (click)="filtroCalidad.set('todos')">Todos</ion-chip>
+      <ion-chip
+        [color]="filtroCalidad() === 'sin_evaluar' ? 'medium' : 'medium'"
+        [outline]="filtroCalidad() !== 'sin_evaluar'"
+        (click)="filtroCalidad.set('sin_evaluar')">Sin evaluar</ion-chip>
+      <ion-chip
+        [color]="filtroCalidad() === 'ok' ? 'success' : 'medium'"
+        [outline]="filtroCalidad() !== 'ok'"
+        (click)="filtroCalidad.set('ok')">OK</ion-chip>
+      <ion-chip
+        [color]="filtroCalidad() === 'observacion' ? 'warning' : 'medium'"
+        [outline]="filtroCalidad() !== 'observacion'"
+        (click)="filtroCalidad.set('observacion')">Observaciones</ion-chip>
+      <ion-chip
+        [color]="filtroCalidad() === 'problema' ? 'danger' : 'medium'"
+        [outline]="filtroCalidad() !== 'problema'"
+        (click)="filtroCalidad.set('problema')">Problemas</ion-chip>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && historial().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <p>No hay revisiones completadas en <strong>{{ proyectoNombre() }}</strong>.</p>
+    </div>
+  }
+
+  @if (!loading() && historial().length > 0 && revisionesFlat().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <p>No hay revisiones que coincidan con los filtros.</p>
+    </div>
+  }
+
+  @if (!loading() && revisionesFlat().length > 0) {
+    <div class="historial-header">
+      <p class="historial-subtitle">
+        {{ proyectoNombre() }} · {{ revisionesFlat().length }} revisiones completadas
+      </p>
+    </div>
+
+    <div class="historial-card">
+      <div class="historial-scroll">
+        <table class="h-table">
+          <thead>
+            <tr>
+              <th>Equipo</th>
+              <th>Fecha</th>
+              <th>Técnico</th>
+              <th>Calidad</th>
+              <th>Ítems</th>
+              <th class="h-table-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of revisionesFlat(); track r.id) {
+              <tr>
+                <td class="h-table-equipo">{{ r.equipoNombre }}</td>
+                <td class="h-table-fecha">{{ r.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+                <td class="h-table-tecnico">{{ r.tecnico?.nombre || '—' }}</td>
+                <td>
+                  <span [class]="'status-pill status-' + (r.estado_calidad || 'none')">
+                    {{ labelCalidad(r.estado_calidad ?? null) }}
+                  </span>
+                </td>
+                <td class="h-table-items">{{ r.item_count }} ítems</td>
+                <td class="h-table-actions">
+                  <ion-button fill="clear" size="small" (click)="verDetalle(r)">
+                    <ion-icon slot="icon-only" name="eye-outline"></ion-icon>
+                  </ion-button>
+                  @if (isAdmin()) {
+                    <ion-button fill="clear" size="small" color="danger" (click)="eliminarRevision(r)">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</ion-content>
+
+<!-- Modal detalle -->
+<ion-modal [isOpen]="revisionDetalle() !== null" (didDismiss)="cerrarDetalle()">
+  @if (revisionDetalle(); as det) {
+    <ion-header>
+      <ion-toolbar color="success">
+        <ion-title>{{ det.equipo?.nombre }} — Revisión #{{ det.id }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarDetalle()">
+            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="detalle-header">
+        @if (det.equipo) {
+          <p><strong>Equipo:</strong> {{ det.equipo.nombre }}</p>
+        }
+        @if (det.tecnico?.nombre) {
+          <p><strong>Técnico:</strong> {{ det.tecnico!.nombre }}</p>
+        }
+        <p><strong>Fecha:</strong> {{ det.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p>
+          <strong>Calidad:</strong>&nbsp;
+          <span [class]="'status-pill status-' + (det.estado_calidad || 'none')">
+            {{ labelCalidad(det.estado_calidad ?? null) }}
+          </span>
+        </p>
+        @if (det.observacion_general) {
+          <p><strong>Observación:</strong> {{ det.observacion_general }}</p>
+        }
+      </div>
+
+      <ion-list lines="full">
+        @for (item of det.items; track item.id) {
+          <ion-item [color]="item.checked ? 'light' : ''">
+            <ion-icon
+              slot="start"
+              [name]="item.checked ? 'checkmark-outline' : 'close-outline'"
+              [color]="item.checked ? 'success' : 'medium'">
+            </ion-icon>
+            <ion-label class="ion-text-wrap">
+              <h3 [style.text-decoration]="item.checked ? 'line-through' : 'none'">{{ item.label }}</h3>
+              @if (item.nota) {
+                <p><em>{{ item.nota }}</em></p>
+              }
+              @if ((item.archivos?.length ?? 0) > 0) {
+                <p><ion-text color="primary">{{ item.archivos!.length }} archivo(s) adjunto(s)</ion-text></p>
+              }
+            </ion-label>
+          </ion-item>
+        }
+      </ion-list>
+    </ion-content>
+  }
+</ion-modal>

@@ -1,0 +1,79 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>SuperAdmin — Workspaces</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="goToUsers()" title="Gestionar usuarios">
+        <ion-icon slot="icon-only" name="people-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="openChangePassword()" title="Cambiar contraseña">
+        <ion-icon slot="icon-only" name="key-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="logout()" title="Cerrar sesión">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  @if (loading()) {
+    <div class="center-spinner">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  }
+
+  @if (!loading() && workspaces().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="business-outline"></ion-icon>
+      <p>No hay workspaces creados aún.</p>
+      <ion-button (click)="openCreate()">Crear primer workspace</ion-button>
+    </div>
+  }
+
+  <div class="workspace-grid">
+    @for (ws of workspaces(); track ws.id) {
+      <ion-card class="ws-card">
+        <ion-card-header>
+          <div class="ws-card-title-row">
+            <ion-card-title>{{ ws.nombre }}</ion-card-title>
+            <ion-badge [color]="ws.activo ? 'success' : 'medium'">
+              {{ ws.activo ? 'Activo' : 'Inactivo' }}
+            </ion-badge>
+          </div>
+          @if (ws.descripcion) {
+            <ion-card-subtitle>{{ ws.descripcion }}</ion-card-subtitle>
+          }
+        </ion-card-header>
+
+        <ion-card-content>
+          <p class="ws-admin-count">
+            <ion-icon name="people-outline"></ion-icon>
+            {{ ws.usuarios?.length ?? 0 }} admin(s)
+          </p>
+
+          <div class="ws-actions">
+            <ion-button fill="outline" size="small" (click)="openEdit(ws)">
+              <ion-icon slot="start" name="pencil-outline"></ion-icon>
+              Editar
+            </ion-button>
+            <ion-button fill="outline" size="small" color="secondary" (click)="openAssignAdmin(ws)">
+              <ion-icon slot="start" name="person-add-outline"></ion-icon>
+              Admin
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(ws)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    }
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openCreate()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

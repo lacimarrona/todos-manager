@@ -1,0 +1,11 @@
+# Artefactos de build — no son código fuente
+frontend-web/dist/
+frontend-web/.angular/
+mobile/www/
+mobile/android/app/src/main/assets/public/
+mobile/.angular/
+
+# Dependencias
+frontend-web/node_modules/
+mobile/node_modules/
+backend/node_modules/

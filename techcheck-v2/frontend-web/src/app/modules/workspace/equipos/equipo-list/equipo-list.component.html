@@ -1,0 +1,264 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/workspace/proyectos" text="Proyectos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ proyectoNombre() }}</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="abrirImport()">
+          <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+
+  <ion-toolbar>
+    <ion-segment [value]="filtro()" (ionChange)="onFiltroChange($any($event))">
+      <ion-segment-button value="todos">
+        <ion-label>Todos</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="pendiente">
+        <ion-label>Pendiente</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="en_proceso">
+        <ion-label>En Proceso</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="terminado">
+        <ion-label>Terminado</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="archivado">
+        <ion-label>Archivados</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && equipos().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="clipboard-outline"></ion-icon>
+      <p>
+        @if (filtro() === 'archivado') {
+          No hay equipos archivados en este proyecto.
+        } @else if (filtro() !== 'todos') {
+          No hay equipos con estado "{{ estadoLabel($any(filtro())) }}"
+        } @else {
+          No hay equipos en este proyecto.
+        }
+      </p>
+    </div>
+  }
+
+  <div class="equipo-grid">
+    @for (eq of equipos(); track eq.id) {
+
+      @if (filtro() === 'archivado') {
+        <!-- Vista compacta para equipos archivados -->
+        <ion-card class="equipo-card estado-archivado">
+          <ion-card-header>
+            <div class="equipo-card-header">
+              <ion-card-title>{{ eq.nombre }}</ion-card-title>
+              <span class="status-pill status-archivado">Archivado</span>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="equipo-meta">
+              <span>
+                <ion-icon name="clipboard-outline"></ion-icon>
+                {{ eq.items?.length ?? 0 }} ítems
+              </span>
+              @if (eq.tecnico_asignado) {
+                <span>
+                  <ion-icon name="person-outline"></ion-icon>
+                  {{ eq.tecnico_asignado.nombre }}
+                </span>
+              }
+            </div>
+            @if (isAdmin()) {
+              <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:8px">
+                <ion-button fill="clear" size="small" color="medium" (click)="exportar(eq, $event)">
+                  <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+                </ion-button>
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      } @else {
+        <!-- Vista normal para equipos activos -->
+        <ion-card
+          class="equipo-card"
+          [class]="'estado-' + eq.ultimo_estado"
+          (click)="openRevision(eq)"
+          button>
+
+          <ion-card-header>
+            <div class="equipo-card-header">
+              <ion-card-title>{{ eq.nombre }}</ion-card-title>
+              <span [class]="'status-pill status-' + (eq.ultimo_estado ?? 'pendiente')">
+                {{ estadoLabel(eq.ultimo_estado) }}
+              </span>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            <div class="equipo-meta">
+              <span>
+                <ion-icon name="clipboard-outline"></ion-icon>
+                {{ eq.items?.length ?? 0 }} ítems
+              </span>
+              @if (eq.tecnico_asignado) {
+                <span>
+                  <ion-icon name="person-outline"></ion-icon>
+                  {{ eq.tecnico_asignado.nombre }}
+                </span>
+              }
+            </div>
+
+            @if (abriendo() === eq.id) {
+              <div class="equipo-opening">
+                <ion-spinner name="crescent" color="primary"></ion-spinner>
+                <small>Abriendo revisión...</small>
+              </div>
+            } @else {
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div class="equipo-cta">
+                  <ion-icon name="chevron-forward-outline" color="primary"></ion-icon>
+                  <small>Toca para revisar</small>
+                </div>
+                @if (isAdmin()) {
+                  <div style="display:flex;gap:4px">
+                    <ion-button fill="clear" size="small" color="medium" (click)="openEdit(eq, $event)">
+                      <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+                    </ion-button>
+                    <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(eq, $event)">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-button>
+                    @if (!eq.archivado && eq.ultimo_estado === 'terminado') {
+                      <ion-button fill="clear" size="small" color="medium" (click)="archivar(eq, $event)">
+                        <ion-icon slot="icon-only" name="archive-outline"></ion-icon>
+                      </ion-button>
+                    }
+                    <ion-button fill="clear" size="small" color="medium" (click)="exportar(eq, $event)">
+                      <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+                    </ion-button>
+                  </div>
+                }
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
+    }
+  </div>
+
+  @if (isAdmin()) {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button (click)="openCreate()">
+        <ion-icon name="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+</ion-content>
+
+<!-- Modal de importar equipos masivo -->
+<ion-modal [isOpen]="mostrarImport()" (didDismiss)="cerrarImport()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Importar equipos</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarImport()">Cerrar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <p style="color:var(--ion-color-medium);font-size:0.875rem;margin-bottom:12px">
+        Sube un archivo <strong>Excel (.xlsx)</strong> o <strong>CSV</strong> con los nombres de equipos.
+        La primera columna debe ser el nombre. La primera fila es el encabezado.
+      </p>
+
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <label style="font-weight:600">Archivo (Excel o CSV)</label>
+          <ion-button fill="clear" size="small" color="primary" (click)="descargarPlantillaExcel()">
+            Descargar plantilla Excel
+          </ion-button>
+        </div>
+        <input
+          type="file"
+          accept=".csv,.txt,.xlsx,.xls"
+          style="display:block;width:100%"
+          (change)="onImportFileChange($event)" />
+      </div>
+
+      @if (importError()) {
+        <div style="color:var(--ion-color-danger);margin-bottom:12px;font-size:0.875rem">
+          {{ importError() }}
+        </div>
+      }
+
+      @if (importNombre().length > 0) {
+        <div style="margin-bottom:16px">
+          <p style="font-weight:600;margin-bottom:8px">
+            {{ importNombre().length }} equipo(s) detectado(s):
+          </p>
+          <div style="max-height:200px;overflow-y:auto;border:1px solid var(--ion-color-light);border-radius:8px;padding:8px">
+            @for (eq of importNombre(); track $index) {
+              <div style="padding:4px 0;border-bottom:1px solid var(--ion-color-light-shade)">
+                {{ $index + 1 }}. {{ eq.nombre }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-weight:600;margin-bottom:8px">Plantilla (opcional)</label>
+          <ion-select
+            [value]="importPlantillaId()"
+            (ionChange)="importPlantillaId.set($any($event).detail.value)"
+            placeholder="Sin plantilla"
+            interface="action-sheet">
+            <ion-select-option [value]="null">Sin plantilla</ion-select-option>
+            @for (p of plantillas(); track p.id) {
+              <ion-select-option [value]="p.id">{{ p.nombre }}</ion-select-option>
+            }
+          </ion-select>
+        </div>
+
+        @if (importExito()) {
+          <div style="color:var(--ion-color-success);margin-bottom:12px;font-weight:600">
+            {{ importExito() }}
+          </div>
+        }
+
+        <div style="display:flex;gap:12px;margin-top:16px">
+          <ion-button
+            expand="block"
+            style="flex:1"
+            [disabled]="importandoMasivo()"
+            (click)="confirmarImport()">
+            @if (importandoMasivo()) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              Importar {{ importNombre().length }} equipos
+            }
+          </ion-button>
+          <ion-button
+            expand="block"
+            fill="outline"
+            color="medium"
+            style="flex:1"
+            (click)="cerrarImport()">
+            Cancelar
+          </ion-button>
+        </div>
+      }
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -1,0 +1,127 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ isEdit ? 'Editar' : 'Nuevo' }} Equipo</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()" fill="clear">Cancelar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loadingData()) {
+    <div style="display:flex;justify-content:center;padding:32px">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else {
+    <ion-list lines="full" class="form-list">
+      <ion-item>
+        <ion-input
+          label="Nombre *"
+          labelPlacement="stacked"
+          [value]="nombre()"
+          (ionInput)="nombre.set($event.detail.value ?? '')"
+          placeholder="Nombre del equipo o máquina"
+          autocomplete="off">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-select
+          label="Plantilla de ítems"
+          labelPlacement="stacked"
+          [value]="plantillaId()"
+          (ionChange)="onPlantillaChange($event.detail.value)"
+          placeholder="Sin plantilla (opcional)">
+          <ion-select-option [value]="null">Sin plantilla</ion-select-option>
+          @for (p of plantillas(); track p.id) {
+            <ion-select-option [value]="p.id">{{ p.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-select
+          label="Técnico asignado"
+          labelPlacement="stacked"
+          [value]="tecnicoId()"
+          (ionChange)="tecnicoId.set($event.detail.value)"
+          placeholder="Sin asignar (opcional)">
+          <ion-select-option [value]="null">Sin asignar</ion-select-option>
+          @for (u of tecnicos(); track u.id) {
+            <ion-select-option [value]="u.id">{{ u.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-input
+          label="Tiempo límite (minutos)"
+          labelPlacement="stacked"
+          type="number"
+          [value]="tiempoLimite()"
+          (ionInput)="tiempoLimite.set($event.detail.value ?? '')"
+          placeholder="Ej: 60 (opcional)"
+          min="1">
+        </ion-input>
+      </ion-item>
+    </ion-list>
+
+    <!-- Items del checklist -->
+    <ion-list lines="full" class="form-list ion-margin-top">
+      <ion-item>
+        <ion-label>
+          <strong>Ítems del checklist</strong>
+          <span style="font-weight:normal;color:#888"> ({{ localItems().length }})</span>
+        </ion-label>
+      </ion-item>
+
+      @if (localItems().length === 0) {
+        <ion-item>
+          <ion-label color="medium"><em>Sin ítems aún. Agrega ítems manualmente o selecciona una plantilla arriba.</em></ion-label>
+        </ion-item>
+      }
+
+      @for (item of localItems(); track $index) {
+        <ion-item>
+          <ion-label>{{ item.label }}</ion-label>
+          <ion-button slot="end" fill="clear" size="small" color="danger" (click)="eliminarItem($index)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-item>
+      }
+
+      <ion-item>
+        <ion-input
+          label="Agregar ítem"
+          labelPlacement="stacked"
+          [value]="nuevoLabel()"
+          (ionInput)="nuevoLabel.set($event.detail.value ?? '')"
+          placeholder="Nombre del ítem..."
+          autocomplete="off">
+        </ion-input>
+        <ion-button slot="end" fill="clear" (click)="agregarItem()" [disabled]="!nuevoLabel().trim()">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+
+    @if (error()) {
+      <ion-text color="danger">
+        <p class="form-error">{{ error() }}</p>
+      </ion-text>
+    }
+
+    <ion-button
+      expand="block"
+      type="button"
+      class="ion-margin-top"
+      [disabled]="!isValid() || loading()"
+      (click)="submit()">
+      @if (loading()) {
+        <ion-spinner name="crescent"></ion-spinner>
+      } @else {
+        Guardar
+      }
+    </ion-button>
+  }
+</ion-content>

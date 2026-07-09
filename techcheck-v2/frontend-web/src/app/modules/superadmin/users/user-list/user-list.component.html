@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>SuperAdmin — Usuarios</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()" title="Cerrar sesión">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar>
+    <ion-item lines="none">
+      <ion-select
+        label="Filtrar por workspace"
+        labelPlacement="stacked"
+        [value]="filtroWs()"
+        (ionChange)="onFiltroChange($event)"
+        interface="popover"
+        placeholder="Todos los workspaces">
+        <ion-select-option [value]="null">Todos</ion-select-option>
+        @for (ws of workspaces(); track ws.id) {
+          <ion-select-option [value]="ws.id">{{ ws.nombre }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && users().length === 0) {
+    <div class="empty-state">
+      <p>No hay usuarios registrados.</p>
+      <ion-button (click)="openCreate()">Crear primer usuario</ion-button>
+    </div>
+  }
+
+  @for (u of users(); track u.id) {
+    <ion-item lines="full">
+      <ion-label>
+        <h2>{{ u.nombre }}</h2>
+        <p>{{ u.email }}</p>
+        @if (u.workspace) {
+          <p class="ws-label">{{ u.workspace.nombre }}</p>
+        }
+      </ion-label>
+      <ion-badge slot="end" [color]="rolColor(u.rol)" class="rol-badge">
+        {{ rolLabel(u.rol) }}
+      </ion-badge>
+      <ion-button slot="end" fill="clear" size="small" (click)="openEdit(u)">
+        <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+      </ion-button>
+      <ion-button slot="end" fill="clear" size="small" color="danger" (click)="confirmDelete(u)">
+        <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+  }
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openCreate()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

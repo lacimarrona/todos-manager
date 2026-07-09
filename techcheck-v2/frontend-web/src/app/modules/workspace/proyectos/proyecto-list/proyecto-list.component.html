@@ -1,0 +1,87 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Proyectos</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="importarJSON($event)" title="Importar proyecto JSON">
+          <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
+        </ion-button>
+        <ion-button (click)="openCreate()" title="Nuevo proyecto">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && proyectos().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="folder-open-outline"></ion-icon>
+      <p>No hay proyectos en este workspace.</p>
+      @if (isAdmin()) {
+        <ion-button (click)="openCreate()">Crear primer proyecto</ion-button>
+      }
+    </div>
+  }
+
+  <div class="proyecto-grid">
+    @for (p of proyectos(); track p.id) {
+      <div class="proyecto-card" (click)="openEquipos(p)">
+
+        <!-- Cabecera: icono + nombre -->
+        <div class="proyecto-card-top">
+          <div class="proyecto-card-icon">
+            <ion-icon name="folder-open-outline"></ion-icon>
+          </div>
+          <div class="proyecto-card-info">
+            <h3 class="proyecto-card-nombre">{{ p.nombre }}</h3>
+            @if (p.descripcion) {
+              <p class="proyecto-card-desc">{{ p.descripcion }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- Pie: meta + acciones -->
+        <div class="proyecto-card-footer">
+          <span class="proyecto-card-meta">
+            {{ p.createdAt | date:'dd/MM/yyyy' }}
+            @if (p.creador) { · {{ p.creador.nombre }} }
+          </span>
+          <div class="proyecto-card-actions" (click)="$event.stopPropagation()">
+            <ion-button fill="clear" size="small" color="medium" (click)="openHistorial(p, $event)" title="Historial">
+              <ion-icon slot="icon-only" name="time-outline"></ion-icon>
+            </ion-button>
+            @if (isAdmin()) {
+              <ion-button fill="clear" size="small" color="medium" (click)="exportar(p, $event)" title="Exportar">
+                <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="small" color="medium" (click)="openEdit(p, $event)">
+                <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(p, $event)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-button>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+  </div>
+
+  @if (isAdmin()) {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button (click)="openCreate()">
+        <ion-icon name="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+</ion-content>

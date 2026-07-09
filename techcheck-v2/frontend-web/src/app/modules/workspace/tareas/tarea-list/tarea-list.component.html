@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Tareas Programadas</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="openCreate()" title="Nueva tarea">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && tareas().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="time-outline"></ion-icon>
+      <p>No hay tareas programadas.</p>
+      @if (isAdmin()) {
+        <ion-button (click)="openCreate()">Crear tarea</ion-button>
+      }
+    </div>
+  }
+
+  <ion-list>
+    @for (t of tareas(); track t.id) {
+      <ion-item class="tarea-item">
+        <ion-icon name="time-outline" slot="start" [color]="t.activa ? 'primary' : 'medium'"></ion-icon>
+        <ion-label>
+          <h2>{{ t.equipo?.nombre ?? 'Equipo' }}</h2>
+          @if (t.equipo?.proyecto) {
+            <p class="proyecto-meta">{{ t.equipo!.proyecto!.nombre }}</p>
+          }
+          <p class="tarea-hora">
+            <strong>{{ horaCorta(t.hora) }}</strong>
+            &nbsp;·&nbsp;{{ diasLabel(t.dias_semana) }}
+          </p>
+        </ion-label>
+
+        <ion-toggle
+          slot="end"
+          [checked]="t.activa"
+          (ionChange)="toggleActiva(t, $event)"
+          color="primary"
+          style="padding-right:4px">
+        </ion-toggle>
+
+        @if (isAdmin()) {
+          <ion-button fill="clear" size="small" color="medium" slot="end" (click)="openEdit(t, $event)">
+            <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" size="small" color="danger" slot="end" (click)="confirmDelete(t, $event)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        }
+      </ion-item>
+    }
+  </ion-list>
+
+  @if (isAdmin()) {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button (click)="openCreate()">
+        <ion-icon name="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+</ion-content>

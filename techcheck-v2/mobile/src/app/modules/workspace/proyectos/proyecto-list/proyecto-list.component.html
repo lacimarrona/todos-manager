@@ -1,0 +1,78 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Proyectos</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="triggerImportInput()" title="Importar proyecto JSON">
+          <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
+        </ion-button>
+        <ion-button (click)="openCreate()" title="Nuevo proyecto">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<!-- Input oculto para importar JSON -->
+<input
+  id="proyecto-import-input"
+  type="file"
+  accept=".json"
+  style="display:none"
+  (change)="onImportFileChange($event)" />
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && proyectos().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="folder-open-outline"></ion-icon>
+      <p>No hay proyectos en este workspace.</p>
+      @if (isAdmin()) {
+        <ion-button (click)="openCreate()">Crear primer proyecto</ion-button>
+      }
+    </div>
+  }
+
+  <ion-list>
+    @for (p of proyectos(); track p.id) {
+      <ion-item button detail="false" (click)="openEquipos(p)" class="proyecto-item">
+        <ion-icon name="folder-open-outline" slot="start" color="primary"></ion-icon>
+
+        <ion-label>
+          <h2>{{ p.nombre }}</h2>
+          @if (p.descripcion) { <p>{{ p.descripcion }}</p> }
+          <p class="proyecto-meta">
+            Creado {{ p.createdAt | date:'dd/MM/yyyy' }}
+            @if (p.creador) { · {{ p.creador.nombre }} }
+          </p>
+        </ion-label>
+
+        <div slot="end" class="proyecto-actions">
+          <ion-button fill="clear" size="small" color="medium" (click)="openHistorial(p, $event)" title="Historial">
+            <ion-icon slot="icon-only" name="time-outline"></ion-icon>
+          </ion-button>
+          @if (isAdmin()) {
+            <ion-button fill="clear" size="small" (click)="exportar(p, $event)" title="Exportar proyecto">
+              <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="openEdit(p, $event)">
+              <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(p, $event)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          }
+        </div>
+
+        <ion-icon name="chevron-forward-outline" slot="end" color="medium"></ion-icon>
+      </ion-item>
+    }
+  </ion-list>
+</ion-content>

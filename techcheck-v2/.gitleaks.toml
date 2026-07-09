@@ -1,0 +1,6 @@
+[allowlist]
+  description = "Excluye artefactos de build con claves de virtual DOM de Ionic/Angular"
+  paths = [
+    '''mobile/www/''',
+    '''frontend-web/dist/''',
+  ]

@@ -1,0 +1,61 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Plantillas</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="openCreate()" title="Nueva plantilla">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && plantillas().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="document-text-outline"></ion-icon>
+      <p>No hay plantillas creadas.</p>
+      @if (isAdmin()) {
+        <ion-button (click)="openCreate()">Crear plantilla</ion-button>
+      }
+    </div>
+  }
+
+  <ion-list>
+    @for (p of plantillas(); track p.id) {
+      <ion-item button detail="false" class="plantilla-item" (click)="openEdit(p, $event)">
+        <ion-icon name="document-text-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h2>{{ p.nombre }}</h2>
+          @if (p.descripcion) { <p>{{ p.descripcion }}</p> }
+          <p class="proyecto-meta">{{ p.items.length }} ítems de revisión</p>
+        </ion-label>
+        <ion-badge slot="end" color="primary">{{ p.items.length }}</ion-badge>
+        @if (isAdmin()) {
+          <ion-button fill="clear" size="small" color="medium" slot="end" (click)="openEdit(p, $event)" title="Editar">
+            <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" size="small" color="danger" slot="end" (click)="confirmDelete(p, $event)" title="Eliminar">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        }
+      </ion-item>
+    }
+  </ion-list>
+
+  @if (isAdmin()) {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button (click)="openCreate()">
+        <ion-icon name="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+</ion-content>

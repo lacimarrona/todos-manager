@@ -1,0 +1,21 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+# Instala todas las deps (sequelize-cli es devDep pero se necesita para las migraciones)
+COPY package*.json ./
+RUN npm ci
+
+# Copia el código fuente y archivos de base de datos
+COPY src        ./src
+COPY migrations ./migrations
+COPY seeders    ./seeders
+COPY .sequelizerc ./
+
+# Copia el entrypoint de producción
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
+EXPOSE 4000
+
+ENTRYPOINT ["./docker-entrypoint.sh"]

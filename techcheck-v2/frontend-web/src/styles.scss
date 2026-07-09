@@ -1,0 +1,1026 @@
+/* Ionic core */
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/* ── Variables ───────────────────────────────────────────────── */
+:root {
+  --ion-color-primary:          #2563eb;
+  --ion-color-primary-rgb:      37, 99, 235;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade:    #1d4ed8;
+  --ion-color-primary-tint:     #3b82f6;
+  --ion-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ion-background-color:       #f8fafc;
+  --ion-background-color-rgb:   248, 250, 252;
+  --ion-item-background:        #ffffff;
+  --ion-card-background:        #ffffff;
+}
+
+/* ── Overrides globales Ionic → estilo v1 (Tailwind clean) ──── */
+
+// Fondo gris claro en todo el contenido (como bg-gray-50 de Tailwind)
+ion-content { --background: #f8fafc; }
+
+// ion-card → tarjeta blanca con borde sutil (v1: bg-white border border-gray-200 rounded-xl)
+ion-card {
+  --background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  margin: 0;
+  overflow: hidden;
+}
+
+ion-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+ion-card-content { color: #475569; font-size: 0.875rem; }
+
+// ion-item → limpio, borde sutil como v1's divide-y divide-gray-100
+ion-item {
+  --background:           #ffffff;
+  --background-activated: #f8fafc;
+  --border-color:         #f1f5f9;
+  --color:                #334155;
+  --detail-icon-color:    #94a3b8;
+  --detail-icon-font-size: 16px;
+  --inner-border-width:   0 0 1px 0;
+}
+
+// ion-list → fondo transparente para que se vea el gris del ion-content
+ion-list {
+  background: transparent;
+  padding: 0;
+}
+
+// Toolbars secundarias (sin color="primary") → blancas con borde inferior
+ion-header ion-toolbar:not([color]) {
+  --background:     #ffffff;
+  --border-color:   #e2e8f0;
+  --border-width:   0 0 1px 0;
+}
+
+// Segmentos (tabs de filtro) → estilo botones pill de v1
+ion-segment {
+  --background: transparent;
+  padding: 6px 16px 8px;
+  gap: 4px;
+}
+
+ion-segment-button {
+  --background:        #ffffff;
+  --background-checked: #1e293b;
+  --color:              #64748b;
+  --color-checked:      #ffffff;
+  --indicator-color:    transparent;
+  --indicator-height:   0;
+  --border-radius:      8px;
+  --padding-top:        6px;
+  --padding-bottom:     6px;
+  --padding-start:      12px;
+  --padding-end:        12px;
+  min-height: 34px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin: 0 2px;
+}
+
+ion-segment-button.segment-button-checked {
+  border-color: #1e293b;
+}
+
+// Searchbar → estilo input limpio de v1
+ion-searchbar {
+  --background:         #ffffff;
+  --border-radius:      8px;
+  --box-shadow:         none;
+  --placeholder-color:  #94a3b8;
+  --color:              #1e293b;
+  --icon-color:         #94a3b8;
+  --clear-button-color: #94a3b8;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+}
+
+// Badges de conteo → más suaves
+ion-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 3px 8px;
+}
+
+// Chips de filtro → más compactos
+ion-chip {
+  height: 30px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+// Inputs en formularios → estilo v1 (border-gray-200, ring-blue-500)
+ion-input, ion-textarea, ion-select {
+  --placeholder-color: #94a3b8;
+  --color: #1e293b;
+  --background: #ffffff;
+}
+
+// Botones outline → estilo v1 (border-gray-200, hover:bg-gray-50)
+ion-button[fill="outline"] {
+  --border-color: #e2e8f0;
+  --color: #64748b;
+}
+
+ion-button[fill="clear"] {
+  --color: #64748b;
+}
+
+/* ── Login ───────────────────────────────────────────────────── */
+.login-page { --background: #f0f4f8; }
+
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px 16px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  overflow: hidden;
+}
+
+.login-header {
+  text-align: center;
+  padding: 36px 32px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.login-logo-circle {
+  width: 60px;
+  height: 60px;
+  background: #dbeafe;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  ion-icon { font-size: 1.8rem; color: #2563eb; }
+}
+
+.login-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 0 0 4px;
+}
+
+.login-subtitle {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* Formulario */
+.login-form {
+  padding: 28px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.02em;
+}
+
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .field-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 1.05rem;
+    color: #94a3b8;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+.login-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 44px 0 40px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+
+  &::placeholder { color: #cbd5e1; }
+
+  &:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+
+  &:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 50px #f8fafc inset;
+    -webkit-text-fill-color: #1e293b;
+  }
+}
+
+.pwd-toggle {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+  transition: color 0.2s;
+  ion-icon { font-size: 1.1rem; }
+  &:hover { color: #2563eb; }
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.83rem;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 8px;
+  ion-icon { font-size: 1rem; flex-shrink: 0; }
+}
+
+.login-btn {
+  width: 100%;
+  height: 48px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+  margin-top: 4px;
+
+  &:hover:not(:disabled) { background: #1d4ed8; }
+  &:active:not(:disabled) { transform: scale(0.98); }
+  &:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+  }
+}
+
+.btn-spinner { width: 20px; height: 20px; --color: #ffffff; }
+
+/* ── Shared utilities ────────────────────────────────────────── */
+.center-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--ion-color-medium);
+
+  ion-icon { font-size: 4rem; }
+  p        { font-size: 1rem; margin: 0; }
+}
+
+.form-list { margin: 0 -16px; }
+
+.form-error {
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  margin: 8px 0 0;
+}
+
+.modal-subtitle {
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+}
+
+
+/* ── Form modal sizing ───────────────────────────────────────── */
+.form-modal {
+  --border-radius: 16px;
+  --width:         min(540px, 95vw);
+  --height:        min(520px, 88vh);
+  --max-height:    92vh;
+}
+
+/* ── Workspace grid (superadmin) ─────────────────────────────── */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding-bottom: 80px;
+}
+
+.ws-card { margin: 0; }
+
+.ws-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ws-admin-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+  ion-icon { font-size: 1rem; }
+}
+
+.ws-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Side menu ───────────────────────────────────────────────── */
+.menu-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+  margin-bottom: 8px;
+}
+
+.menu-avatar-icon { font-size: 2.8rem; color: var(--ion-color-primary); }
+
+.menu-user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.menu-user-role {
+  font-size: 0.78rem;
+  color: var(--ion-color-medium);
+  margin: 2px 0 0;
+  text-transform: capitalize;
+}
+
+.menu-item-active {
+  --background: rgba(var(--ion-color-primary-rgb), 0.1);
+  --color: var(--ion-color-primary);
+  ion-icon { color: var(--ion-color-primary); }
+}
+
+/* ── User list ───────────────────────────────────────────────── */
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── Proyectos (grid de tarjetas estilo v1) ───────────────────── */
+.proyecto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px 16px 80px;
+}
+
+.proyecto-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-color: #93c5fd;
+  }
+}
+
+.proyecto-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.proyecto-card-icon {
+  width: 42px;
+  height: 42px;
+  background: #dbeafe;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  ion-icon {
+    font-size: 1.4rem;
+    color: #2563eb;
+  }
+
+  .proyecto-card:hover & { background: #bfdbfe; }
+}
+
+.proyecto-card-info { min-width: 0; flex: 1; }
+
+.proyecto-card-nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proyecto-card-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proyecto-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.proyecto-card-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.proyecto-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Equipos ─────────────────────────────────────────────────── */
+.equipo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.equipo-card {
+  margin: 0;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  &:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+}
+
+.equipo-card.estado-pendiente  { border-left: 4px solid var(--ion-color-warning); }
+.equipo-card.estado-en_proceso { border-left: 4px solid var(--ion-color-primary); }
+.equipo-card.estado-terminado  { border-left: 4px solid var(--ion-color-success); }
+
+.equipo-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.equipo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--ion-color-medium);
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+  span { display: flex; align-items: center; gap: 4px; }
+  ion-icon { font-size: 0.9rem; }
+}
+
+.equipo-cta, .equipo-opening {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+/* ── Revisión modal ──────────────────────────────────────────── */
+.revision-modal {
+  --height:        100%;
+  --width:         100%;
+  --max-width:     100%;
+  --border-radius: 0;
+}
+
+.progress-bar-wrapper {
+  height: 4px;
+  background: rgba(0,0,0,0.08);
+  margin: 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--ion-color-success);
+  transition: width 0.3s ease;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+  text-align: center;
+  padding: 2px 0 4px;
+}
+
+.header-badge {
+  margin: 0 12px;
+  font-size: 0.75rem;
+}
+
+/* Revisión item */
+.revision-list  { padding: 0; }
+
+.rev-item {
+  border-bottom: 1px solid var(--ion-color-light-shade);
+  &.rev-item--checked { background: rgba(var(--ion-color-success-rgb, 45,211,111), 0.05); }
+}
+
+.rev-item-row { --padding-start: 8px; --inner-padding-end: 4px; }
+
+.rev-checkbox { --size: 22px; }
+
+.rev-label {
+  font-size: 0.95rem;
+  white-space: normal;
+  cursor: pointer;
+  padding: 4px 0;
+  &.rev-label--done {
+    text-decoration: line-through;
+    color: var(--ion-color-medium);
+  }
+}
+
+.expand-btn { --padding-start: 4px; --padding-end: 4px; }
+.item-spinner { width: 18px; height: 18px; margin: 0 4px; }
+
+/* Detalle expandible */
+.rev-item-detail {
+  padding: 8px 16px 12px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rev-nota {
+  --padding-start: 0;
+  --padding-end: 0;
+  font-size: 0.88rem;
+  min-height: 56px;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+/* Archivos de evidencia */
+.archivos-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.archivo-item {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+}
+
+.archivo-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--ion-color-light-shade);
+}
+
+.archivo-doc {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--ion-color-light-shade);
+  gap: 4px;
+  ion-icon { font-size: 1.8rem; color: var(--ion-color-medium); }
+  small    { font-size: 0.7rem; color: var(--ion-color-medium); }
+}
+
+.archivo-del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  ion-icon { font-size: 1.2rem; }
+}
+
+.upload-btn { margin-top: 4px; }
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.drag-hint {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+/* Drag & Drop sobre el detalle del item */
+.rev-item-detail--drag {
+  border: 2px dashed #2563eb;
+  border-radius: 8px;
+  background: #eff6ff;
+  position: relative;
+}
+
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 6px;
+  z-index: 10;
+  pointer-events: none;
+  gap: 6px;
+  ion-icon { font-size: 2rem; color: #2563eb; }
+  span { font-size: 0.85rem; color: #2563eb; font-weight: 600; }
+}
+
+/* Zona de fotos de observación general */
+.obs-fotos-zone {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+  transition: border-color 0.2s, background 0.2s;
+
+  &.obs-fotos-zone--drag {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+}
+
+/* Footer revisión */
+.footer-toolbar { --padding-top: 0; --padding-bottom: 0; }
+
+.footer-content {
+  padding: 8px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.obs-textarea {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.completar-btn { margin: 0; }
+
+.footer-terminado {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ion-color-success);
+  font-weight: 600;
+  ion-icon { font-size: 1.4rem; }
+}
+
+.obs-terminado {
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+  font-weight: normal;
+  margin: 0;
+}
+
+/* ── Plantillas ──────────────────────────────────────────────── */
+.plantilla-modal {
+  --border-radius: 16px;
+  --width:         min(600px, 95vw);
+  --height:        85vh;
+}
+
+.plantilla-item { --padding-top: 12px; --padding-bottom: 12px; }
+
+.plantilla-items-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 8px;
+  flex-wrap: wrap;
+}
+
+.plantilla-items-title {
+  flex: 1;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.item-row { --padding-start: 16px; }
+
+/* ── Tareas Programadas ──────────────────────────────────────── */
+.tarea-item { --padding-top: 10px; --padding-bottom: 10px; }
+
+.tarea-hora {
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+  margin: 2px 0 0;
+}
+
+.tarea-equipo-info {
+  padding: 12px 16px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.tarea-equipo-nombre {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.tarea-equipo-proyecto {
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+  margin: 2px 0 0;
+}
+
+.dias-section {
+  padding: 12px 16px 0;
+}
+
+.dias-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: var(--ion-color-dark);
+}
+
+.dias-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+.dia-item { --padding-start: 4px; --inner-padding-end: 4px; }
+
+/* ── Historial ───────────────────────────────────────────────── */
+.historial-header {
+  padding: 12px 16px 0;
+}
+
+.historial-subtitle {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  margin: 0 0 4px;
+}
+
+.historial-equipo-block {
+  margin: 16px 0 0;
+}
+
+.historial-equipo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--ion-color-light);
+  border-top: 1px solid var(--ion-color-light-shade);
+}
+
+.historial-equipo-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.historial-revision-item { --padding-top: 8px; --padding-bottom: 8px; }
+
+.historial-meta {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  margin: 2px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.historial-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ── Status pills (v1 style — soft colored badges) ───────────── */
+.status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+.status-pendiente   { background: #fef9c3; color: #92400e; }
+.status-en_proceso  { background: #dbeafe; color: #1d4ed8; }
+.status-terminado   { background: #dcfce7; color: #15803d; }
+.status-archivado   { background: #f1f5f9; color: #64748b; }
+.status-ok          { background: #dcfce7; color: #15803d; }
+.status-observacion { background: #fef9c3; color: #92400e; }
+.status-problema    { background: #fee2e2; color: #dc2626; }
+.status-none        { background: #f1f5f9; color: #64748b; }
+
+/* ── Historial tabla (v1 style) ──────────────────────────────── */
+.historial-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px;
+}
+
+.historial-scroll { overflow-x: auto; }
+
+.h-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; transition: background 0.15s; }
+}
+
+.h-table-equipo  { font-weight: 600; color: #1e293b; }
+.h-table-fecha   { color: var(--ion-color-medium); white-space: nowrap; font-size: 0.82rem; }
+.h-table-tecnico { color: var(--ion-color-medium); font-size: 0.82rem; }
+.h-table-items   { color: var(--ion-color-medium); white-space: nowrap; font-size: 0.82rem; }
+.h-table-actions { white-space: nowrap; }
+
+/* ── Filtros calidad chips ────────────────────────────────────── */
+.filtros-calidad {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+/* ── Detalle header (historial modal) ────────────────────────── */
+.detalle-header {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+
+  p { margin: 4px 0; font-size: 0.9rem; color: #334155; }
+  strong { color: #1e293b; }
+}
+
+/* ── Equipo cards v1-style ───────────────────────────────────── */
+.equipo-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-color: #93c5fd;
+  }
+}
+
+.equipo-card.estado-pendiente  { border-left: 4px solid #f59e0b; }
+.equipo-card.estado-en_proceso { border-left: 4px solid #3b82f6; }
+.equipo-card.estado-terminado  { border-left: 4px solid #22c55e; }
+.equipo-card.estado-archivado  { border-left: 4px solid #94a3b8; }

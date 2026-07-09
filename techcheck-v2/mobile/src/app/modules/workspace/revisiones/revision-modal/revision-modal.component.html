@@ -1,0 +1,291 @@
+<ion-header>
+  <ion-toolbar [color]="isTerminado() ? 'success' : 'primary'">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ equipoNombre }}</ion-title>
+    <ion-buttons slot="end">
+      @if (revision()) {
+        <ion-badge [color]="estadoColor(revision()!.estado)" class="header-badge">
+          {{ estadoLabel(revision()!.estado) }}
+        </ion-badge>
+      }
+    </ion-buttons>
+  </ion-toolbar>
+
+  @if (!loading() && revision()) {
+    <ion-toolbar>
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar" [style.width.%]="progress()"></div>
+      </div>
+      <div class="progress-label">
+        {{ checkedCount() }} / {{ totalCount() }} ítems completados
+        @if (isOffline()) {
+          <span class="offline-chip">
+            <ion-icon name="cloud-offline-outline"></ion-icon> Sin conexión
+          </span>
+        }
+      </div>
+    </ion-toolbar>
+  }
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && revision()) {
+    @if (revision()!.items.length === 0) {
+      <div class="empty-state">
+        <ion-icon name="clipboard-outline"></ion-icon>
+        <p>Este equipo no tiene ítems de checklist.</p>
+      </div>
+    }
+
+    <ion-list class="revision-list">
+      @for (item of revision()!.items; track item.id) {
+        <div class="rev-item" [class.rev-item--checked]="item.checked" [class.rev-item--expanded]="isExpanded(item.id)">
+
+          <!-- Fila principal -->
+          <ion-item lines="none" class="rev-item-row">
+            <ion-checkbox
+              slot="start"
+              [checked]="item.checked"
+              [disabled]="isTerminado() || isSaving(item.id)"
+              (ionChange)="toggleCheck(item, $event)"
+              class="rev-checkbox">
+            </ion-checkbox>
+
+            <ion-label
+              class="rev-label"
+              [class.rev-label--done]="item.checked"
+              (click)="toggleExpand(item.id)">
+              {{ item.label }}
+              @if ((item.archivos?.length ?? 0) > 0) {
+                <ion-note color="primary"> · {{ item.archivos!.length }} archivo(s)</ion-note>
+              }
+            </ion-label>
+
+            @if (isSaving(item.id)) {
+              <ion-spinner slot="end" name="crescent" color="medium" class="item-spinner"></ion-spinner>
+            }
+
+            <ion-button
+              slot="end"
+              fill="clear"
+              size="small"
+              (click)="toggleExpand(item.id)"
+              class="expand-btn">
+              <ion-icon [name]="isExpanded(item.id) ? 'chevron-up-outline' : 'chevron-down-outline'" color="medium"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <!-- Detalle expandible -->
+          @if (isExpanded(item.id)) {
+            <div class="rev-item-detail">
+              <ion-textarea
+                placeholder="Agregar nota u observación..."
+                [value]="item.nota ?? ''"
+                [disabled]="isTerminado()"
+                (ionInput)="onNoteInput(item.id, $any($event).target.value)"
+                (ionBlur)="onNoteBlur(item.id)"
+                [rows]="2"
+                autoGrow="true"
+                class="rev-nota">
+              </ion-textarea>
+
+              <!-- Archivos subidos -->
+              @if ((item.archivos?.length ?? 0) > 0) {
+                <div class="archivos-list">
+                  @for (arch of item.archivos!; track arch.id) {
+                    <div class="archivo-item">
+                      @if (arch.tipo === 'imagen') {
+                        <img
+                          [src]="arch.url"
+                          class="archivo-thumb"
+                          (click)="viewImage(arch.url)"
+                          alt="Evidencia">
+                      } @else {
+                        <div class="archivo-doc" (click)="openDocument(arch.url)">
+                          <ion-icon name="document-outline"></ion-icon>
+                          <small>Abrir</small>
+                        </div>
+                      }
+                      @if (!isTerminado()) {
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          color="danger"
+                          class="archivo-del"
+                          (click)="removeArchivo(item.id, arch.id)">
+                          <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+                        </ion-button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Botones de adjuntar -->
+              @if (!isTerminado()) {
+                <div class="upload-row">
+                  <ion-button
+                    fill="outline"
+                    size="small"
+                    color="primary"
+                    class="upload-btn"
+                    [disabled]="isUploading(item.id)"
+                    (click)="capturePhoto(item)">
+                    @if (isUploading(item.id)) {
+                      <ion-spinner name="crescent" slot="start"></ion-spinner>
+                      Subiendo...
+                    } @else {
+                      <ion-icon slot="start" name="camera-outline"></ion-icon>
+                      Foto
+                    }
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    size="small"
+                    color="medium"
+                    class="upload-btn"
+                    [disabled]="isUploading(item.id)"
+                    (click)="triggerFileInput(item.id)">
+                    <ion-icon slot="start" name="attach-outline"></ion-icon>
+                    Archivo
+                  </ion-button>
+                  <input
+                    [id]="'file-input-' + item.id"
+                    type="file"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                    style="display:none"
+                    (change)="onFileSelected($event, item)">
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </ion-list>
+  }
+</ion-content>
+
+<!-- Footer: observación general + completar -->
+@if (!loading() && revision() && !isTerminado()) {
+  <ion-footer>
+    <ion-toolbar class="footer-toolbar">
+      <div class="footer-content">
+        <ion-textarea
+          placeholder="Observación general de la revisión (opcional)..."
+          [value]="obsGeneral()"
+          (ionInput)="obsGeneral.set($any($event).detail.value ?? '')"
+          [rows]="2"
+          autoGrow="true"
+          class="obs-textarea">
+        </ion-textarea>
+
+        <!-- Archivos adjuntos a la observación general -->
+        <div class="obs-archivos">
+          @for (a of revision()!.archivos_obs ?? []; track a.id) {
+            <div class="obs-archivo-chip">
+              @if (a.tipo === 'imagen') {
+                <img [src]="a.url" class="obs-thumb" (click)="viewImage(a.url)" alt="imagen">
+              } @else {
+                <ion-icon name="document-outline" class="obs-doc-icon" (click)="openDocument(a.url)"></ion-icon>
+              }
+              <ion-button fill="clear" size="small" color="danger" class="obs-del-btn" (click)="removeArchivoObs(a.id)">
+                <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+              </ion-button>
+            </div>
+          }
+          <div class="obs-upload-actions">
+            <ion-button fill="outline" size="small" color="medium" [disabled]="uploadingObs()" (click)="capturePhotoObs()">
+              @if (uploadingObs()) { <ion-spinner name="crescent" slot="start"></ion-spinner> } @else {
+                <ion-icon slot="start" name="camera-outline"></ion-icon>
+              }
+              Foto
+            </ion-button>
+            <ion-button fill="outline" size="small" color="medium" [disabled]="uploadingObs()" (click)="triggerFileInputObs()">
+              <ion-icon slot="start" name="attach-outline"></ion-icon>
+              Archivo
+            </ion-button>
+            <input id="file-input-obs" type="file"
+              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+              style="display:none" (change)="onFileSelectedObs($event)">
+          </div>
+        </div>
+
+        <ion-item lines="none" class="calidad-item">
+          <ion-select
+            label="Calidad"
+            [value]="calidadLocal()"
+            (ionChange)="calidadLocal.set($any($event).detail.value)"
+            interface="action-sheet">
+            <ion-select-option value="ok">OK</ion-select-option>
+            <ion-select-option value="observacion">Con observaciones</ion-select-option>
+            <ion-select-option value="problema">Con problemas</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-button
+          expand="block"
+          [color]="allChecked() ? 'success' : 'medium'"
+          [disabled]="completando()"
+          (click)="completar()"
+          class="completar-btn">
+          @if (completando()) {
+            <ion-spinner name="crescent" slot="start"></ion-spinner>
+            Completando...
+          } @else if (!allChecked()) {
+            <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
+            Faltan {{ pendingCount() }} ítem(s) por revisar
+          } @else {
+            <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
+            Marcar como Terminado
+          }
+        </ion-button>
+      </div>
+    </ion-toolbar>
+  </ion-footer>
+}
+
+@if (!loading() && revision() && isTerminado()) {
+  <ion-footer>
+    <ion-toolbar>
+      <div class="footer-terminado">
+        <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+        <span>Revisión completada</span>
+        @if (revision()!.estado_calidad) {
+          <span [class]="'status-pill status-' + revision()!.estado_calidad">
+            {{ calidadLabel(revision()!.estado_calidad) }}
+          </span>
+        }
+        @if (revision()!.observacion_general) {
+          <p class="obs-terminado">{{ revision()!.observacion_general }}</p>
+        }
+        @if ((revision()!.archivos_obs?.length ?? 0) > 0) {
+          <div class="archivos-list" style="margin-top:8px">
+            @for (arch of revision()!.archivos_obs!; track arch.id) {
+              @if (arch.tipo === 'imagen') {
+                <img [src]="arch.url" class="archivo-thumb" (click)="viewImage(arch.url)" alt="Foto">
+              }
+            }
+          </div>
+        }
+      </div>
+    </ion-toolbar>
+  </ion-footer>
+}
+
+<!-- Visor de imagen fullscreen -->
+@if (imagenVisor()) {
+  <div class="imagen-visor-overlay" (click)="cerrarVisor()">
+    <ion-button class="imagen-visor-close" fill="clear" color="light" (click)="cerrarVisor()">
+      <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+    </ion-button>
+    <img [src]="imagenVisor()!" class="imagen-visor-img" alt="Evidencia" (click)="$event.stopPropagation()">
+  </div>
+}

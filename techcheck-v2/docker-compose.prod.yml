@@ -1,0 +1,64 @@
+services:
+
+  # ── MySQL 8.0 ──────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: techcheck-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${DB_NAME}
+      MYSQL_USER:          ${DB_USER}
+      MYSQL_PASSWORD:      ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - techcheck-net
+    healthcheck:
+      test:     ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout:  5s
+      retries:  12
+      start_period: 30s
+
+  # ── Backend Node.js ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile.prod
+    container_name: techcheck-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST:   mysql
+      NODE_ENV:  production
+    networks:
+      - techcheck-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ── Frontend Angular + nginx ───────────────────────────────────────────────
+  frontend:
+    build:
+      context:    ./frontend-web
+      dockerfile: Dockerfile
+    container_name: techcheck-frontend
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    networks:
+      - techcheck-net
+    depends_on:
+      - backend
+
+# ── Red interna ────────────────────────────────────────────────────────────────
+networks:
+  techcheck-net:
+    driver: bridge
+
+# ── Volúmenes persistentes ─────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local

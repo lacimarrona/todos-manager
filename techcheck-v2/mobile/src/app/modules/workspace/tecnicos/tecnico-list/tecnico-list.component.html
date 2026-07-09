@@ -1,0 +1,102 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Técnicos</ion-title>
+    @if (isAdmin()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="abrirCrear()" title="Agregar técnico">
+          <ion-icon slot="icon-only" name="add"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
+  }
+
+  @if (!loading() && tecnicos().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="person-outline"></ion-icon>
+      <p>No hay técnicos registrados.</p>
+      @if (isAdmin()) {
+        <ion-button (click)="abrirCrear()">Agregar primer técnico</ion-button>
+      }
+    </div>
+  }
+
+  <ion-list>
+    @for (t of tecnicos(); track t.id) {
+      <ion-item>
+        <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>{{ t.nombre }}</h3>
+          @if (t.email) { <p>{{ t.email }}</p> }
+        </ion-label>
+        <div slot="end" style="display:flex;align-items:center;gap:4px">
+          <ion-badge [color]="t.activo ? 'success' : 'medium'">
+            {{ t.activo ? 'Activo' : 'Inactivo' }}
+          </ion-badge>
+          @if (isAdmin()) {
+            <ion-button fill="clear" size="small" (click)="abrirEditar(t)">
+              <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="confirmarEliminar(t)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
+          }
+        </div>
+      </ion-item>
+    }
+  </ion-list>
+
+  @if (isAdmin()) {
+  }
+</ion-content>
+
+<ion-modal [isOpen]="modalAbierto()" (didDismiss)="cerrarModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>{{ editando() ? 'Editar técnico' : 'Nuevo técnico' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModal()">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto">
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px">Nombre *</label>
+          <ion-input
+            [value]="formNombre()"
+            (ionInput)="formNombre.set($any($event).detail.value)"
+            placeholder="Nombre del técnico"
+            fill="outline">
+          </ion-input>
+        </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:6px">Email (opcional)</label>
+          <ion-input
+            type="email"
+            [value]="formEmail()"
+            (ionInput)="formEmail.set($any($event).detail.value)"
+            placeholder="correo@ejemplo.com"
+            fill="outline">
+          </ion-input>
+        </div>
+        <ion-button expand="block" [disabled]="guardando()" (click)="guardar()">
+          @if (guardando()) {
+            <ion-spinner name="crescent"></ion-spinner>
+          } @else {
+            {{ editando() ? 'Guardar cambios' : 'Crear técnico' }}
+          }
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

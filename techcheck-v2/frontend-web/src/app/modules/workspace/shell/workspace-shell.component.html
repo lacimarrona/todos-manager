@@ -1,0 +1,48 @@
+<ion-menu menuId="workspace-menu" contentId="workspace-content" type="overlay">
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>TechCheck</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <div class="menu-user-info">
+      <ion-icon name="person-circle-outline" class="menu-avatar-icon"></ion-icon>
+      <div>
+        <p class="menu-user-name">{{ auth.user()?.nombre }}</p>
+        <p class="menu-user-role">{{ auth.user()?.rol }}</p>
+      </div>
+    </div>
+
+    <ion-list lines="none">
+      @for (item of navItems; track item.path) {
+        @if (!item.adminOnly || auth.isAdmin()) {
+          <ion-item
+            [routerLink]="item.path"
+            routerLinkActive="menu-item-active"
+            detail="false"
+            (click)="closeMenu()"
+            button>
+            <ion-icon [name]="item.icon" slot="start"></ion-icon>
+            <ion-label>{{ item.label }}</ion-label>
+          </ion-item>
+        }
+      }
+    </ion-list>
+  </ion-content>
+
+  <ion-footer>
+    <ion-toolbar>
+      <ion-button expand="full" fill="clear" (click)="openChangePassword()">
+        <ion-icon name="key-outline" slot="start"></ion-icon>
+        Cambiar contraseña
+      </ion-button>
+      <ion-button expand="full" fill="clear" color="danger" (click)="logout()">
+        <ion-icon name="log-out-outline" slot="start"></ion-icon>
+        Cerrar sesión
+      </ion-button>
+    </ion-toolbar>
+  </ion-footer>
+</ion-menu>
+
+<ion-router-outlet id="workspace-content"></ion-router-outlet>

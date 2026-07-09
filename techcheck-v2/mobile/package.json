@@ -1,0 +1,45 @@
+{
+  "name": "techcheck-mobile",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "build:android": "ng build --configuration production && npx cap sync android && echo Done! Open Android Studio with: npx cap open android",
+    "cap:open": "npx cap open android"
+  },
+  "private": true,
+  "packageManager": "npm@11.12.1",
+  "dependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/compiler": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/forms": "^22.0.0",
+    "@angular/platform-browser": "^22.0.0",
+    "@angular/router": "^22.0.0",
+    "@capacitor-community/file-opener": "^7.0.1",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/camera": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.1.8",
+    "@capacitor/network": "^7.0.4",
+    "@capacitor/preferences": "^7.0.4",
+    "@capacitor/share": "^7.0.4",
+    "@ionic/angular": "^8.8.10",
+    "@ionic/angular-toolkit": "^12.3.0",
+    "ionicons": "^8.0.13",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.0.5",
+    "@angular/cli": "^22.0.5",
+    "@angular/compiler-cli": "^22.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "typescript": "~6.0.2"
+  },
+  "overrides": {
+    "@babel/core": "^7.29.6",
+    "esbuild": "^0.25.5"
+  }
+}

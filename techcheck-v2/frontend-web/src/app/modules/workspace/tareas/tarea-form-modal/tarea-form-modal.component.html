@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()" fill="clear">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ isEdit ? 'Editar' : 'Nueva' }} Tarea</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="submit()" fill="clear" [disabled]="!isValid() || saving()">
+        @if (saving()) {
+          <ion-spinner name="crescent" style="width:18px;height:18px"></ion-spinner>
+        } @else {
+          Guardar
+        }
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Edit mode: show equipo info (read-only) -->
+  @if (isEdit && tarea?.equipo) {
+    <div class="tarea-equipo-info">
+      <p class="tarea-equipo-nombre">{{ tarea!.equipo!.nombre }}</p>
+      @if (tarea?.equipo?.proyecto) {
+        <p class="tarea-equipo-proyecto">{{ tarea!.equipo!.proyecto!.nombre }}</p>
+      }
+    </div>
+  }
+
+  <!-- Create mode: project + equipo selectors -->
+  @if (!isEdit) {
+    <ion-list lines="full" class="form-list">
+      <ion-item>
+        <ion-select
+          label="Proyecto *"
+          labelPlacement="stacked"
+          [value]="proyectoId()"
+          (ionChange)="onProyectoChange($event.detail.value)"
+          placeholder="Selecciona un proyecto">
+          @for (p of proyectos(); track p.id) {
+            <ion-select-option [value]="p.id">{{ p.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-select
+          label="Equipo *"
+          labelPlacement="stacked"
+          [value]="equipoId()"
+          (ionChange)="equipoId.set($event.detail.value)"
+          placeholder="Selecciona un equipo"
+          [disabled]="equipos().length === 0">
+          @for (eq of equipos(); track eq.id) {
+            <ion-select-option [value]="eq.id">{{ eq.nombre }}</ion-select-option>
+          }
+        </ion-select>
+        @if (loadingEqs()) {
+          <ion-spinner name="crescent" slot="end" style="width:18px;height:18px"></ion-spinner>
+        }
+      </ion-item>
+    </ion-list>
+  }
+
+  <!-- Hora -->
+  <ion-list lines="full" class="form-list">
+    <ion-item>
+      <ion-input
+        label="Hora de ejecución *"
+        labelPlacement="stacked"
+        [value]="hora()"
+        (ionChange)="hora.set($event.detail.value ?? '')"
+        type="time"
+        placeholder="HH:MM">
+      </ion-input>
+    </ion-item>
+  </ion-list>
+
+  <!-- Días de la semana -->
+  <div class="dias-section">
+    <p class="dias-label">Días de la semana *</p>
+    <div class="dias-grid">
+      @for (day of DAYS; track day.value) {
+        <ion-item lines="none" class="dia-item">
+          <ion-checkbox
+            [checked]="isDaySelected(day.value)"
+            (ionChange)="toggleDay(day.value, $event)"
+            justify="start"
+            labelPlacement="end">
+            {{ day.label }}
+          </ion-checkbox>
+        </ion-item>
+      }
+    </div>
+    @if (selectedDays().length === 0) {
+      <p class="form-error" style="color:var(--ion-color-danger);font-size:0.82rem;margin:4px 0 0">
+        Selecciona al menos un día
+      </p>
+    }
+  </div>
+
+  @if (error()) {
+    <ion-text color="danger"><p class="form-error">{{ error() }}</p></ion-text>
+  }
+</ion-content>

@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button menu="workspace-menu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Usuarios</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openCreate()" title="Nuevo usuario">
+        <ion-icon slot="icon-only" name="add"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar>
+    <ion-searchbar
+      placeholder="Buscar por nombre o email..."
+      [debounce]="300"
+      (ionInput)="query.set($any($event).target.value ?? '')"
+      (ionClear)="query.set('')">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  @if (loading()) {
+    <div class="center-spinner">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  }
+
+  @if (!loading() && filtered().length === 0) {
+    <div class="empty-state">
+      <ion-icon name="person-outline"></ion-icon>
+      <p>{{ query() ? 'Sin resultados para "' + query() + '"' : 'No hay usuarios en este workspace.' }}</p>
+      @if (!query()) {
+        <ion-button (click)="openCreate()">Crear primer usuario</ion-button>
+      }
+    </div>
+  }
+
+  <ion-list>
+    @for (u of filtered(); track u.id) {
+      <ion-item>
+        <div class="user-avatar" slot="start">{{ initials(u.nombre) }}</div>
+
+        <ion-label>
+          <h3>{{ u.nombre }}</h3>
+          <p>{{ u.email }}</p>
+        </ion-label>
+
+        <div slot="end" class="user-end">
+          <ion-badge [color]="rolColor(u.rol)">{{ u.rol }}</ion-badge>
+          @if (!u.activo) {
+            <ion-badge color="medium">Inactivo</ion-badge>
+          }
+          <ion-button fill="clear" size="small" (click)="openEdit(u)">
+            <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(u)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-item>
+    }
+  </ion-list>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openCreate()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>
