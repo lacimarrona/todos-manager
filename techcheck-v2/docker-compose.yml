@@ -17,6 +17,7 @@ services:
       - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./backend/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -43,6 +44,9 @@ services:
       - ./backend/migrations:/app/migrations
       - ./backend/seeders:/app/seeders
       - ./backend/.sequelizerc:/app/.sequelizerc
+      - ./backend/tests:/app/tests
+      - ./backend/vitest.config.js:/app/vitest.config.js
+      - ./backend/.env.test:/app/.env.test
 
 volumes:
   mysql_data:
