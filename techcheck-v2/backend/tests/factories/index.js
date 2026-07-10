@@ -1,4 +1,4 @@
-const { Workspace, Usuario, Proyecto, Equipo, Plantilla } = require('../../src/models');
+const { Workspace, Usuario, Proyecto, Equipo, Plantilla, ItemPlantilla } = require('../../src/models');
 
 let counter = 0;
 function uniq(prefix) {
@@ -45,4 +45,20 @@ async function createPlantilla(workspace, overrides = {}) {
   });
 }
 
-module.exports = { createWorkspace, createUsuario, createProyecto, createEquipo, createPlantilla };
+async function createItemPlantilla(plantilla, overrides = {}) {
+  return ItemPlantilla.create({
+    plantilla_id: plantilla.id,
+    label: uniq('Item '),
+    orden: 0,
+    ...overrides,
+  });
+}
+
+module.exports = {
+  createWorkspace,
+  createUsuario,
+  createProyecto,
+  createEquipo,
+  createPlantilla,
+  createItemPlantilla,
+};
