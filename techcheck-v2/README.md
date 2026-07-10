@@ -151,6 +151,48 @@ Cada usuario pertenece a exactamente un workspace. El superadmin no pertenece a 
 
 ---
 
+## Tests
+
+### Backend (Vitest + Supertest)
+
+Corre contra una base de datos de test separada (`techcheck_test`), nunca contra la de desarrollo.
+
+```bash
+# 1. Una sola vez: crear la BD de test si el volumen de MySQL ya existía antes
+#    de agregar backend/docker/init-test-db.sql (si el volumen es nuevo, se crea sola).
+#    Reemplazar <DB_ROOT_PASSWORD> por el valor real de tu .env.
+docker compose exec mysql mysql -uroot -p<DB_ROOT_PASSWORD> -e \
+  "CREATE DATABASE IF NOT EXISTS techcheck_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON techcheck_test.* TO 'techcheck_user'@'%'; FLUSH PRIVILEGES;"
+
+# 2. Copiar la config de test y ajustar si hace falta
+cd backend
+cp .env.test.example .env.test
+
+# 3. Migrar la BD de test (solo la primera vez o tras agregar migraciones nuevas)
+docker compose exec backend npm run db:migrate:test
+
+# 4. Correr los tests
+docker compose exec backend npm test
+```
+
+### Frontend web y mobile (Vitest, vía Angular)
+
+```bash
+cd frontend-web   # o cd mobile
+npm test
+```
+
+> Nota: los componentes que usan `@ionic/angular` (ej. `ion-app`) no se pueden testear
+> hoy con el test runner nativo de Angular — es un bug externo sin resolver
+> ([ionic-team/ionic-framework#30982](https://github.com/ionic-team/ionic-framework/issues/30982)).
+> Los tests actuales se enfocan en servicios, guards y lógica pura.
+
+### CI
+
+Los tres suites corren automáticamente en GitHub Actions en cada push/PR que toque `techcheck-v2/**` (`.github/workflows/techcheck-v2-ci.yml` en la raíz del repo).
+
+---
+
 ## Comandos útiles
 
 ```bash
