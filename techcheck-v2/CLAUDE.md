@@ -24,11 +24,11 @@ Este archivo le da contexto a Claude Code sobre el proyecto. Léelo completament
 ### Frontend Web
 - Angular 22
 - Ionic 8 (componentes UI)
-- Tailwind CSS
+- SCSS custom en `src/styles.scss` (no Tailwind — ver nota abajo)
 - Standalone components (sin NgModules)
 
 ### App Móvil
-- Ionic 8 + Angular 20
+- Ionic 8 + Angular 22
 - Capacitor (bridge nativo)
 - Plugin de cámara de Capacitor
 
@@ -36,6 +36,13 @@ Este archivo le da contexto a Claude Code sobre el proyecto. Léelo completament
 - Docker + Docker Compose
 - MySQL en contenedor con volumen persistente
 - Docker Hub: julianquintero/techcheck
+
+> **Nota sobre estilos (2026-07-10):** el plan original era usar Tailwind CSS, pero
+> `frontend-web` nunca llegó a instalarlo (no hay `tailwindcss` en `package.json` ni
+> `tailwind.config.*`). En su lugar hay ~1000 líneas de SCSS custom en `src/styles.scss`
+> que imita el look de Tailwind y ya funciona en toda la app. Decisión: no migrar por
+> ahora (evita tocar templates de todos los módulos sin beneficio funcional); se
+> reevaluará si hace falta algo específico de Tailwind (ej. dark mode, purga de CSS).
 
 ---
 
@@ -124,7 +131,7 @@ archivos_obs_general→ id, revision_id, url, tipo
 plantillas          → id, workspace_id, nombre, descripcion
 items_plantilla     → id, plantilla_id, label, observacion_guia, orden
 tareas_programadas  → id, equipo_id, hora, dias_semana, activa
-tecnicos            → id, workspace_id, nombre, especialidad, contacto (catálogo de técnicos externos sin cuenta)
+tecnicos            → id, workspace_id, nombre, email, activo (catálogo de técnicos externos sin cuenta)
 ```
 
 > **Nota sobre la tabla `tecnicos`:** Es un catálogo de técnicos externos (sin cuenta en el sistema).
@@ -243,9 +250,12 @@ npx sequelize-cli db:migrate:undo
 
 ## Fase actual de desarrollo
 
-Ver `techcheck_v2_planificacion.md` para el orden completo de desarrollo.
+El desarrollo inicial (backend, frontend web, app móvil) está completo — ver `README.md` sección
+"Funcionalidades implementadas". El trabajo actual es de mantenimiento, hardening de seguridad
+(ver `SECURITY.md`) y las mejoras listadas en "Pendiente / próximos pasos" más arriba.
 
-**Próximo paso:** Fase 1 — Setup del proyecto con Express + Sequelize + MySQL en Docker.
+> Nota: `techcheck_v2_planificacion.md`, mencionado en versiones anteriores de este archivo, no
+> existe en el repositorio — puede haberse usado solo localmente durante el arranque del proyecto.
 
 ---
 
@@ -259,6 +269,6 @@ Ver `techcheck_v2_planificacion.md` para el orden completo de desarrollo.
 - Preferencias:
   - Un cambio a la vez
   - Separar siempre lógica (.ts) de template (.html)
-  - Tailwind para estilos
+  - Estilos: SCSS custom en `frontend-web` (Tailwind fue el plan original, ver nota en Stack tecnológico)
   - Nunca modificar código que ya funciona
   - Preguntar antes de hacer cambios grandes

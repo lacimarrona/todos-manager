@@ -9,8 +9,8 @@ Plataforma de gestión de checklists de mantenimiento técnico con soporte **web
 | Capa | Tecnologías |
 |---|---|
 | Backend | Node.js 20 · Express · Sequelize · MySQL 8 · bcrypt · JWT |
-| Frontend web | Angular 20 · Ionic 8 · Tailwind CSS · Standalone components |
-| App móvil | Ionic 8 · Angular 20 · Capacitor 7 · Android |
+| Frontend web | Angular 22 · Ionic 8 · SCSS custom · Standalone components |
+| App móvil | Ionic 8 · Angular 22 · Capacitor 7 · Android |
 | DevOps | Docker · Docker Compose · nginx 1.28-alpine |
 
 ---
