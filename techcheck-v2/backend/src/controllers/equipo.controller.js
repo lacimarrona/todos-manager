@@ -2,6 +2,8 @@
 
 const ExcelJS  = require('exceljs');
 const { Equipo, ItemEquipo, ArchivoGuia, Proyecto, Usuario, Revision, ItemRevision } = require('../models');
+const { wsId } = require('../utils/workspace');
+const { csvCell, csvRow } = require('../utils/csv');
 
 // Carga el equipo verificando que su proyecto pertenece al workspace del usuario
 async function findEquipoConAcceso(equipoId, workspaceId) {
@@ -13,8 +15,13 @@ async function findEquipoConAcceso(equipoId, workspaceId) {
   return equipo;
 }
 
-function wsId(req) {
-  return req.user.rol === 'superadmin' ? null : req.user.workspace_id;
+// Verifica que el técnico asignado (si viene informado) pertenece al workspace del usuario
+async function tecnicoValido(tecnicoId, workspaceId) {
+  if (!tecnicoId) return true;
+  const usuario = await Usuario.findOne({
+    where: { id: tecnicoId, ...(workspaceId ? { workspace_id: workspaceId } : {}) },
+  });
+  return !!usuario;
 }
 
 // Includes estándar para un equipo completo
@@ -71,6 +78,10 @@ const equipoController = {
       });
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
+      if (!(await tecnicoValido(tecnico_asignado_id, wsId(req)))) {
+        return res.status(404).json({ error: 'Técnico asignado no encontrado' });
+      }
+
       const equipo = await Equipo.create({
         proyecto_id,
         nombre,
@@ -105,6 +116,9 @@ const equipoController = {
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const { nombre, plantilla_id, tecnico_asignado_id, tiempo_limite } = req.body;
+      if (!(await tecnicoValido(tecnico_asignado_id, wsId(req)))) {
+        return res.status(404).json({ error: 'Técnico asignado no encontrado' });
+      }
       await equipo.update({ nombre, plantilla_id, tecnico_asignado_id, tiempo_limite });
       await equipo.reload({ include: equipoIncludes });
       return res.json(equipo);
@@ -378,9 +392,18 @@ const equipoController = {
       });
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
+      if (!(await tecnicoValido(tecnico_asignado_id, wsId(req)))) {
+        return res.status(404).json({ error: 'Técnico asignado no encontrado' });
+      }
+
       let itemsBase = [];
       if (plantilla_id) {
-        const { ItemPlantilla } = require('../models');
+        const { Plantilla, ItemPlantilla } = require('../models');
+        const plantilla = await Plantilla.findOne({
+          where: { id: plantilla_id, ...(wsId(req) ? { workspace_id: wsId(req) } : {}) },
+        });
+        if (!plantilla) return res.status(404).json({ error: 'Plantilla no encontrada' });
+
         itemsBase = await ItemPlantilla.findAll({
           where: { plantilla_id },
           order: [['orden', 'ASC']],
@@ -461,12 +484,6 @@ const equipoController = {
         order: [['id', 'ASC']],
       });
 
-      const csvCell = v => {
-        let s = String(v ?? '');
-        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-        return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
-      };
-      const csvRow = cells => cells.map(csvCell).join(',');
       const fmtDate = d => d ? new Date(d).toLocaleString('es-ES') : '';
       const estadoMap = { ok: 'OK', observacion: 'Con observaciones', problema: 'Con problemas' };
 

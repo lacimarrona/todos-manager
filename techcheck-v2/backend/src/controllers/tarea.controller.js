@@ -1,12 +1,9 @@
 'use strict';
 
 const { TareaProgramada, Equipo, Proyecto } = require('../models');
+const { wsId } = require('../utils/workspace');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function wsId(req) {
-  return req.user.rol === 'superadmin' ? null : req.user.workspace_id;
-}
 
 // Acepta "HH:MM" o "HH:MM:SS"; rechaza cualquier otro formato
 function normalizarHora(hora) {

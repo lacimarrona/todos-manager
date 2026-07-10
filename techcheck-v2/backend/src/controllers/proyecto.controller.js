@@ -4,26 +4,10 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const { Proyecto, Equipo, ItemEquipo, ArchivoGuia, Usuario, Workspace,
         Revision, ItemRevision, ArchivoRevision } = require('../models');
+const { wsIdFiltrable: wsId } = require('../utils/workspace');
+const { csvCell, csvRow } = require('../utils/csv');
 
-// ── CSV helpers ──────────────────────────────────────────────────────────────
-function csvCell(val) {
-  if (val === null || val === undefined) return '';
-  let str = String(val);
-  // Neutralizar inyección de fórmulas CSV (=, +, -, @, TAB, CR)
-  if (/^[=+\-@\t\r]/.test(str)) str = "'" + str;
-  return (str.includes(',') || str.includes('"') || str.includes('\n'))
-    ? `"${str.replace(/"/g, '""')}"`
-    : str;
-}
-function csvRow(cells) { return cells.map(csvCell).join(','); }
 function fmtDate(d) { return d ? new Date(d).toISOString().replace('T', ' ').slice(0, 19) : ''; }
-
-// Devuelve el workspace_id a filtrar según el rol; null = sin restricción
-function wsId(req) {
-  return req.user.rol === 'superadmin'
-    ? (req.query.workspace_id ? parseInt(req.query.workspace_id) : null)
-    : req.user.workspace_id;
-}
 
 // Verifica que el proyecto pertenece al workspace del usuario
 async function findProyectoConAcceso(id, workspaceId) {

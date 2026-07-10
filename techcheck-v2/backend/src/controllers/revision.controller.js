@@ -12,9 +12,15 @@ function validarDataUrl(url, tipo) {
 
 const { sequelize } = require('../config/database');
 const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ItemEquipo, Usuario, ItemPlantilla } = require('../models');
+const { wsId } = require('../utils/workspace');
 
-function wsId(req) {
-  return req.user.rol === 'superadmin' ? null : req.user.workspace_id;
+// Verifica que el técnico (si viene informado) pertenece al workspace del usuario
+async function tecnicoValido(tecnicoId, workspaceId) {
+  if (!tecnicoId) return true;
+  const usuario = await Usuario.findOne({
+    where: { id: tecnicoId, ...(workspaceId ? { workspace_id: workspaceId } : {}) },
+  });
+  return !!usuario;
 }
 
 // Includes estándar para una revisión completa
@@ -160,6 +166,10 @@ const revisionController = {
         return res.status(404).json({ error: 'Equipo no encontrado' });
       }
 
+      if (!(await tecnicoValido(tecnico_id, wsId(req)))) {
+        return res.status(404).json({ error: 'Técnico no encontrado' });
+      }
+
       // Obtener ítems actuales del equipo (snapshot en el momento de crear la revisión)
       const itemsEquipo = await ItemEquipo.findAll({
         where: { equipo_id },
@@ -219,6 +229,10 @@ const revisionController = {
             error: `No puedes terminar la revisión: faltan ${sinChequear.length} ítem(s) por revisar.`,
           });
         }
+      }
+
+      if (!(await tecnicoValido(tecnico_id, wsId(req)))) {
+        return res.status(404).json({ error: 'Técnico no encontrado' });
       }
 
       await revision.update({ estado, observacion_general, tecnico_id, estado_calidad });

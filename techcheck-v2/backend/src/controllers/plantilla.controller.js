@@ -2,12 +2,7 @@
 
 const ExcelJS = require('exceljs');
 const { Plantilla, ItemPlantilla, ItemEquipo, Equipo, Proyecto, Workspace } = require('../models');
-
-function wsId(req) {
-  return req.user.rol === 'superadmin'
-    ? (req.query.workspace_id ? parseInt(req.query.workspace_id) : null)
-    : req.user.workspace_id;
-}
+const { wsIdFiltrable: wsId } = require('../utils/workspace');
 
 async function findPlantillaConAcceso(id, workspaceId) {
   const where = { id };

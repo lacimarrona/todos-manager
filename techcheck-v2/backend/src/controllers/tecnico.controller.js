@@ -1,10 +1,7 @@
 'use strict';
 
 const { Tecnico } = require('../models');
-
-function wsId(req) {
-  return req.user.rol === 'superadmin' ? null : req.user.workspace_id;
-}
+const { wsId } = require('../utils/workspace');
 
 const tecnicoController = {
   async list(req, res) {
