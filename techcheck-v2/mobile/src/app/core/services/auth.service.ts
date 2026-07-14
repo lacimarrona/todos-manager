@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, switchMap, EMPTY, share } from 'rxjs';
+import { Observable, from, tap, catchError, switchMap, EMPTY, share } from 'rxjs';
 import { Preferences } from '@capacitor/preferences';
 import { environment } from '../../../environments/environment';
 import { StorageService } from './storage.service';
@@ -35,12 +35,10 @@ export class AuthService {
 
   login(creds: LoginRequest) {
     return this.http.post<LoginResponse>(`${this.base}/login`, creds).pipe(
-      tap(res => {
-        this.storage.setTokens(res.access_token, res.refresh_token);
-        // Guardar hash de credenciales para login offline futuro
-        sha256(`${creds.email}:${creds.password}`).then(hash =>
-          Preferences.set({ key: LOCAL_AUTH_KEY, value: hash })
-        );
+      switchMap(async res => {
+        await this.storage.setTokens(res.access_token, res.refresh_token);
+        const hash = await sha256(`${creds.email}:${creds.password}`);
+        await Preferences.set({ key: LOCAL_AUTH_KEY, value: hash });
       }),
       switchMap(() => this.loadMe()),
     );
@@ -83,7 +81,10 @@ export class AuthService {
     this._refreshInProgress$ = this.http
       .post<RefreshResponse>(`${this.base}/refresh`, { refresh_token: refreshToken })
       .pipe(
-        tap(res => this.storage.setTokens(res.access_token, res.refresh_token)),
+        switchMap(async res => {
+          await this.storage.setTokens(res.access_token, res.refresh_token);
+          return res;
+        }),
         share(),
       );
 
@@ -103,7 +104,7 @@ export class AuthService {
 
     return req$.pipe(
       catchError(() => EMPTY),
-      tap(() => this._clearSession()),
+      switchMap(() => from(this._clearSession())),
     );
   }
 
@@ -112,7 +113,7 @@ export class AuthService {
   }
 
   clearSession() {
-    this._clearSession();
+    void this._clearSession();
   }
 
   decodeToken(): JwtPayload | null {
@@ -132,10 +133,12 @@ export class AuthService {
     return Date.now() >= payload.exp * 1000;
   }
 
-  private _clearSession(): void {
-    this.storage.clearTokens();
-    Preferences.remove({ key: USER_CACHE_KEY });
-    Preferences.remove({ key: LOCAL_AUTH_KEY });
+  private async _clearSession(): Promise<void> {
+    await this.storage.clearTokens();
+    await Promise.all([
+      Preferences.remove({ key: USER_CACHE_KEY }),
+      Preferences.remove({ key: LOCAL_AUTH_KEY }),
+    ]);
     this._user.set(null);
     this.router.navigate(['/auth/login']);
   }

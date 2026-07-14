@@ -25,9 +25,9 @@ export class AuthService {
   readonly isAdmin  = computed(() => ['admin', 'superadmin'].includes(this._user()?.rol ?? ''));
 
   login(creds: LoginRequest) {
-    return this.http.post<LoginResponse>(`${this.base}/login`, creds).pipe(
+    return this.http.post<LoginResponse>(`${this.base}/login`, creds, { withCredentials: true }).pipe(
       tap(res => {
-        this.storage.setTokens(res.access_token, res.refresh_token);
+        this.storage.setTokens(res.access_token);
       }),
       switchMap(() => this.loadMe()),
     );
@@ -40,18 +40,14 @@ export class AuthService {
   }
 
   refresh(): Observable<RefreshResponse> {
-    const refreshToken = this.storage.getRefreshToken();
-    if (!refreshToken) return EMPTY;
-
-    // Si ya hay un refresh en curso, reutilizar el mismo Observable
-    // para evitar múltiples llamadas simultáneas con el mismo refresh token
     if (this._refreshInProgress$) return this._refreshInProgress$;
 
+    // Web: no envía refresh_token en body — usa la cookie httpOnly automáticamente
     this._refreshInProgress$ = this.http
-      .post<RefreshResponse>(`${this.base}/refresh`, { refresh_token: refreshToken })
+      .post<RefreshResponse>(`${this.base}/refresh`, {}, { withCredentials: true })
       .pipe(
-        tap(res => this.storage.setTokens(res.access_token, res.refresh_token)),
-        share(), // multicast para todos los suscriptores simultáneos
+        tap(res => this.storage.setTokens(res.access_token)),
+        share(),
       );
 
     // Limpiar cuando el Observable termine (completado o error)
@@ -64,12 +60,8 @@ export class AuthService {
   }
 
   logout() {
-    const refreshToken = this.storage.getRefreshToken();
-    const req$ = refreshToken
-      ? this.http.post(`${this.base}/logout`, { refresh_token: refreshToken })
-      : EMPTY;
-
-    return req$.pipe(
+    // withCredentials: true para que el servidor limpie la cookie httpOnly
+    return this.http.post(`${this.base}/logout`, {}, { withCredentials: true }).pipe(
       catchError(() => EMPTY),
       tap(() => this._clearSession()),
     );

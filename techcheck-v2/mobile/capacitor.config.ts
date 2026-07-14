@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'www/browser',
   server: {
     androidScheme: 'https',
-    cleartext: true,   // permite HTTP al backend LAN; network_security_config.xml restringe a IPs locales
+    // cleartext desactivado — la app usa HTTPS (ngrok / dominio propio).
+    // network_security_config.xml permite HTTP solo a emulador y localhost para debugging puntual.
   },
   plugins: {
     Camera: {

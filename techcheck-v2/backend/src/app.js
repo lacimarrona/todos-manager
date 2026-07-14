@@ -1,8 +1,9 @@
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
+const express    = require('express');
+const cors       = require('cors');
+const helmet     = require('helmet');
+const morgan     = require('morgan');
+const cookieParser = require('cookie-parser');
 const { sequelize } = require('./config/database');
 require('./models'); // registra modelos y asociaciones
 
@@ -46,7 +47,7 @@ function makeRateLimiter(max, windowMs) {
     next();
   };
 }
-const authRateLimiter = makeRateLimiter(20, 15 * 60 * 1000);
+const authRateLimiter = makeRateLimiter(5, 15 * 60 * 1000);
 
 // Limpiar entradas expiradas cada hora para evitar crecimiento ilimitado del Map.
 // .unref() evita que este timer mantenga el proceso vivo (necesario para que los
@@ -58,12 +59,29 @@ setInterval(() => {
   }
 }, 60 * 60 * 1000).unref();
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc:  ["'self'"],
+      styleSrc:   ["'self'", "'unsafe-inline'"],
+      imgSrc:     ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  frameguard: { action: 'deny' },
+}));
 
-// CORS: orígenes explícitos si CORS_ORIGIN está definido; en caso contrario solo localhost (dev/LAN)
+// CORS: orígenes explícitos si CORS_ORIGIN está definido
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
   : null;
+
+if (!allowedOrigins && process.env.NODE_ENV === 'production') {
+  throw new Error('CORS_ORIGIN debe estar definido en producción');
+}
 
 // Capacitor (Android: https://localhost, iOS: capacitor://localhost) siempre permitido
 const CAPACITOR_ORIGINS = new Set(['https://localhost', 'capacitor://localhost']);
@@ -72,12 +90,13 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (CAPACITOR_ORIGINS.has(origin)) return callback(null, true);
-    if (!allowedOrigins) return callback(null, true); // modo dev: sin restricción
+    if (!allowedOrigins) return callback(null, true); // modo dev/LAN sin restricción
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`Origen CORS no permitido: ${origin}`));
   },
   credentials: true,
 }));
+app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // Límite global reducido; los endpoints de archivos e importación definen el suyo propio
 app.use(express.json({ limit: '1mb' }));

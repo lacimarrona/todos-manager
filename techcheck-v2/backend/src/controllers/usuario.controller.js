@@ -66,6 +66,9 @@ const usuarioController = {
       if (!nombre || !email || !password) {
         return res.status(400).json({ error: 'nombre, email y password son requeridos' });
       }
+      if (password.length < 12) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
+      }
 
       // Admin solo puede crear usuarios en su propio workspace con rol 'usuario'
       const rolFinal = req.user.rol === 'superadmin' ? (rol || 'usuario') : 'usuario';
@@ -112,6 +115,10 @@ const usuarioController = {
       // Admin no puede escalar privilegios
       if (req.user.rol === 'admin' && req.body.rol && req.body.rol !== 'usuario') {
         return res.status(403).json({ error: 'No puedes asignar ese rol' });
+      }
+
+      if (req.body.password && req.body.password.length < 12) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
       }
 
       const updates = {};

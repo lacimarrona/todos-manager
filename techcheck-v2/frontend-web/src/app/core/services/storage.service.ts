@@ -1,27 +1,20 @@
 import { Injectable } from '@angular/core';
 
-const KEYS = {
-  accessToken:  'tc_access_token',
-  refreshToken: 'tc_refresh_token',
-} as const;
+const ACCESS_KEY = 'tc_access_token';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   getAccessToken(): string | null {
-    return localStorage.getItem(KEYS.accessToken);
+    return localStorage.getItem(ACCESS_KEY);
   }
 
-  getRefreshToken(): string | null {
-    return localStorage.getItem(KEYS.refreshToken);
-  }
-
-  setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem(KEYS.accessToken, accessToken);
-    localStorage.setItem(KEYS.refreshToken, refreshToken);
+  // El refresh_token ya no se guarda en localStorage — vive en la cookie httpOnly
+  // que el servidor gestiona automáticamente.
+  setTokens(accessToken: string, _refreshToken?: string): void {
+    localStorage.setItem(ACCESS_KEY, accessToken);
   }
 
   clearTokens(): void {
-    localStorage.removeItem(KEYS.accessToken);
-    localStorage.removeItem(KEYS.refreshToken);
+    localStorage.removeItem(ACCESS_KEY);
   }
 }

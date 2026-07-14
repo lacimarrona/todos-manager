@@ -10,11 +10,18 @@ const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días en ms
 function buildPayload(usuario) {
   return {
     sub: usuario.id,
-    email: usuario.email,
     rol: usuario.rol,
     workspace_id: usuario.workspace_id,
   };
 }
+
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path:     '/api/auth',
+  maxAge:   7 * 24 * 60 * 60 * 1000, // 7 días en ms
+};
 
 function generateAccessToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -52,6 +59,7 @@ const authController = {
 
       const valid = await bcrypt.compare(password, usuario.password_hash);
       if (!valid) {
+        console.warn('[security] login_failed', { email, ip: req.ip, ts: new Date().toISOString() });
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
@@ -64,9 +72,12 @@ const authController = {
         expires_at: new Date(Date.now() + REFRESH_TTL_MS),
       });
 
+      // httpOnly cookie para web; también en body para clientes móviles/API
+      res.cookie('tc_refresh', rawRefresh, COOKIE_OPTS);
+
       return res.json({
         access_token: accessToken,
-        refresh_token: rawRefresh,
+        refresh_token: rawRefresh, // móvil lo usa directamente; web usa la cookie
         token_type: 'Bearer',
         user: safeUser(usuario),
       });
@@ -80,12 +91,14 @@ const authController = {
     try {
       const { refresh_token } = req.body;
 
-      if (!refresh_token) {
+      // Prioridad: cookie httpOnly (web) → body (móvil/API)
+      const token = req.cookies?.tc_refresh || refresh_token;
+      if (!token) {
         return res.status(400).json({ error: 'refresh_token es requerido' });
       }
 
       const stored = await RefreshToken.findOne({
-        where: { token_hash: hashToken(refresh_token) },
+        where: { token_hash: hashToken(token) },
         include: [{ model: Usuario, as: 'usuario' }],
       });
 
@@ -107,9 +120,11 @@ const authController = {
         expires_at: new Date(Date.now() + REFRESH_TTL_MS),
       });
 
+      res.cookie('tc_refresh', rawRefresh, COOKIE_OPTS);
+
       return res.json({
         access_token: accessToken,
-        refresh_token: rawRefresh,
+        refresh_token: rawRefresh, // móvil lo usa directamente; web usa la cookie
         token_type: 'Bearer',
       });
     } catch (err) {
@@ -121,11 +136,13 @@ const authController = {
   async logout(req, res) {
     try {
       const { refresh_token } = req.body;
+      const token = req.cookies?.tc_refresh || refresh_token;
 
-      if (refresh_token) {
-        await RefreshToken.destroy({ where: { token_hash: hashToken(refresh_token) } });
+      if (token) {
+        await RefreshToken.destroy({ where: { token_hash: hashToken(token) } });
       }
 
+      res.clearCookie('tc_refresh', { ...COOKIE_OPTS, maxAge: 0 });
       return res.json({ message: 'Sesión cerrada correctamente' });
     } catch (err) {
       console.error('[auth/logout]', err);
@@ -139,8 +156,8 @@ const authController = {
       if (!password_actual || !password_nuevo) {
         return res.status(400).json({ error: 'password_actual y password_nuevo son requeridos' });
       }
-      if (password_nuevo.length < 6) {
-        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+      if (password_nuevo.length < 12) {
+        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 12 caracteres' });
       }
       if (password_nuevo === password_actual) {
         return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
