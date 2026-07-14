@@ -89,8 +89,8 @@ export class EquipoListComponent implements OnInit {
 
     if (f === 'archivado') {
       this.proyectoSvc.listEquipos(this.proyectoId, undefined, true).subscribe({
-        next: es => {
-          this.equipos.set(es.filter(e => e.archivado === true));
+        next: resp => {
+          this.equipos.set(resp.data.filter(e => e.archivado === true));
           this.loading.set(false);
         },
         error: () => { this.loading.set(false); this.toast('Error al cargar equipos', 'danger'); },
@@ -98,7 +98,7 @@ export class EquipoListComponent implements OnInit {
     } else {
       const estado = f !== 'todos' ? f : undefined;
       this.proyectoSvc.listEquipos(this.proyectoId, estado).subscribe({
-        next: es => { this.equipos.set(es); this.loading.set(false); },
+        next: resp => { this.equipos.set(resp.data); this.loading.set(false); },
         error: () => { this.loading.set(false); this.toast('Error al cargar equipos', 'danger'); },
       });
     }
@@ -114,7 +114,7 @@ export class EquipoListComponent implements OnInit {
     this.abriendo.set(equipo.id);
 
     try {
-      const revisiones = await firstValueFrom(this.equipoSvc.listRevisiones(equipo.id));
+      const { data: revisiones } = await firstValueFrom(this.equipoSvc.listRevisiones(equipo.id));
       const equipoTieneItems = (equipo.items?.length ?? 0) > 0;
       const activa = revisiones?.find(
         r => r.estado !== 'terminado' && !(equipoTieneItems && r.item_count === 0)

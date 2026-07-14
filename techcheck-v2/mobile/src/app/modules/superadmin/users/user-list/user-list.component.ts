@@ -1,12 +1,13 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
+import { Preferences } from '@capacitor/preferences';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
   IonItem, IonLabel, IonBadge, IonSelect, IonSelectOption,
-  IonSpinner,
+  IonSpinner, IonChip,
   ModalController, AlertController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, pencilOutline, trashOutline, arrowBackOutline, logOutOutline } from 'ionicons/icons';
+import { add, pencilOutline, trashOutline, arrowBackOutline, logOutOutline, cloudOfflineOutline } from 'ionicons/icons';
 import { UserService } from '../../../../core/services/user.service';
 import { WorkspaceService } from '../../../../core/services/workspace.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -15,13 +16,16 @@ import { Workspace } from '../../../../core/models/workspace.model';
 import { SuperadminUserFormModalComponent } from '../user-form-modal/user-form-modal.component';
 import { NavController } from '@ionic/angular/standalone';
 
+const CACHE_USERS_KEY = 'tc_superadmin_users';
+const CACHE_WS_KEY    = 'tc_superadmin_workspaces';
+
 @Component({
   selector: 'app-superadmin-user-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
     IonItem, IonLabel, IonBadge, IonSelect, IonSelectOption,
-    IonSpinner,
+    IonSpinner, IonChip,
   ],
   templateUrl: './user-list.component.html',
 })
@@ -38,23 +42,49 @@ export class SuperadminUserListComponent implements OnInit {
   readonly workspaces = signal<Workspace[]>([]);
   readonly loading    = signal(false);
   readonly filtroWs   = signal<number | null>(null);
+  readonly fromCache  = signal(false);
 
   constructor() {
-    addIcons({ add, pencilOutline, trashOutline, arrowBackOutline, logOutOutline });
+    addIcons({ add, pencilOutline, trashOutline, arrowBackOutline, logOutOutline, cloudOfflineOutline });
   }
 
   ngOnInit() {
-    this.wsSvc.list().subscribe({ next: ws => this.workspaces.set(ws) });
+    this.wsSvc.list().subscribe({
+      next: ws => {
+        this.workspaces.set(ws);
+        Preferences.set({ key: CACHE_WS_KEY, value: JSON.stringify(ws) });
+      },
+      error: async () => {
+        const { value } = await Preferences.get({ key: CACHE_WS_KEY });
+        if (value) this.workspaces.set(JSON.parse(value));
+      },
+    });
     this.loadUsers();
   }
 
   loadUsers() {
     this.loading.set(true);
+    this.fromCache.set(false);
     const wsId = this.filtroWs() ?? undefined;
     this.userSvc.list(wsId).subscribe({
-      next:  us => { this.users.set(us); this.loading.set(false); },
-      error: ()  => { this.loading.set(false); this.toast('Error al cargar usuarios', 'danger'); },
+      next: us => {
+        this.users.set(us);
+        this.loading.set(false);
+        Preferences.set({ key: CACHE_USERS_KEY, value: JSON.stringify(us) });
+      },
+      error: () => this.loadUsersFromCache(),
     });
+  }
+
+  private async loadUsersFromCache() {
+    const { value } = await Preferences.get({ key: CACHE_USERS_KEY });
+    if (value) {
+      this.users.set(JSON.parse(value));
+      this.fromCache.set(true);
+    } else {
+      this.toast('Sin conexión y sin datos en caché', 'danger');
+    }
+    this.loading.set(false);
   }
 
   onFiltroChange(event: Event) {

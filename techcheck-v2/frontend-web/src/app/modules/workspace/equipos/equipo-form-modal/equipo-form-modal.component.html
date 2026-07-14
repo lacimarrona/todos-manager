@@ -83,16 +83,44 @@
 
       @for (item of localItems(); track $index) {
         <ion-item>
-          <ion-label>{{ item.label }}</ion-label>
+          <ion-input
+            [value]="item.label"
+            (ionInput)="updateItemLabel($index, $any($event).detail.value ?? '')"
+            placeholder="Nombre del ítem"
+            autocomplete="off">
+          </ion-input>
+          @if (item.observacion_guia) {
+            <ion-note slot="helper" color="medium">{{ item.observacion_guia }}</ion-note>
+          }
+          <ion-button slot="end" fill="clear" size="small"
+            [color]="expandedObs() === $index ? 'primary' : 'medium'"
+            (click)="toggleItemObs($index)"
+            title="Observación guía">
+            <ion-icon slot="icon-only" [name]="expandedObs() === $index ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+          </ion-button>
           <ion-button slot="end" fill="clear" size="small" color="danger" (click)="eliminarItem($index)">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
           </ion-button>
         </ion-item>
+        @if (expandedObs() === $index) {
+          <ion-item>
+            <ion-textarea
+              label="Observación guía"
+              labelPlacement="stacked"
+              [value]="item.observacion_guia ?? ''"
+              (ionInput)="updateItemObs($index, $any($event).detail.value ?? '')"
+              placeholder="Texto de ayuda para el técnico al revisar este ítem..."
+              [rows]="2"
+              autoGrow="true">
+            </ion-textarea>
+          </ion-item>
+        }
       }
 
+      <!-- Agregar nuevo ítem -->
       <ion-item>
         <ion-input
-          label="Agregar ítem"
+          label="Nuevo ítem"
           labelPlacement="stacked"
           [value]="nuevoLabel()"
           (ionInput)="nuevoLabel.set($event.detail.value ?? '')"
@@ -102,6 +130,17 @@
         <ion-button slot="end" fill="clear" (click)="agregarItem()" [disabled]="!nuevoLabel().trim()">
           <ion-icon slot="icon-only" name="add"></ion-icon>
         </ion-button>
+      </ion-item>
+      <ion-item lines="full">
+        <ion-textarea
+          label="Observación guía del nuevo ítem"
+          labelPlacement="stacked"
+          [value]="nuevoObsGuia()"
+          (ionInput)="nuevoObsGuia.set($event.detail.value ?? '')"
+          placeholder="Texto de ayuda para el técnico (opcional)..."
+          [rows]="2"
+          autoGrow="true">
+        </ion-textarea>
       </ion-item>
     </ion-list>
 

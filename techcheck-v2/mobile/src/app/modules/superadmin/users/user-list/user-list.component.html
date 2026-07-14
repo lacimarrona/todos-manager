@@ -36,6 +36,13 @@
 
 <ion-content class="ion-padding">
 
+  @if (fromCache()) {
+    <ion-chip color="warning" style="margin-bottom:12px;width:100%;justify-content:center">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <ion-label>Sin conexión — mostrando datos en caché</ion-label>
+    </ion-chip>
+  }
+
   @if (loading()) {
     <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
   }

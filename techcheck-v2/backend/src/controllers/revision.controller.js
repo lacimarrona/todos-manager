@@ -81,15 +81,28 @@ const revisionController = {
         return res.status(404).json({ error: 'Equipo no encontrado' });
       }
 
-      const revisiones = await Revision.findAll({
+      const page  = Math.max(1, parseInt(req.query.page)  || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await Revision.findAndCountAll({
         where: { equipo_id: equipo.id },
         include: [
-          { model: Usuario, as: 'tecnico', attributes: ['id', 'nombre'], required: false },
-          { model: ItemRevision, as: 'items', attributes: ['id'], required: false },
+          { model: Usuario,     as: 'tecnico', attributes: ['id', 'nombre'], required: false },
+          { model: ItemRevision, as: 'items',  attributes: ['id'], required: false },
         ],
-        order: [['id', 'DESC']],
+        order:  [['id', 'DESC']],
+        limit,
+        offset,
+        distinct: true,
       });
-      return res.json(revisiones.map(r => ({ ...r.toJSON(), item_count: r.items?.length ?? 0 })));
+      return res.json({
+        data:  rows.map(r => ({ ...r.toJSON(), item_count: r.items?.length ?? 0 })),
+        total: count,
+        page,
+        limit,
+        pages: Math.ceil(count / limit),
+      });
     } catch (err) {
       console.error('[revision/listByEquipo]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Equipo, ItemEquipo } from '../models/equipo.model';
 import { RevisionResumen } from '../models/revision.model';
+import { PagedResponse } from './proyecto.service';
 
 export interface CreateEquipoDto {
   proyecto_id: number;
@@ -27,7 +28,9 @@ export class EquipoService {
   create(dto: CreateEquipoDto)     { return this.api.post<Equipo>('/equipos', dto); }
   update(id: number, dto: UpdateEquipoDto) { return this.api.put<Equipo>(`/equipos/${id}`, dto); }
   remove(id: number)               { return this.api.delete(`/equipos/${id}`); }
-  listRevisiones(equipoId: number) { return this.api.get<RevisionResumen[]>(`/equipos/${equipoId}/revisiones`); }
+  listRevisiones(equipoId: number, page = 1, limit = 20) {
+    return this.api.get<PagedResponse<RevisionResumen>>(`/equipos/${equipoId}/revisiones`, { page: String(page), limit: String(limit) });
+  }
   addItem(equipoId: number, label: string, observacion_guia?: string | null) {
     return this.api.post<ItemEquipo>(`/equipos/${equipoId}/items`, { label, observacion_guia: observacion_guia ?? null });
   }

@@ -2,12 +2,12 @@ import { Component, ChangeDetectionStrategy, Input, OnInit, signal, computed, in
 import { forkJoin } from 'rxjs';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
-  IonList, IonItem, IonInput, IonSelect, IonSelectOption, IonSpinner, IonText,
-  IonIcon, IonLabel,
+  IonList, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonSpinner, IonText,
+  IonIcon, IonLabel, IonNote,
   ModalController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, trashOutline } from 'ionicons/icons';
+import { add, trashOutline, pencilOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { EquipoService, UpdateEquipoDto } from '../../../../core/services/equipo.service';
 import { PlantillaService } from '../../../../core/services/plantilla.service';
 import { UserService } from '../../../../core/services/user.service';
@@ -23,8 +23,8 @@ interface LocalItem { id?: number; label: string; observacion_guia?: string | nu
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
-    IonList, IonItem, IonInput, IonSelect, IonSelectOption, IonSpinner, IonText,
-    IonIcon, IonLabel,
+    IonList, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonSpinner, IonText,
+    IonIcon, IonLabel, IonNote,
   ],
   templateUrl: './equipo-form-modal.component.html',
 })
@@ -43,8 +43,10 @@ export class EquipoFormModalComponent implements OnInit {
   readonly plantillaId = signal<number | null>(null);
   readonly tecnicoId   = signal<number | null>(null);
   readonly tiempoLimite = signal<string>('');
-  readonly localItems  = signal<LocalItem[]>([]);
-  readonly nuevoLabel  = signal('');
+  readonly localItems    = signal<LocalItem[]>([]);
+  readonly nuevoLabel    = signal('');
+  readonly nuevoObsGuia  = signal('');
+  readonly expandedObs   = signal<number | null>(null);
 
   readonly plantillas  = signal<Plantilla[]>([]);
   readonly tecnicos    = signal<User[]>([]);
@@ -54,7 +56,7 @@ export class EquipoFormModalComponent implements OnInit {
   get isEdit() { return !!this.equipo; }
 
   constructor() {
-    addIcons({ add, trashOutline });
+    addIcons({ add, trashOutline, pencilOutline, chevronDownOutline, chevronUpOutline });
   }
 
   ngOnInit() {
@@ -89,12 +91,26 @@ export class EquipoFormModalComponent implements OnInit {
   agregarItem() {
     const label = this.nuevoLabel().trim();
     if (!label) return;
-    this.localItems.update(items => [...items, { label }]);
+    this.localItems.update(items => [...items, { label, observacion_guia: this.nuevoObsGuia().trim() || null }]);
     this.nuevoLabel.set('');
+    this.nuevoObsGuia.set('');
   }
 
   eliminarItem(idx: number) {
     this.localItems.update(items => items.filter((_, i) => i !== idx));
+    if (this.expandedObs() === idx) this.expandedObs.set(null);
+  }
+
+  updateItemLabel(idx: number, label: string) {
+    this.localItems.update(items => items.map((it, i) => i === idx ? { ...it, label } : it));
+  }
+
+  updateItemObs(idx: number, obs: string) {
+    this.localItems.update(items => items.map((it, i) => i === idx ? { ...it, observacion_guia: obs.trim() || null } : it));
+  }
+
+  toggleItemObs(idx: number) {
+    this.expandedObs.update(v => v === idx ? null : idx);
   }
 
   dismiss() { this.modalCtrl.dismiss(null, 'cancel'); }

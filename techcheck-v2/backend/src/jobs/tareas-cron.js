@@ -5,6 +5,9 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
 const { TareaProgramada, Equipo, ItemEquipo, Revision, ItemRevision } = require('../models');
 
+const isProd = process.env.NODE_ENV === 'production';
+const log   = (...args) => { if (!isProd) console.log(...args); };
+
 // Normaliza el valor TIME que MySQL puede devolver como string o Date
 function horaString(valor) {
   if (!valor) return '';
@@ -46,7 +49,7 @@ async function procesarTareasProgramadas() {
 
     if (!coinciden.length) return;
 
-    console.log(`[cron ${horaActual}] ${coinciden.length} tarea(s) a procesar`);
+    log(`[cron ${horaActual}] ${coinciden.length} tarea(s) a procesar`);
 
     for (const tarea of coinciden) {
       // Guardia: no crear si ya hay una revisión activa (pendiente o en_proceso)
@@ -57,7 +60,7 @@ async function procesarTareasProgramadas() {
         },
       });
       if (activa) {
-        console.log(`[cron] Equipo ${tarea.equipo_id}: revisión activa (id=${activa.id}, estado=${activa.estado}), omitiendo`);
+        log(`[cron] Equipo ${tarea.equipo_id}: revisión activa (id=${activa.id}, estado=${activa.estado}), omitiendo`);
         continue;
       }
 
@@ -94,9 +97,7 @@ async function procesarTareasProgramadas() {
         itemCount  = items.length;
       });
 
-      console.log(
-        `[cron] Revisión ${revisionId} creada — equipo "${tarea.equipo.nombre}" (${itemCount} ítems)`
-      );
+      log(`[cron] Revisión ${revisionId} creada — equipo "${tarea.equipo.nombre}" (${itemCount} ítems)`);
     }
   } catch (err) {
     console.error('[cron] Error al procesar tareas programadas:', err.message);
@@ -106,7 +107,7 @@ async function procesarTareasProgramadas() {
 function iniciarCron() {
   // Se ejecuta al inicio de cada minuto
   cron.schedule('* * * * *', procesarTareasProgramadas, { timezone: 'America/Bogota' });
-  console.log('[cron] Tareas programadas activas (cada minuto, zona: America/Bogota)');
+  log('[cron] Tareas programadas activas (cada minuto, zona: America/Bogota)');
 }
 
 module.exports = { iniciarCron, procesarTareasProgramadas };

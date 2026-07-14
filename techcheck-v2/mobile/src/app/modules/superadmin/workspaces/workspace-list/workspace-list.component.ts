@@ -1,14 +1,15 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
+import { Preferences } from '@capacitor/preferences';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-  IonBadge, IonSpinner,
+  IonBadge, IonSpinner, IonChip, IonLabel,
   ModalController, AlertController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   add, pencilOutline, trashOutline, personAddOutline, businessOutline,
-  peopleOutline, logOutOutline, personOutline, keyOutline,
+  peopleOutline, logOutOutline, personOutline, keyOutline, cloudOfflineOutline,
 } from 'ionicons/icons';
 import { WorkspaceService } from '../../../../core/services/workspace.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -18,13 +19,15 @@ import { AssignAdminModalComponent } from '../assign-admin-modal/assign-admin-mo
 import { NavController } from '@ionic/angular/standalone';
 import { ChangePasswordModalComponent } from '../../../workspace/shell/change-password-modal/change-password-modal.component';
 
+const CACHE_KEY = 'tc_superadmin_workspaces';
+
 @Component({
   selector: 'app-workspace-list',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-    IonBadge, IonSpinner,
+    IonBadge, IonSpinner, IonChip, IonLabel,
   ],
   templateUrl: './workspace-list.component.html',
 })
@@ -38,19 +41,36 @@ export class WorkspaceListComponent implements OnInit {
 
   readonly workspaces = signal<Workspace[]>([]);
   readonly loading    = signal(false);
+  readonly fromCache  = signal(false);
 
   constructor() {
-    addIcons({ add, pencilOutline, trashOutline, personAddOutline, businessOutline, peopleOutline, logOutOutline, personOutline, keyOutline });
+    addIcons({ add, pencilOutline, trashOutline, personAddOutline, businessOutline, peopleOutline, logOutOutline, personOutline, keyOutline, cloudOfflineOutline });
   }
 
   ngOnInit() { this.load(); }
 
   load() {
     this.loading.set(true);
+    this.fromCache.set(false);
     this.wsSvc.list().subscribe({
-      next:  ws  => { this.workspaces.set(ws); this.loading.set(false); },
-      error: ()  => { this.loading.set(false); this.toast('Error al cargar workspaces', 'danger'); },
+      next: ws => {
+        this.workspaces.set(ws);
+        this.loading.set(false);
+        Preferences.set({ key: CACHE_KEY, value: JSON.stringify(ws) });
+      },
+      error: () => this.loadFromCache(),
     });
+  }
+
+  private async loadFromCache() {
+    const { value } = await Preferences.get({ key: CACHE_KEY });
+    if (value) {
+      this.workspaces.set(JSON.parse(value));
+      this.fromCache.set(true);
+    } else {
+      this.toast('Sin conexión y sin datos en caché', 'danger');
+    }
+    this.loading.set(false);
   }
 
   async openCreate() {

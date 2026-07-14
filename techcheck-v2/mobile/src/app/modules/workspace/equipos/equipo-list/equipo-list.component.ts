@@ -109,7 +109,7 @@ export class EquipoListComponent implements OnInit {
     }
 
     this.proyectoSvc.listEquipos(this.proyectoId, estado, esArchivado).pipe(
-      map(es => esArchivado ? es.filter(e => e.archivado) : es)
+      map(resp => esArchivado ? resp.data.filter(e => e.archivado) : resp.data)
     ).subscribe({
       next: es => {
         this.equipos.set(es);
@@ -141,7 +141,7 @@ export class EquipoListComponent implements OnInit {
       });
       // Cachear revisión activa si existe
       this.equipoSvc.listRevisiones(eq.id).subscribe({
-        next: revisiones => {
+        next: ({ data: revisiones }) => {
           const activa = revisiones.find(r => r.estado !== 'terminado') ?? revisiones[0];
           if (activa) {
             this.revSvc.getOne(activa.id).subscribe({
@@ -264,7 +264,7 @@ export class EquipoListComponent implements OnInit {
 
     // ── Modo online ─────────────────────────────────────────────────────────
     try {
-      const revisiones = await firstValueFrom(this.equipoSvc.listRevisiones(equipo.id));
+      const { data: revisiones } = await firstValueFrom(this.equipoSvc.listRevisiones(equipo.id));
       const latest = revisiones?.[0];
       let revisionId: number;
 

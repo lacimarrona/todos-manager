@@ -124,8 +124,12 @@ const proyectoController = {
       const whereEquipos = { proyecto_id: proyecto.id };
       if (!incluir_archivados) whereEquipos.archivado = false;
 
+      const page   = Math.max(1, parseInt(req.query.page)  || 1);
+      const limit  = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+      const offset = (page - 1) * limit;
+
       // 1. Obtener equipos con items y técnico
-      const equipos = await Equipo.findAll({
+      const { count, rows: equipos } = await Equipo.findAndCountAll({
         where: whereEquipos,
         include: [
           {
@@ -142,10 +146,15 @@ const proyectoController = {
             required: false,
           },
         ],
-        order: [['nombre', 'ASC']],
+        order:    [['nombre', 'ASC']],
+        limit,
+        offset,
+        distinct: true,
       });
 
-      if (!equipos.length) return res.json([]);
+      if (!equipos.length) {
+        return res.json({ data: [], total: count, page, limit, pages: Math.ceil(count / limit) });
+      }
 
       // 2. Última revisión por equipo en una sola query
       const equipoIds = equipos.map(e => e.id);
@@ -170,7 +179,13 @@ const proyectoController = {
         .map(e => ({ ...e.toJSON(), ultimo_estado: revMap[e.id] || 'pendiente' }))
         .filter(e => !estado || e.ultimo_estado === estado);
 
-      return res.json(result);
+      return res.json({
+        data:  result,
+        total: count,
+        page,
+        limit,
+        pages: Math.ceil(count / limit),
+      });
     } catch (err) {
       console.error('[proyecto/listEquipos]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
@@ -359,6 +374,8 @@ const proyectoController = {
       });
 
       const equipoIdMap = {};
+      const itemIdMaps  = {}; // equipoOriginalId → { itemOriginalId: newItemId }
+
       for (const eq of equipos) {
         const nuevoEq = await Equipo.create({
           proyecto_id: nuevoProyecto.id,
@@ -368,20 +385,21 @@ const proyectoController = {
           archivado: eq.archivado || false,
         });
         equipoIdMap[eq.id] = nuevoEq.id;
+        itemIdMaps[eq.id] = {};
 
         if (Array.isArray(eq.items) && eq.items.length) {
-          await ItemEquipo.bulkCreate(
-            eq.items.map((it, i) => ({
+          for (const [i, it] of eq.items.entries()) {
+            const newItem = await ItemEquipo.create({
               equipo_id: nuevoEq.id,
               label: it.label,
               observacion_guia: it.observacion_guia || null,
               orden: it.orden ?? i,
-            }))
-          );
+            });
+            if (it.id) itemIdMaps[eq.id][it.id] = newItem.id;
+          }
         }
       }
 
-      // Mapear item_id de revision al nuevo equipo (solo se importan labels, no IDs de items)
       for (const rev of revisiones) {
         const nuevoEquipoId = equipoIdMap[rev.equipo_id];
         if (!nuevoEquipoId) continue;
@@ -395,10 +413,11 @@ const proyectoController = {
         });
 
         if (Array.isArray(rev.items) && rev.items.length) {
+          const itemMap = itemIdMaps[rev.equipo_id] ?? {};
           await ItemRevision.bulkCreate(
             rev.items.map(it => ({
               revision_id: nuevaRev.id,
-              item_id: null,
+              item_id: itemMap[it.item_id] ?? null,
               label: it.label,
               checked: it.checked || false,
               nota: it.nota || null,

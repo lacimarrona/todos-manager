@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Equipo, ItemEquipo, ArchivoGuia } from '../models/equipo.model';
 import { RevisionResumen } from '../models/revision.model';
+import { PagedResponse } from './proyecto.service';
 
 export interface CreateEquipoDto {
   proyecto_id: number;
@@ -47,8 +48,8 @@ export class EquipoService {
   }
   descargarPlantillaExcel() { return this.api.getBlob('/equipos/plantilla-excel'); }
 
-  listRevisiones(equipoId: number) {
-    return this.api.get<RevisionResumen[]>(`/equipos/${equipoId}/revisiones`);
+  listRevisiones(equipoId: number, page = 1, limit = 20) {
+    return this.api.get<PagedResponse<RevisionResumen>>(`/equipos/${equipoId}/revisiones`, { page: String(page), limit: String(limit) });
   }
 
   addItem(equipoId: number, label: string, observacion_guia?: string | null) {

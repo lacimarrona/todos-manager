@@ -48,5 +48,14 @@ services:
       - ./backend/vitest.config.js:/app/vitest.config.js
       - ./backend/.env.test:/app/.env.test
 
+  frontend:
+    build: ./frontend-web
+    container_name: techcheck-frontend
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      - backend
+
 volumes:
   mysql_data:

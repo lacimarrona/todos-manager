@@ -98,7 +98,7 @@ export class TareaFormModalComponent implements OnInit {
     this.equipos.set([]);
     this.form.patchValue({ equipo_id: 0 });
     this.proyectoSvc.listEquipos(proyectoId).subscribe({
-      next:  eqs => { this.equipos.set(eqs); this.loadingEqs.set(false); },
+      next:  resp => { this.equipos.set(resp.data); this.loadingEqs.set(false); },
       error: () => { this.loadingEqs.set(false); this.toast('Error al cargar equipos', 'danger'); },
     });
   }

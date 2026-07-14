@@ -101,12 +101,13 @@ export class HistorialComponent implements OnInit {
   load() {
     this.loading.set(true);
     this.proyectoSvc.listEquipos(this.proyectoId).pipe(
-      switchMap(equipos => {
+      switchMap(resp => {
+        const equipos = resp.data;
         if (!equipos.length) return of([] as EquipoHistorial[]);
         return forkJoin(
           equipos.map(eq =>
             this.equipoSvc.listRevisiones(eq.id).pipe(
-              map(revs => ({
+              map(({ data: revs }) => ({
                 equipo: eq,
                 revisiones: revs.filter(r => r.estado === 'terminado'),
               }))

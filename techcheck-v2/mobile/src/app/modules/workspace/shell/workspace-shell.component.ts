@@ -29,7 +29,6 @@ interface NavItem {
     IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
     IonList, IonItem, IonLabel, IonIcon, IonButton,
     IonRouterOutlet,
-    ChangePasswordModalComponent,
   ],
   templateUrl: './workspace-shell.component.html',
 })
