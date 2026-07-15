@@ -1,5 +1,10 @@
 export type UserRole = 'superadmin' | 'admin' | 'usuario';
 
+export interface WorkspaceSummary {
+  id: number;
+  nombre: string;
+}
+
 export interface User {
   id: number;
   workspace_id: number | null;
@@ -8,5 +13,6 @@ export interface User {
   rol: UserRole;
   activo: boolean;
   createdAt: string;
-  workspace?: { id: number; nombre: string } | null;
+  workspace?: WorkspaceSummary | null;
+  workspaces?: WorkspaceSummary[];
 }

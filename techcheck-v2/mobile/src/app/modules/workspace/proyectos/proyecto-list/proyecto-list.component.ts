@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
@@ -42,11 +42,17 @@ export class ProyectoListComponent implements OnInit {
   readonly loading   = signal(false);
   readonly isAdmin   = this.auth.isAdmin;
 
+  private readonly activeWsId = computed(() => this.auth.user()?.workspace_id);
+
   constructor() {
+    effect(() => {
+      const wsId = this.activeWsId();
+      if (wsId) this.load();
+    }, { allowSignalWrites: true });
     addIcons({ add, folderOpenOutline, pencilOutline, trashOutline, chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline });
   }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { /* carga gestionada reactivamente por el effect */ }
 
   load() {
     this.loading.set(true);

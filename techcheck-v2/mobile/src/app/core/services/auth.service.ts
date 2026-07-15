@@ -108,6 +108,17 @@ export class AuthService {
     );
   }
 
+  switchWorkspace(workspaceId: number) {
+    const currentRefresh = this.storage.getRefreshToken() ?? '';
+    return this.http.post<{ access_token: string; token_type: string }>(
+      `${this.base}/switch-workspace`,
+      { workspace_id: workspaceId },
+    ).pipe(
+      switchMap(res => from(this.storage.setTokens(res.access_token, currentRefresh))),
+      switchMap(() => this.loadMe()),
+    );
+  }
+
   changePassword(passwordActual: string, passwordNuevo: string) {
     return this.http.post(`${this.base}/change-password`, { password_actual: passwordActual, password_nuevo: passwordNuevo });
   }

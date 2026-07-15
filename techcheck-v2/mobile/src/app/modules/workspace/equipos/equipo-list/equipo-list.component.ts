@@ -82,9 +82,12 @@ export class EquipoListComponent implements OnInit {
     this.proyectoSvc.getOne(this.proyectoId).subscribe({
       next: p => this.proyectoNombre.set(p.nombre),
     });
-    this.plantillaSvc.list().subscribe({
-      next: ps => this.plantillas.set(ps),
-    });
+    if (this.auth.isAdmin()) {
+      this.plantillaSvc.list().subscribe({
+        next: ps => this.plantillas.set(ps),
+        error: () => {},
+      });
+    }
     this.loadEquipos();
   }
 

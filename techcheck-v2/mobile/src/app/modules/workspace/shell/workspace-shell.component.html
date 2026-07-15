@@ -14,6 +14,29 @@
       </div>
     </div>
 
+    @if (hasMultiWs()) {
+      <div class="menu-workspace-switcher">
+        <p class="menu-ws-label">
+          <ion-icon name="swap-horizontal-outline"></ion-icon>
+          Workspace activo
+        </p>
+        @for (ws of workspaces(); track ws.id) {
+          <ion-item
+            button
+            detail="false"
+            lines="none"
+            class="ws-switch-item"
+            [class.ws-active]="ws.id === activeWsId()"
+            (click)="switchWorkspace(ws.id)">
+            <ion-label>{{ ws.nombre }}</ion-label>
+            @if (ws.id === activeWsId()) {
+              <ion-icon name="checkmark-circle-outline" slot="end" color="primary"></ion-icon>
+            }
+          </ion-item>
+        }
+      </div>
+    }
+
     <ion-list lines="none">
       @for (item of navItems; track item.path) {
         @if (!item.adminOnly || auth.isAdmin()) {
