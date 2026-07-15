@@ -4,7 +4,7 @@ import {
   IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
   IonList, IonItem, IonLabel, IonIcon, IonButton, IonBadge,
   IonRouterOutlet,
-  MenuController, ModalController, ToastController,
+  MenuController, ModalController, ToastController, NavController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -38,17 +38,18 @@ export class WorkspaceShellComponent {
   private menuCtrl   = inject(MenuController);
   private modalCtrl  = inject(ModalController);
   private toastCtrl  = inject(ToastController);
+  private navCtrl    = inject(NavController);
 
   readonly workspaces     = computed(() => this.auth.user()?.workspaces ?? []);
   readonly hasMultiWs     = computed(() => this.workspaces().length > 1);
   readonly activeWsId     = computed(() => this.auth.user()?.workspace_id);
 
   readonly navItems: NavItem[] = [
-    { label: 'Proyectos',         icon: 'folder-open-outline',  path: '/workspace/proyectos' },
-    { label: 'Plantillas',        icon: 'document-text-outline', path: '/workspace/plantillas' },
-    { label: 'Tareas Programadas', icon: 'time-outline',         path: '/workspace/tareas' },
-    { label: 'Técnicos',          icon: 'construct-outline',     path: '/workspace/tecnicos',  adminOnly: true },
-    { label: 'Usuarios',          icon: 'people-outline',        path: '/workspace/usuarios', adminOnly: true },
+    { label: 'Proyectos',          icon: 'folder-open-outline',   path: '/workspace/proyectos' },
+    { label: 'Tareas Programadas', icon: 'time-outline',          path: '/workspace/tareas' },
+    { label: 'Plantillas',         icon: 'document-text-outline', path: '/workspace/plantillas', adminOnly: true },
+    { label: 'Técnicos',           icon: 'construct-outline',     path: '/workspace/tecnicos',   adminOnly: true },
+    { label: 'Usuarios',           icon: 'people-outline',        path: '/workspace/usuarios',   adminOnly: true },
   ];
 
   constructor() {
@@ -73,6 +74,9 @@ export class WorkspaceShellComponent {
     this.auth.switchWorkspace(wsId).subscribe({
       next: async () => {
         await this.menuCtrl.close('workspace-menu');
+        // Navegar a la raíz limpia para que la lista de proyectos se recargue
+        // con los datos del nuevo workspace (evita usar proyectos del workspace anterior)
+        await this.navCtrl.navigateRoot('/workspace/proyectos');
         const t = await this.toastCtrl.create({ message: 'Workspace cambiado', duration: 2000, color: 'success' });
         await t.present();
       },

@@ -41,8 +41,6 @@ export const WORKSPACE_ROUTES: Routes = [
       },
       {
         path: 'tareas',
-        canActivate: [roleGuard],
-        data: { roles: ['admin', 'superadmin'] },
         loadComponent: () =>
           import('./tareas/tarea-list/tarea-list.component').then(m => m.TareaListComponent),
       },
