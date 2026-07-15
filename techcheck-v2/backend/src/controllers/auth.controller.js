@@ -215,6 +215,9 @@ const authController = {
       });
       if (!membership) return res.status(403).json({ error: 'No perteneces a ese workspace' });
 
+      // Persistir workspace activo en BD para que /me y el refresh devuelvan el nuevo workspace
+      await Usuario.update({ workspace_id }, { where: { id: req.user.sub } });
+
       const newPayload = { sub: req.user.sub, rol: req.user.rol, workspace_id };
       const accessToken = generateAccessToken(newPayload);
 

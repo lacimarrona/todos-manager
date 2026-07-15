@@ -72,11 +72,8 @@ export class AuthService {
       `${this.base}/switch-workspace`,
       { workspace_id: workspaceId },
     ).pipe(
-      tap(res => {
-        this.storage.setTokens(res.access_token);
-        // Forzar recarga de /me para refrescar el usuario con el nuevo workspace_id
-        this.loadMe().subscribe();
-      }),
+      tap(res => this.storage.setTokens(res.access_token)),
+      switchMap(() => this.loadMe()),
     );
   }
 
