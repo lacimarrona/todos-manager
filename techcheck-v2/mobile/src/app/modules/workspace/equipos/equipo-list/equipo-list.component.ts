@@ -14,8 +14,9 @@ import {
   clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
   archiveOutline, eyeOutline, addOutline, createOutline, trashOutline,
   cloudUploadOutline, closeOutline, cloudOfflineOutline,
+  calendarOutline, checkmarkCircleOutline,
 } from 'ionicons/icons';
-import { ProyectoService } from '../../../../core/services/proyecto.service';
+import { ProyectoService, TareaVencida } from '../../../../core/services/proyecto.service';
 import { EquipoService } from '../../../../core/services/equipo.service';
 import { RevisionService } from '../../../../core/services/revision.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -59,7 +60,8 @@ export class EquipoListComponent implements OnInit {
   readonly equipos        = signal<Equipo[]>([]);
   readonly loading        = signal(false);
   readonly abriendo       = signal<number | null>(null);
-  readonly filtro         = signal<string>('todos');
+  readonly filtro         = signal<string>('pendiente');
+  readonly vencidas       = signal<TareaVencida[]>([]);
 
   // Import signals
   readonly mostrarImport     = signal(false);
@@ -75,6 +77,7 @@ export class EquipoListComponent implements OnInit {
       clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
       archiveOutline, eyeOutline, addOutline, createOutline, trashOutline,
       cloudUploadOutline, closeOutline, cloudOfflineOutline,
+      calendarOutline, checkmarkCircleOutline,
     });
   }
 
@@ -92,10 +95,11 @@ export class EquipoListComponent implements OnInit {
   }
 
   loadEquipos() {
+    if (this.filtro() === 'perdidas') { this.loadVencidas(); return; }
     this.loading.set(true);
     const f = this.filtro();
     const esArchivado = f === 'archivado';
-    const estado = esArchivado || f === 'todos' ? undefined : f;
+    const estado = esArchivado ? undefined : f;
 
     // Sin internet: usar cache
     if (!this.online()) {
@@ -130,6 +134,19 @@ export class EquipoListComponent implements OnInit {
   onFiltroChange(event: CustomEvent) {
     this.filtro.set((event as CustomEvent<{ value: string }>).detail.value);
     this.loadEquipos();
+  }
+
+  loadVencidas() {
+    this.loading.set(true);
+    this.proyectoSvc.getTareasVencidas(this.proyectoId).subscribe({
+      next: v => { this.vencidas.set(v); this.loading.set(false); },
+      error: () => { this.loading.set(false); this.toast('Error al cargar tareas perdidas', 'danger'); },
+    });
+  }
+
+  readonly DIAS_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  diasLabel(dias: number[]): string {
+    return (dias ?? []).map(d => this.DIAS_LABELS[d]).join(', ');
   }
 
   // Pre-cachea ítems de cada equipo y sus revisiones activas (en background, sin bloquear UI)

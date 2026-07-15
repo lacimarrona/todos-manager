@@ -3,6 +3,17 @@ import { ApiService } from './api.service';
 import { Proyecto } from '../models/proyecto.model';
 import { Equipo } from '../models/equipo.model';
 
+export interface TareaVencida {
+  id: string;
+  tarea_id: number;
+  equipo_id: number;
+  equipo_nombre: string;
+  fecha_programada: string;
+  hora: string;
+  dias_semana: number[];
+  asignado_a: { id: number; nombre: string; email: string } | null;
+}
+
 export interface PagedResponse<T> {
   data: T[];
   total: number;
@@ -43,5 +54,9 @@ export class ProyectoService {
 
   importarJSON(datos: object) {
     return this.api.post<{ message: string; proyecto_id: number }>('/proyectos/importar-json', datos);
+  }
+
+  getTareasVencidas(id: number) {
+    return this.api.get<TareaVencida[]>(`/proyectos/${id}/tareas-vencidas`);
   }
 }

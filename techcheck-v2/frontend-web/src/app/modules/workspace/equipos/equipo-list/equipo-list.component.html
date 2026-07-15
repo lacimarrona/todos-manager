@@ -15,9 +15,6 @@
 
   <ion-toolbar>
     <ion-segment [value]="filtro()" (ionChange)="onFiltroChange($any($event))">
-      <ion-segment-button value="todos">
-        <ion-label>Todos</ion-label>
-      </ion-segment-button>
       <ion-segment-button value="pendiente">
         <ion-label>Pendiente</ion-label>
       </ion-segment-button>
@@ -30,6 +27,9 @@
       <ion-segment-button value="archivado">
         <ion-label>Archivados</ion-label>
       </ion-segment-button>
+      <ion-segment-button value="perdidas">
+        <ion-label>Perdidas</ion-label>
+      </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
 </ion-header>
@@ -39,16 +39,62 @@
     <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
   }
 
+  <!-- Vista de tareas perdidas (read-only) -->
+  @if (filtro() === 'perdidas' && !loading()) {
+    @if (vencidas().length === 0) {
+      <div class="empty-state">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <p>No hay tareas programadas perdidas en los últimos 30 días.</p>
+      </div>
+    } @else {
+      <div style="margin-bottom:8px;color:var(--ion-color-medium);font-size:0.85rem">
+        {{ vencidas().length }} ocurrencia(s) sin completar en los últimos 30 días
+      </div>
+      <div class="equipo-grid">
+        @for (v of vencidas(); track v.id) {
+          <ion-card class="equipo-card estado-perdida" style="border-left:4px solid var(--ion-color-danger);opacity:0.9">
+            <ion-card-header>
+              <div class="equipo-card-header">
+                <ion-card-title style="font-size:1rem">{{ v.equipo_nombre }}</ion-card-title>
+                <span class="status-pill" style="background:var(--ion-color-danger);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:10px">Perdida</span>
+              </div>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="equipo-meta">
+                <span>
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  {{ v.fecha_programada | date:'dd/MM/yyyy' }}
+                </span>
+                <span>
+                  <ion-icon name="time-outline"></ion-icon>
+                  {{ v.hora }}
+                </span>
+                @if (v.asignado_a) {
+                  <span>
+                    <ion-icon name="person-outline"></ion-icon>
+                    {{ v.asignado_a.nombre }}
+                  </span>
+                }
+              </div>
+              <div style="margin-top:6px;font-size:0.78rem;color:var(--ion-color-medium)">
+                Días: {{ diasLabel(v.dias_semana) }}
+              </div>
+            </ion-card-content>
+          </ion-card>
+        }
+      </div>
+    }
+  }
+
+  @if (filtro() !== 'perdidas') {
   @if (!loading() && equipos().length === 0) {
     <div class="empty-state">
       <ion-icon name="clipboard-outline"></ion-icon>
       <p>
         @if (filtro() === 'archivado') {
           No hay equipos archivados en este proyecto.
-        } @else if (filtro() !== 'todos') {
-          No hay equipos con estado "{{ estadoLabel($any(filtro())) }}"
         } @else {
-          No hay equipos en este proyecto.
+          No hay equipos con estado "{{ estadoLabel($any(filtro())) }}"
         }
       </p>
     </div>
@@ -163,6 +209,7 @@
       </ion-fab-button>
     </ion-fab>
   }
+  } <!-- fin @if filtro !== perdidas -->
 </ion-content>
 
 <!-- Modal de importar equipos masivo -->

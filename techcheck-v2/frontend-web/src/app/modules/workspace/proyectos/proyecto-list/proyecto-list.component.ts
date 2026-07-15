@@ -9,12 +9,13 @@ import { DatePipe } from '@angular/common';
 import { addIcons } from 'ionicons';
 import {
   add, folderOpenOutline, pencilOutline, trashOutline,
-  chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline,
+  chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline, lockClosedOutline,
 } from 'ionicons/icons';
 import { ProyectoService } from '../../../../core/services/proyecto.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { ProyectoFormModalComponent } from '../proyecto-form-modal/proyecto-form-modal.component';
+import { ProyectoPermisosModalComponent } from '../proyecto-permisos-modal/proyecto-permisos-modal.component';
 
 @Component({
   selector: 'app-proyecto-list',
@@ -26,7 +27,7 @@ import { ProyectoFormModalComponent } from '../proyecto-form-modal/proyecto-form
   ],
   templateUrl: './proyecto-list.component.html',
 })
-export class ProyectoListComponent implements OnInit {
+export class ProyectoListComponent {
   private readonly proyectoSvc = inject(ProyectoService);
   private readonly auth        = inject(AuthService);
   private readonly modalCtrl   = inject(ModalController);
@@ -46,10 +47,25 @@ export class ProyectoListComponent implements OnInit {
       const wsId = this.activeWsId();
       if (wsId) this.load();
     }, { allowSignalWrites: true });
-    addIcons({ add, folderOpenOutline, pencilOutline, trashOutline, chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline });
+    addIcons({ add, folderOpenOutline, pencilOutline, trashOutline, chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline, lockClosedOutline });
   }
 
-  ngOnInit() { /* la carga inicial y los cambios de workspace los gestiona el effect */ }
+  async openPermisos(p: Proyecto, event: Event) {
+    event.stopPropagation();
+    try {
+      const modal = await this.modalCtrl.create({
+        component: ProyectoPermisosModalComponent,
+        componentProps: { proyecto: p },
+        cssClass: 'form-modal',
+      });
+      await modal.present();
+      const { role } = await modal.onWillDismiss();
+      if (role === 'saved') this.load();
+    } catch (err) {
+      console.error('openPermisos error:', err);
+      this.toast('Error al abrir permisos', 'danger');
+    }
+  }
 
   load() {
     this.loading.set(true);

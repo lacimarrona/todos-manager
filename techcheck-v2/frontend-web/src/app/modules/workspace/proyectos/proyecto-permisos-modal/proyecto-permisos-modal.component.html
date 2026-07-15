@@ -1,0 +1,67 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Permisos — {{ proyecto.nombre }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()" fill="clear">Cancelar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <div style="display:flex;justify-content:center;padding:32px">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else {
+    <!-- Toggle restringido -->
+    <ion-list lines="full">
+      <ion-item>
+        <ion-label>
+          <h3>Proyecto restringido</h3>
+          <p>Cuando está activo, solo los usuarios con permiso explícito pueden ver este proyecto.</p>
+        </ion-label>
+        <ion-toggle
+          slot="end"
+          [checked]="restringido()"
+          (ionChange)="restringido.set($event.detail.checked)">
+        </ion-toggle>
+      </ion-item>
+    </ion-list>
+
+    <!-- Lista de usuarios con su nivel de acceso -->
+    <p style="font-weight:600;margin:16px 0 8px">Acceso de usuarios</p>
+    <ion-list lines="full">
+      @for (u of usuarios(); track u.id) {
+        <ion-item>
+          <ion-label>
+            <h3>{{ u.nombre }}</h3>
+            <ion-note>{{ u.email }}</ion-note>
+            <ion-badge [color]="u.rol === 'admin' ? 'warning' : 'primary'" style="margin-top:2px">
+              {{ u.rol }}
+            </ion-badge>
+          </ion-label>
+          <ion-select
+            slot="end"
+            interface="popover"
+            placeholder="Sin acceso"
+            [value]="getPermiso(u.id)"
+            (ionChange)="setPermiso(u.id, $event.detail.value)"
+            style="min-width:110px">
+            <ion-select-option [value]="null">Sin acceso</ion-select-option>
+            <ion-select-option value="ver">Solo ver</ion-select-option>
+            <ion-select-option value="editar">Ver y editar</ion-select-option>
+          </ion-select>
+        </ion-item>
+      }
+      @if (usuarios().length === 0) {
+        <ion-item>
+          <ion-label><ion-text color="medium">No hay usuarios en el workspace.</ion-text></ion-label>
+        </ion-item>
+      }
+    </ion-list>
+
+    <ion-button expand="block" class="ion-margin-top" [disabled]="saving()" (click)="save()">
+      @if (saving()) { <ion-spinner name="crescent"></ion-spinner> } @else { Guardar permisos }
+    </ion-button>
+  }
+</ion-content>

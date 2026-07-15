@@ -67,6 +67,8 @@ export class AuthService {
     if (!value) return null;
     try {
       const user = JSON.parse(value) as User;
+      // Cuenta desactivada por admin: no permitir sesión offline
+      if (user.activo === false) return null;
       this._user.set(user);
       return user;
     } catch { return null; }

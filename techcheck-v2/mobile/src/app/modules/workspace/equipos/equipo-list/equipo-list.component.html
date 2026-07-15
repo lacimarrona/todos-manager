@@ -38,9 +38,6 @@
 
   <ion-toolbar>
     <ion-segment [value]="filtro()" (ionChange)="onFiltroChange($any($event))" scrollable="true">
-      <ion-segment-button value="todos">
-        <ion-label>Todos</ion-label>
-      </ion-segment-button>
       <ion-segment-button value="pendiente">
         <ion-label>Pendiente</ion-label>
       </ion-segment-button>
@@ -53,6 +50,9 @@
       <ion-segment-button value="archivado">
         <ion-label>Archivados</ion-label>
       </ion-segment-button>
+      <ion-segment-button value="perdidas">
+        <ion-label>Perdidas</ion-label>
+      </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
 </ion-header>
@@ -62,16 +62,47 @@
     <div class="center-spinner"><ion-spinner name="crescent"></ion-spinner></div>
   }
 
+  <!-- Tab Perdidas: read-only -->
+  @if (filtro() === 'perdidas' && !loading()) {
+    @if (vencidas().length === 0) {
+      <div class="empty-state">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <p>No hay tareas perdidas en los últimos 30 días.</p>
+      </div>
+    } @else {
+      <div style="margin-bottom:8px;color:var(--ion-color-medium);font-size:0.83rem">
+        {{ vencidas().length }} ocurrencia(s) sin completar — últimos 30 días
+      </div>
+      @for (v of vencidas(); track v.id) {
+        <ion-card style="border-left:4px solid var(--ion-color-danger)">
+          <ion-card-header>
+            <div class="equipo-card-header">
+              <ion-card-title style="font-size:1rem">{{ v.equipo_nombre }}</ion-card-title>
+              <ion-badge color="danger">Perdida</ion-badge>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="equipo-meta">
+              <span><ion-icon name="calendar-outline"></ion-icon> {{ v.fecha_programada }}</span>
+              <span><ion-icon name="time-outline"></ion-icon> {{ v.hora }}</span>
+              @if (v.asignado_a) {
+                <span><ion-icon name="person-outline"></ion-icon> {{ v.asignado_a.nombre }}</span>
+              }
+            </div>
+            <div style="margin-top:4px;font-size:0.78rem;color:var(--ion-color-medium)">
+              Días: {{ diasLabel(v.dias_semana) }}
+            </div>
+          </ion-card-content>
+        </ion-card>
+      }
+    }
+  }
+
+  @if (filtro() !== 'perdidas') {
   @if (!loading() && equipos().length === 0) {
     <div class="empty-state">
       <ion-icon name="clipboard-outline"></ion-icon>
-      <p>
-        @if (filtro() !== 'todos') {
-          No hay equipos con estado "{{ estadoLabel($any(filtro())) }}"
-        } @else {
-          No hay equipos en este proyecto.
-        }
-      </p>
+      <p>No hay equipos con estado "{{ estadoLabel($any(filtro())) }}"</p>
     </div>
   }
 
@@ -146,6 +177,7 @@
       </ion-card>
     }
   </div>
+  } <!-- fin @if filtro !== perdidas -->
 </ion-content>
 
 <!-- Modal de importar equipos -->

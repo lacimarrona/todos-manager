@@ -296,6 +296,11 @@ const equipoController = {
       const { url, tipo } = req.body;
       if (!url || !tipo) return res.status(400).json({ error: 'url y tipo son requeridos' });
 
+      const MIME_IMAGEN    = /^data:image\/(jpeg|png|webp|gif);base64,/;
+      const MIME_DOCUMENTO = /^data:application\/(pdf|msword|vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation));base64,/;
+      const esValido = (tipo === 'imagen' && MIME_IMAGEN.test(url)) || (tipo === 'documento' && MIME_DOCUMENTO.test(url));
+      if (!esValido) return res.status(400).json({ error: 'Tipo de archivo no permitido o formato de Data URL inválido' });
+
       const archivo = await ArchivoGuia.create({ item_id: item.id, url, tipo });
       return res.status(201).json(archivo);
     } catch (err) {
@@ -509,9 +514,10 @@ const equipoController = {
       }
 
       const csv = '﻿' + lines.join('\r\n');
-      const filename = `${equipo.nombre.replace(/\s+/g, '_')}_equipo_techcheck.csv`;
+      const safeNombre = equipo.nombre.replace(/[^\w\-\.]/g, '_');
+      const filename = `${safeNombre}_equipo_techcheck.csv`;
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
       return res.send(csv);
     } catch (err) {
       console.error('[equipo/exportarCSV]', err);

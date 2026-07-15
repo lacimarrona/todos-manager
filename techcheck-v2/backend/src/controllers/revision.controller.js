@@ -11,8 +11,22 @@ function validarDataUrl(url, tipo) {
 }
 
 const { sequelize } = require('../config/database');
-const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ItemEquipo, Usuario, ItemPlantilla } = require('../models');
+const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario, ItemPlantilla } = require('../models');
 const { wsId } = require('../utils/workspace');
+
+// Verifica acceso al proyecto incluyendo la restricción de proyecto_permisos
+// (misma lógica que findProyectoConAcceso en proyecto.controller.js)
+async function findProyectoConAcceso(id, workspaceId, userId, rol) {
+  const where = { id };
+  if (workspaceId) where.workspace_id = workspaceId;
+  const proyecto = await Proyecto.findOne({ where });
+  if (!proyecto) return null;
+  if (rol === 'usuario' && proyecto.restringido) {
+    const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: id, usuario_id: userId } });
+    if (!permiso) return null;
+  }
+  return proyecto;
+}
 
 // Verifica que el técnico (si viene informado) pertenece al workspace del usuario
 async function tecnicoValido(tecnicoId, workspaceId) {
@@ -352,10 +366,8 @@ const revisionController = {
       const { proyecto_id, estado, calidad, texto } = req.query;
       if (!proyecto_id) return res.status(400).json({ error: 'proyecto_id es requerido' });
 
-      // Verificar acceso al proyecto
-      const proyecto = await require('../models').Proyecto.findOne({
-        where: { id: proyecto_id, ...(wsId(req) ? { workspace_id: wsId(req) } : {}) },
-      });
+      // Verificar acceso al proyecto (incluyendo proyectos restringidos)
+      const proyecto = await findProyectoConAcceso(proyecto_id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       const equipos = await Equipo.findAll({

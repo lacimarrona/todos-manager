@@ -32,7 +32,13 @@ export class UserService {
   remove(id: number)                     { return this.api.delete(`/usuarios/${id}`); }
 
   // Membresías de workspace (solo superadmin)
-  listWorkspaces(userId: number)                    { return this.api.get<{ id: number; nombre: string }[]>(`/usuarios/${userId}/workspaces`); }
-  addWorkspace(userId: number, workspace_id: number){ return this.api.post<{ message: string }>(`/usuarios/${userId}/workspaces`, { workspace_id }); }
-  removeWorkspace(userId: number, workspaceId: number){ return this.api.delete(`/usuarios/${userId}/workspaces/${workspaceId}`); }
+  listWorkspaces(userId: number) {
+    return this.api.get<{ id: number; nombre: string }[]>(`/usuarios/${userId}/workspaces`);
+  }
+  addWorkspace(userId: number, workspace_id: number, ws_rol: 'admin' | 'usuario' = 'usuario') {
+    return this.api.post<{ message: string; ws_rol: string }>(`/usuarios/${userId}/workspaces`, { workspace_id, ws_rol });
+  }
+  removeWorkspace(userId: number, workspaceId: number) {
+    return this.api.delete(`/usuarios/${userId}/workspaces/${workspaceId}`);
+  }
 }

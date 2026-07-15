@@ -1,19 +1,28 @@
 'use strict';
 
-const { QueryTypes } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const { Proyecto, Equipo, ItemEquipo, ArchivoGuia, Usuario, Workspace,
-        Revision, ItemRevision, ArchivoRevision } = require('../models');
+        Revision, ItemRevision, ArchivoRevision, ProyectoPermiso,
+        TareaProgramada } = require('../models');
 const { wsIdFiltrable: wsId } = require('../utils/workspace');
 const { csvCell, csvRow } = require('../utils/csv');
 
 function fmtDate(d) { return d ? new Date(d).toISOString().replace('T', ' ').slice(0, 19) : ''; }
 
-// Verifica que el proyecto pertenece al workspace del usuario
-async function findProyectoConAcceso(id, workspaceId) {
+// Verifica que el proyecto pertenece al workspace del usuario y que el usuario tiene acceso.
+// Usuarios regulares no pueden ver proyectos restringidos sin permiso explícito.
+async function findProyectoConAcceso(id, workspaceId, userId, rol) {
   const where = { id };
   if (workspaceId) where.workspace_id = workspaceId;
-  return Proyecto.findOne({ where });
+  const proyecto = await Proyecto.findOne({ where });
+  if (!proyecto) return null;
+
+  if (rol === 'usuario' && proyecto.restringido) {
+    const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: id, usuario_id: userId } });
+    if (!permiso) return null;
+  }
+  return proyecto;
 }
 
 const proyectoController = {
@@ -22,6 +31,19 @@ const proyectoController = {
       const where = {};
       const ws = wsId(req);
       if (ws) where.workspace_id = ws;
+
+      if (req.user.rol === 'usuario') {
+        // Usuarios normales ven proyectos abiertos O aquellos en los que tienen permiso explícito
+        const propios = await ProyectoPermiso.findAll({
+          where: { usuario_id: req.user.sub },
+          attributes: ['proyecto_id'],
+        });
+        const idsConPermiso = propios.map(p => p.proyecto_id);
+        where[Op.or] = [
+          { restringido: false },
+          { id: { [Op.in]: idsConPermiso.length ? idsConPermiso : [0] } },
+        ];
+      }
 
       const proyectos = await Proyecto.findAll({
         where,
@@ -40,7 +62,7 @@ const proyectoController = {
 
   async getOne(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       await proyecto.reload({
@@ -84,11 +106,15 @@ const proyectoController = {
 
   async update(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
-      const { nombre, descripcion } = req.body;
-      await proyecto.update({ nombre, descripcion });
+      const { nombre, descripcion, restringido } = req.body;
+      const updates = {};
+      if (nombre !== undefined) updates.nombre = nombre;
+      if (descripcion !== undefined) updates.descripcion = descripcion;
+      if (restringido !== undefined) updates.restringido = restringido;
+      await proyecto.update(updates);
       return res.json(proyecto);
     } catch (err) {
       console.error('[proyecto/update]', err);
@@ -98,7 +124,7 @@ const proyectoController = {
 
   async remove(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       await proyecto.destroy();
@@ -112,7 +138,7 @@ const proyectoController = {
   // GET /api/proyectos/:id/equipos?estado=pendiente|en_proceso|terminado
   async listEquipos(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       const { estado, incluir_archivados } = req.query;
@@ -195,7 +221,7 @@ const proyectoController = {
   // GET /api/proyectos/:id/exportar-csv
   async exportarCSV(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       // Cargar equipos con items y técnico asignado
@@ -316,7 +342,7 @@ const proyectoController = {
   // GET /api/proyectos/:id/exportar-json
   async exportarJSON(req, res) {
     try {
-      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req));
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
       const equipos = await Equipo.findAll({
@@ -429,6 +455,144 @@ const proyectoController = {
       return res.status(201).json({ message: 'Proyecto importado correctamente', proyecto_id: nuevoProyecto.id });
     } catch (err) {
       console.error('[proyecto/importarJSON]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+  // GET /api/proyectos/:id/tareas-vencidas
+  // Devuelve ocurrencias programadas pasadas (últimos 30 días) donde no existe una revisión terminada.
+  // "Vencida" = el día/hora pasó y nadie completó el mantenimiento.
+  async tareaVencidas(req, res) {
+    try {
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+      const equipos = await Equipo.findAll({
+        where: { proyecto_id: proyecto.id, archivado: false },
+        attributes: ['id', 'nombre'],
+      });
+      if (!equipos.length) return res.json([]);
+
+      const equipoIds = equipos.map(e => e.id);
+      const equipoMap = Object.fromEntries(equipos.map(e => [e.id, e.toJSON()]));
+
+      const tareas = await TareaProgramada.findAll({
+        where: { equipo_id: equipoIds, activa: true },
+        include: [{ model: Usuario, as: 'asignado_a', attributes: ['id', 'nombre', 'email'], required: false }],
+      });
+      if (!tareas.length) return res.json([]);
+
+      const DIAS_ATRAS = 30;
+      const ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+      const hoy = new Date(ahoraBogota.getFullYear(), ahoraBogota.getMonth(), ahoraBogota.getDate());
+
+      // Traer todas las revisiones terminadas del período en una sola query
+      const inicio = new Date(hoy);
+      inicio.setDate(inicio.getDate() - DIAS_ATRAS);
+
+      const revisiones = await Revision.findAll({
+        where: {
+          equipo_id: equipoIds,
+          estado: 'terminado',
+          createdAt: { [Op.gte]: inicio },
+        },
+        attributes: ['equipo_id', 'createdAt'],
+      });
+
+      // Set de claves "equipoId_YYYY-MM-DD" con revisión terminada ese día
+      const revisionDias = new Set();
+      for (const r of revisiones) {
+        const bogota = new Date(r.createdAt.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+        const key = `${r.equipo_id}_${bogota.getFullYear()}-${String(bogota.getMonth() + 1).padStart(2, '0')}-${String(bogota.getDate()).padStart(2, '0')}`;
+        revisionDias.add(key);
+      }
+
+      const vencidas = [];
+      for (const tarea of tareas) {
+        for (let d = 1; d <= DIAS_ATRAS; d++) {
+          const dia = new Date(hoy);
+          dia.setDate(dia.getDate() - d);
+
+          const diaSemana = dia.getDay();
+          const diasArr = Array.isArray(tarea.dias_semana) ? tarea.dias_semana : [];
+          if (!diasArr.includes(diaSemana)) continue;
+
+          const fechaStr = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+          if (tarea.fecha_fin && fechaStr > tarea.fecha_fin) continue;
+
+          if (!revisionDias.has(`${tarea.equipo_id}_${fechaStr}`)) {
+            vencidas.push({
+              id: `${tarea.id}_${fechaStr}`,
+              tarea_id: tarea.id,
+              equipo_id: tarea.equipo_id,
+              equipo_nombre: equipoMap[tarea.equipo_id]?.nombre ?? '',
+              fecha_programada: fechaStr,
+              hora: typeof tarea.hora === 'string' ? tarea.hora.slice(0, 5) : '00:00',
+              dias_semana: tarea.dias_semana,
+              asignado_a: tarea.asignado_a,
+            });
+          }
+        }
+      }
+
+      vencidas.sort((a, b) =>
+        b.fecha_programada.localeCompare(a.fecha_programada) ||
+        a.equipo_nombre.localeCompare(b.equipo_nombre)
+      );
+
+      return res.json(vencidas);
+    } catch (err) {
+      console.error('[proyecto/tareaVencidas]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  // GET /api/proyectos/:id/permisos  (solo admin/superadmin)
+  async getPermissions(req, res) {
+    try {
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+      const permisos = await ProyectoPermiso.findAll({
+        where: { proyecto_id: proyecto.id },
+        include: [{ model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email'] }],
+      });
+
+      return res.json({ proyecto_id: proyecto.id, restringido: proyecto.restringido, permisos });
+    } catch (err) {
+      console.error('[proyecto/getPermissions]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  // PUT /api/proyectos/:id/permisos  { restringido?, permisos: [{usuario_id, nivel}] }
+  async updatePermissions(req, res) {
+    try {
+      const proyecto = await findProyectoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      if (!proyecto) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+      const { restringido, permisos } = req.body;
+
+      if (restringido !== undefined) {
+        await proyecto.update({ restringido });
+      }
+
+      if (Array.isArray(permisos)) {
+        // Reemplaza todos los permisos del proyecto de una vez
+        await ProyectoPermiso.destroy({ where: { proyecto_id: proyecto.id } });
+        if (permisos.length > 0) {
+          await ProyectoPermiso.bulkCreate(
+            permisos.map(p => ({
+              proyecto_id: proyecto.id,
+              usuario_id: p.usuario_id,
+              nivel: p.nivel === 'editar' ? 'editar' : 'ver',
+            }))
+          );
+        }
+      }
+
+      return res.json({ message: 'Permisos actualizados', proyecto_id: proyecto.id });
+    } catch (err) {
+      console.error('[proyecto/updatePermissions]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
     }
   },

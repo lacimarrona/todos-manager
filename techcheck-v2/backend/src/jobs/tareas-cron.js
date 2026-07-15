@@ -40,7 +40,11 @@ async function procesarTareasProgramadas() {
       }],
     });
 
-    const hoyStr = ahoraBogota.toISOString().slice(0, 10); // YYYY-MM-DD
+    // Formato Bogotá YYYY-MM-DD (no usar toISOString — devolvería UTC, no Bogotá)
+    const y  = ahoraBogota.getFullYear();
+    const mo = String(ahoraBogota.getMonth() + 1).padStart(2, '0');
+    const da = String(ahoraBogota.getDate()).padStart(2, '0');
+    const hoyStr = `${y}-${mo}-${da}`;
 
     // Filtrar por hora, día y fecha_fin en memoria (evita función SQL sobre JSON)
     const coinciden = tareas.filter(t => {

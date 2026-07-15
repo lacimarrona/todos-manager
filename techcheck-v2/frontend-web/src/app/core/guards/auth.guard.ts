@@ -12,7 +12,7 @@ export const authGuard: CanActivateFn = () => {
   // Already has user in memory
   if (auth.isLogged()) return true;
 
-  // Has a stored token → try to hydrate the user
+  // Has access token in memory → load user from /me
   if (storage.getAccessToken()) {
     return auth.loadMe().pipe(
       switchMap(() => of(true)),
@@ -23,6 +23,13 @@ export const authGuard: CanActivateFn = () => {
     );
   }
 
-  router.navigate(['/auth/login']);
-  return false;
+  // No access token in memory (page reload) — try to renew via httpOnly cookie
+  return auth.refresh().pipe(
+    switchMap(() => auth.loadMe()),
+    switchMap(() => of(true)),
+    catchError(() => {
+      router.navigate(['/auth/login']);
+      return of(false);
+    }),
+  );
 };

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
@@ -142,13 +142,13 @@ const workspaceController = {
         return res.status(400).json({ error: 'nombre, email y password son requeridos' });
       }
       if (password.length < 12) {
-        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
+        return res.status(400).json({ error: 'La contraseÃ±a debe tener al menos 12 caracteres' });
       }
 
       const existing = await Usuario.findOne({ where: { email } });
-      if (existing) return res.status(409).json({ error: 'El email ya está registrado' });
+      if (existing) return res.status(409).json({ error: 'El email ya estÃ¡ registrado' });
 
-      const hash = await bcrypt.hash(password, 10);
+      const hash = await bcrypt.hash(password, 12);
       const admin = await Usuario.create({
         workspace_id: workspace.id,
         nombre,

@@ -54,12 +54,18 @@
           <span class="proyecto-card-meta">
             {{ p.createdAt | date:'dd/MM/yyyy' }}
             @if (p.creador) { · {{ p.creador.nombre }} }
+            @if (p.restringido) {
+              <ion-icon name="lock-closed-outline" style="margin-left:4px;vertical-align:middle;color:var(--ion-color-warning)" title="Proyecto restringido"></ion-icon>
+            }
           </span>
           <div class="proyecto-card-actions" (click)="$event.stopPropagation()">
             <ion-button fill="clear" size="small" color="medium" (click)="openHistorial(p, $event)" title="Historial">
               <ion-icon slot="icon-only" name="time-outline"></ion-icon>
             </ion-button>
             @if (isAdmin()) {
+              <ion-button fill="clear" size="small" color="medium" (click)="openPermisos(p, $event)" title="Permisos de acceso">
+                <ion-icon slot="icon-only" name="lock-closed-outline"></ion-icon>
+              </ion-button>
               <ion-button fill="clear" size="small" color="medium" (click)="exportar(p, $event)" title="Exportar">
                 <ion-icon slot="icon-only" name="download-outline"></ion-icon>
               </ion-button>

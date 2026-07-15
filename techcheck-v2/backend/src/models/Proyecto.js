@@ -10,7 +10,8 @@ const Proyecto = sequelize.define(
     workspace_id: { type: DataTypes.INTEGER, allowNull: false },
     nombre: { type: DataTypes.STRING(255), allowNull: false },
     descripcion: { type: DataTypes.TEXT, allowNull: true },
-    creado_por: { type: DataTypes.INTEGER, allowNull: true },
+    creado_por:   { type: DataTypes.INTEGER, allowNull: true },
+    restringido:  { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { tableName: 'proyectos', underscored: true }
 );

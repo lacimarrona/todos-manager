@@ -16,6 +16,7 @@ const ArchivoRevision   = require('./ArchivoRevision');
 const TareaProgramada   = require('./TareaProgramada');
 const Tecnico           = require('./Tecnico');
 const ArchivoObsGeneral = require('./ArchivoObsGeneral');
+const ProyectoPermiso   = require('./ProyectoPermiso');
 
 // ── Workspace ↔ Usuario (FK primario = workspace activo) ─────────────────────
 Workspace.hasMany(Usuario,   { foreignKey: 'workspace_id', as: 'usuarios' });
@@ -107,10 +108,16 @@ Tecnico.belongsTo(Workspace, { foreignKey: 'workspace_id', as: 'workspace' });
 Revision.hasMany(ArchivoObsGeneral,    { foreignKey: 'revision_id', as: 'archivos_obs' });
 ArchivoObsGeneral.belongsTo(Revision,  { foreignKey: 'revision_id', as: 'revision' });
 
+// ── Proyecto ↔ ProyectoPermiso (acceso por usuario) ──────────────────────────
+Proyecto.hasMany(ProyectoPermiso,    { foreignKey: 'proyecto_id', as: 'permisos' });
+ProyectoPermiso.belongsTo(Proyecto,  { foreignKey: 'proyecto_id', as: 'proyecto' });
+ProyectoPermiso.belongsTo(Usuario,   { foreignKey: 'usuario_id',  as: 'usuario' });
+Usuario.hasMany(ProyectoPermiso,     { foreignKey: 'usuario_id',  as: 'permisos_proyecto' });
+
 module.exports = {
   Workspace, Usuario, UsuarioWorkspace, RefreshToken,
   Proyecto, Plantilla, ItemPlantilla,
   Equipo, ItemEquipo, ArchivoGuia,
   Revision, ItemRevision, ArchivoRevision,
-  TareaProgramada, Tecnico, ArchivoObsGeneral,
+  TareaProgramada, Tecnico, ArchivoObsGeneral, ProyectoPermiso,
 };

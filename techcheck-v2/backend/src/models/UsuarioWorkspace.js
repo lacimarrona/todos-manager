@@ -9,6 +9,7 @@ const UsuarioWorkspace = sequelize.define(
     id:           { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     usuario_id:   { type: DataTypes.INTEGER, allowNull: false },
     workspace_id: { type: DataTypes.INTEGER, allowNull: false },
+    ws_rol:       { type: DataTypes.ENUM('admin', 'usuario'), allowNull: false, defaultValue: 'usuario' },
   },
   { tableName: 'usuario_workspaces', underscored: true }
 );

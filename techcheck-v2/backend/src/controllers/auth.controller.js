@@ -5,14 +5,26 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Usuario, RefreshToken, Workspace, UsuarioWorkspace } = require('../models');
 
+const BCRYPT_COST = 12;
+
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días en ms
 
-function buildPayload(usuario) {
-  return {
-    sub: usuario.id,
-    rol: usuario.rol,
-    workspace_id: usuario.workspace_id,
-  };
+// Construye el payload JWT usando el rol específico del workspace (ws_rol),
+// no el rol global. Para superadmin devuelve el rol global directamente.
+async function buildPayload(usuario, wsId) {
+  if (usuario.rol === 'superadmin') {
+    return { sub: usuario.id, rol: 'superadmin', workspace_id: null };
+  }
+  const workspaceId = wsId ?? usuario.workspace_id;
+  let wsRol = 'usuario';
+  if (workspaceId) {
+    const membership = await UsuarioWorkspace.findOne({
+      where: { usuario_id: usuario.id, workspace_id: workspaceId },
+      attributes: ['ws_rol'],
+    });
+    wsRol = membership?.ws_rol ?? 'usuario';
+  }
+  return { sub: usuario.id, rol: wsRol, workspace_id: workspaceId };
 }
 
 const COOKIE_OPTS = {
@@ -71,7 +83,7 @@ const authController = {
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
-      const accessToken = generateAccessToken(buildPayload(usuario));
+      const accessToken = generateAccessToken(await buildPayload(usuario));
 
       const rawRefresh = crypto.randomBytes(64).toString('hex');
       await RefreshToken.create({
@@ -119,7 +131,7 @@ const authController = {
         return res.status(403).json({ error: 'Cuenta desactivada' });
       }
 
-      const accessToken = generateAccessToken(buildPayload(stored.usuario));
+      const accessToken = generateAccessToken(await buildPayload(stored.usuario));
 
       // Rotar el refresh token para invalidar el anterior
       const rawRefresh = crypto.randomBytes(64).toString('hex');
@@ -177,8 +189,12 @@ const authController = {
       const valid = await bcrypt.compare(password_actual, usuario.password_hash);
       if (!valid) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
 
-      const hash = await bcrypt.hash(password_nuevo, 10);
+      const hash = await bcrypt.hash(password_nuevo, BCRYPT_COST);
       await usuario.update({ password_hash: hash });
+
+      // Invalidar todas las sesiones activas para forzar re-login
+      await RefreshToken.destroy({ where: { usuario_id: usuario.id } });
+      res.clearCookie('tc_refresh', { ...COOKIE_OPTS, maxAge: 0 });
 
       return res.json({ message: 'Contraseña actualizada correctamente' });
     } catch (err) {
@@ -198,7 +214,11 @@ const authController = {
         return res.status(404).json({ error: 'Usuario no encontrado' });
       }
 
-      return res.json(usuario);
+      // El JWT lleva el rol del workspace activo (ws_rol), no el rol global de usuarios.
+      // Sobreescribir para que el frontend siempre reciba el rol correcto del workspace actual.
+      const data = usuario.toJSON();
+      data.rol = req.user.rol;
+      return res.json(data);
     } catch (err) {
       console.error('[auth/me]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
@@ -218,8 +238,8 @@ const authController = {
       // Persistir workspace activo en BD para que /me y el refresh devuelvan el nuevo workspace
       await Usuario.update({ workspace_id }, { where: { id: req.user.sub } });
 
-      const newPayload = { sub: req.user.sub, rol: req.user.rol, workspace_id };
-      const accessToken = generateAccessToken(newPayload);
+      const usuario = await Usuario.findByPk(req.user.sub);
+      const accessToken = generateAccessToken(await buildPayload(usuario, workspace_id));
 
       return res.json({ access_token: accessToken, token_type: 'Bearer' });
     } catch (err) {

@@ -46,7 +46,7 @@ services:
       - ./backend/.sequelizerc:/app/.sequelizerc
       - ./backend/tests:/app/tests
       - ./backend/vitest.config.js:/app/vitest.config.js
-      - ./backend/.env.test:/app/.env.test
+      # .env.test se copia vía docker cp (ver README para tests)
 
   frontend:
     build: ./frontend-web

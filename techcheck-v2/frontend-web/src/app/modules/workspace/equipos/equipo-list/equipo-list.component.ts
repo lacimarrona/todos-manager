@@ -12,14 +12,16 @@ import { addIcons } from 'ionicons';
 import {
   clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
   add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
+  calendarOutline, checkmarkCircleOutline,
 } from 'ionicons/icons';
-import { ProyectoService } from '../../../../core/services/proyecto.service';
+import { ProyectoService, TareaVencida } from '../../../../core/services/proyecto.service';
 import { EquipoService } from '../../../../core/services/equipo.service';
 import { RevisionService } from '../../../../core/services/revision.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PlantillaService } from '../../../../core/services/plantilla.service';
 import { Equipo, RevisionEstado } from '../../../../core/models/equipo.model';
 import { Plantilla } from '../../../../core/models/plantilla.model';
+import { DatePipe } from '@angular/common';
 import { RevisionModalComponent } from '../../revisiones/revision-modal/revision-modal.component';
 import { EquipoFormModalComponent } from '../equipo-form-modal/equipo-form-modal.component';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +34,7 @@ import { FormsModule } from '@angular/forms';
     IonSegment, IonSegmentButton, IonLabel, IonCard, IonCardHeader, IonCardTitle,
     IonCardContent, IonSpinner, IonBackButton, IonFab, IonFabButton,
     IonModal, IonSelect, IonSelectOption,
-    FormsModule,
+    FormsModule, DatePipe,
   ],
   templateUrl: './equipo-list.component.html',
 })
@@ -52,7 +54,8 @@ export class EquipoListComponent implements OnInit {
   readonly equipos        = signal<Equipo[]>([]);
   readonly loading        = signal(false);
   readonly abriendo       = signal<number | null>(null);
-  readonly filtro         = signal<'todos' | 'pendiente' | 'en_proceso' | 'terminado' | 'archivado'>('todos');
+  readonly filtro         = signal<'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'perdidas'>('pendiente');
+  readonly vencidas       = signal<TareaVencida[]>([]);
   readonly isAdmin        = this.auth.isAdmin;
 
   // Import signals
@@ -70,6 +73,7 @@ export class EquipoListComponent implements OnInit {
     addIcons({
       clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
       add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
+      calendarOutline, checkmarkCircleOutline,
     });
   }
 
@@ -87,6 +91,7 @@ export class EquipoListComponent implements OnInit {
   }
 
   loadEquipos() {
+    if (this.filtro() === 'perdidas') { this.loadVencidas(); return; }
     this.loading.set(true);
     const f = this.filtro();
 
@@ -99,17 +104,29 @@ export class EquipoListComponent implements OnInit {
         error: () => { this.loading.set(false); this.toast('Error al cargar equipos', 'danger'); },
       });
     } else {
-      const estado = f !== 'todos' ? f : undefined;
-      this.proyectoSvc.listEquipos(this.proyectoId, estado).subscribe({
+      this.proyectoSvc.listEquipos(this.proyectoId, f).subscribe({
         next: resp => { this.equipos.set(resp.data); this.loading.set(false); },
         error: () => { this.loading.set(false); this.toast('Error al cargar equipos', 'danger'); },
       });
     }
   }
 
+  loadVencidas() {
+    this.loading.set(true);
+    this.proyectoSvc.getTareasVencidas(this.proyectoId).subscribe({
+      next: v => { this.vencidas.set(v); this.loading.set(false); },
+      error: () => { this.loading.set(false); this.toast('Error al cargar tareas perdidas', 'danger'); },
+    });
+  }
+
   onFiltroChange(event: CustomEvent) {
-    this.filtro.set((event as CustomEvent<{ value: 'todos' | 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' }>).detail.value);
+    this.filtro.set((event as CustomEvent<{ value: 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'perdidas' }>).detail.value);
     this.loadEquipos();
+  }
+
+  readonly DIAS_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  diasLabel(dias: number[]): string {
+    return (dias ?? []).map(d => this.DIAS_LABELS[d]).join(', ');
   }
 
   async openRevision(equipo: Equipo) {

@@ -6,6 +6,7 @@ export interface Proyecto {
   nombre: string;
   descripcion: string | null;
   creado_por: number;
+  restringido: boolean;
   creador?: Pick<User, 'id' | 'nombre'>;
   createdAt: string;
   updatedAt: string;

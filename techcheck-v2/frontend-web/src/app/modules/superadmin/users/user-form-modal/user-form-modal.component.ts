@@ -38,8 +38,9 @@ export class SuperadminUserFormModalComponent implements OnInit {
   readonly rol             = signal<string>('usuario');
   readonly workspaceId     = signal<number | null>(null);
   readonly userWorkspaces  = signal<WorkspaceSummary[]>([]);
-  readonly wsParaAgregar   = signal<number | null>(null);
-  readonly addingWs        = signal(false);
+  readonly wsParaAgregar      = signal<number | null>(null);
+  readonly wsRolParaAgregar   = signal<'admin' | 'usuario'>('usuario');
+  readonly addingWs           = signal(false);
 
   readonly workspacesDisponibles = computed(() => {
     const asignados = this.userWorkspaces().map(w => w.id);
@@ -103,14 +104,16 @@ export class SuperadminUserFormModalComponent implements OnInit {
   }
 
   addWorkspace() {
-    const wsId = this.wsParaAgregar();
+    const wsId   = this.wsParaAgregar();
+    const wsRol  = this.wsRolParaAgregar();
     if (!wsId || this.addingWs()) return;
     this.addingWs.set(true);
-    this.userSvc.addWorkspace(this.user!.id, wsId).subscribe({
+    this.userSvc.addWorkspace(this.user!.id, wsId, wsRol).subscribe({
       next: async () => {
         const ws = this.workspaces.find(w => w.id === wsId);
         if (ws) this.userWorkspaces.update(list => [...list, { id: ws.id, nombre: ws.nombre }]);
         this.wsParaAgregar.set(null);
+        this.wsRolParaAgregar.set('usuario');
         this.addingWs.set(false);
         const t = await this.toastCtrl.create({ message: 'Workspace agregado', duration: 2000, color: 'success' });
         await t.present();

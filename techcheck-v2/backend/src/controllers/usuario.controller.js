@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
@@ -9,7 +9,7 @@ function omitPassword(usuario) {
   return data;
 }
 
-// Devuelve el workspace_id a aplicar según el rol del solicitante
+// Devuelve el workspace_id a aplicar segÃºn el rol del solicitante
 function resolveWorkspaceFilter(req) {
   if (req.user.rol === 'admin') return req.user.workspace_id;
   return req.query.workspace_id ? parseInt(req.query.workspace_id) : null;
@@ -67,7 +67,7 @@ const usuarioController = {
         return res.status(400).json({ error: 'nombre, email y password son requeridos' });
       }
       if (password.length < 12) {
-        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
+        return res.status(400).json({ error: 'La contraseÃ±a debe tener al menos 12 caracteres' });
       }
 
       // Admin solo puede crear usuarios en su propio workspace con rol 'usuario'
@@ -79,9 +79,9 @@ const usuarioController = {
       }
 
       const existing = await Usuario.findOne({ where: { email } });
-      if (existing) return res.status(409).json({ error: 'El email ya está registrado' });
+      if (existing) return res.status(409).json({ error: 'El email ya estÃ¡ registrado' });
 
-      const hash = await bcrypt.hash(password, 10);
+      const hash = await bcrypt.hash(password, 12);
       const nuevo = await Usuario.create({
         workspace_id: workspaceId,
         nombre,
@@ -90,9 +90,13 @@ const usuarioController = {
         rol: rolFinal,
       });
 
-      // Registrar membresía en tabla de junction
+      // Registrar membresÃ­a en tabla de junction con el rol del workspace
       if (workspaceId) {
-        await UsuarioWorkspace.findOrCreate({ where: { usuario_id: nuevo.id, workspace_id: workspaceId } });
+        const ws_rol_inicial = req.user.rol === 'superadmin' && rolFinal === 'admin' ? 'admin' : 'usuario';
+        await UsuarioWorkspace.findOrCreate({
+          where: { usuario_id: nuevo.id, workspace_id: workspaceId },
+          defaults: { ws_rol: ws_rol_inicial },
+        });
       }
 
       return res.status(201).json(omitPassword(nuevo));
@@ -112,7 +116,7 @@ const usuarioController = {
       const usuario = await Usuario.findOne({ where });
       if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-      // Nadie puede editar al superadmin salvo él mismo
+      // Nadie puede editar al superadmin salvo Ã©l mismo
       if (usuario.rol === 'superadmin' && req.user.sub !== usuario.id) {
         return res.status(403).json({ error: 'No puedes editar al superadmin' });
       }
@@ -123,13 +127,13 @@ const usuarioController = {
       }
 
       if (req.body.password && req.body.password.length < 12) {
-        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
+        return res.status(400).json({ error: 'La contraseÃ±a debe tener al menos 12 caracteres' });
       }
 
       const updates = {};
       if (req.body.nombre)  updates.nombre = req.body.nombre;
       if (req.body.email)   updates.email  = req.body.email;
-      if (req.body.password) updates.password_hash = await bcrypt.hash(req.body.password, 10);
+      if (req.body.password) updates.password_hash = await bcrypt.hash(req.body.password, 12);
       if (req.user.rol === 'superadmin' && req.body.rol) updates.rol = req.body.rol;
       if (req.body.activo !== undefined) updates.activo = req.body.activo;
 
@@ -167,7 +171,7 @@ const usuarioController = {
   },
 };
 
-// ── Gestión de membresías de workspace (solo superadmin) ─────────────────────
+// â”€â”€ GestiÃ³n de membresÃ­as de workspace (solo superadmin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const workspaceMembershipController = {
   // GET /api/usuarios/:id/workspaces
@@ -184,29 +188,41 @@ const workspaceMembershipController = {
     }
   },
 
-  // POST /api/usuarios/:id/workspaces  { workspace_id }
+  // POST /api/usuarios/:id/workspaces  { workspace_id, ws_rol? }
   async addWorkspace(req, res) {
     try {
       const usuario = await Usuario.findByPk(req.params.id);
       if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
       if (usuario.rol === 'superadmin') return res.status(400).json({ error: 'El superadmin no pertenece a workspaces' });
 
-      const { workspace_id } = req.body;
+      const { workspace_id, ws_rol } = req.body;
       if (!workspace_id) return res.status(400).json({ error: 'workspace_id es requerido' });
+
+      const wsRolFinal = ws_rol === 'admin' ? 'admin' : 'usuario';
 
       const workspace = await Workspace.findByPk(workspace_id);
       if (!workspace) return res.status(404).json({ error: 'Workspace no encontrado' });
 
-      const [, created] = await UsuarioWorkspace.findOrCreate({
+      const [membership, created] = await UsuarioWorkspace.findOrCreate({
         where: { usuario_id: usuario.id, workspace_id },
+        defaults: { ws_rol: wsRolFinal },
       });
 
-      // Si el usuario no tenía workspace activo, asignarlo
+      // Si ya existÃ­a la membresÃ­a, actualizar el ws_rol si viene en el body
+      if (!created && ws_rol !== undefined) {
+        await membership.update({ ws_rol: wsRolFinal });
+      }
+
+      // Si el usuario no tenÃ­a workspace activo, asignarlo
       if (!usuario.workspace_id) {
         await usuario.update({ workspace_id });
       }
 
-      return res.status(created ? 201 : 200).json({ message: 'Membresía registrada', workspace: { id: workspace.id, nombre: workspace.nombre } });
+      return res.status(created ? 201 : 200).json({
+        message: 'MembresÃ­a registrada',
+        workspace: { id: workspace.id, nombre: workspace.nombre },
+        ws_rol: membership.ws_rol,
+      });
     } catch (err) {
       console.error('[usuario/addWorkspace]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
@@ -229,7 +245,7 @@ const workspaceMembershipController = {
         await usuario.update({ workspace_id: otra ? otra.workspace_id : null });
       }
 
-      return res.json({ message: 'Membresía eliminada' });
+      return res.json({ message: 'MembresÃ­a eliminada' });
     } catch (err) {
       console.error('[usuario/removeWorkspace]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });

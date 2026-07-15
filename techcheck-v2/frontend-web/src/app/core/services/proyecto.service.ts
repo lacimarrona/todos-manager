@@ -3,6 +3,29 @@ import { ApiService } from './api.service';
 import { Proyecto } from '../models/proyecto.model';
 import { Equipo } from '../models/equipo.model';
 
+export interface TareaVencida {
+  id: string;
+  tarea_id: number;
+  equipo_id: number;
+  equipo_nombre: string;
+  fecha_programada: string; // YYYY-MM-DD
+  hora: string;
+  dias_semana: number[];
+  asignado_a: { id: number; nombre: string; email: string } | null;
+}
+
+export interface ProyectoPermiso {
+  usuario_id: number;
+  nivel: 'ver' | 'editar';
+  usuario?: { id: number; nombre: string; email: string };
+}
+
+export interface ProyectoPermisosResponse {
+  proyecto_id: number;
+  restringido: boolean;
+  permisos: ProyectoPermiso[];
+}
+
 export interface PagedResponse<T> {
   data: T[];
   total: number;
@@ -36,4 +59,15 @@ export class ProyectoService {
   exportarCSV(id: number) { return this.api.getBlob(`/proyectos/${id}/exportar-csv`); }
   exportarJSON(id: number) { return this.api.get<any>(`/proyectos/${id}/exportar-json`); }
   importarJSON(datos: any) { return this.api.post<{ mensaje: string; proyecto_id: number }>('/proyectos/importar-json', datos); }
+
+  getTareasVencidas(id: number) {
+    return this.api.get<TareaVencida[]>(`/proyectos/${id}/tareas-vencidas`);
+  }
+
+  getPermissions(id: number) {
+    return this.api.get<ProyectoPermisosResponse>(`/proyectos/${id}/permisos`);
+  }
+  updatePermissions(id: number, dto: { restringido?: boolean; permisos?: ProyectoPermiso[] }) {
+    return this.api.put<{ message: string; proyecto_id: number }>(`/proyectos/${id}/permisos`, dto);
+  }
 }

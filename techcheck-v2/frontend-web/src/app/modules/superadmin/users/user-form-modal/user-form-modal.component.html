@@ -101,16 +101,25 @@
 
       <!-- Agregar workspace -->
       @if (workspacesDisponibles().length > 0) {
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <ion-select
-            placeholder="Agregar workspace"
+            placeholder="Workspace"
             [value]="wsParaAgregar()"
             (ionChange)="wsParaAgregar.set($event.detail.value)"
             interface="popover"
-            style="flex:1;border:1px solid var(--ion-color-light-shade);border-radius:8px;padding:0 8px">
+            style="flex:2;min-width:120px;border:1px solid var(--ion-color-light-shade);border-radius:8px;padding:0 8px">
             @for (ws of workspacesDisponibles(); track ws.id) {
               <ion-select-option [value]="ws.id">{{ ws.nombre }}</ion-select-option>
             }
+          </ion-select>
+          <ion-select
+            placeholder="Rol"
+            [value]="wsRolParaAgregar()"
+            (ionChange)="wsRolParaAgregar.set($event.detail.value)"
+            interface="popover"
+            style="flex:1;min-width:90px;border:1px solid var(--ion-color-light-shade);border-radius:8px;padding:0 8px">
+            <ion-select-option value="usuario">Usuario</ion-select-option>
+            <ion-select-option value="admin">Admin</ion-select-option>
           </ion-select>
           <ion-button
             size="small"

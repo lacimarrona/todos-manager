@@ -1,4 +1,7 @@
-const { Workspace, Usuario, Proyecto, Equipo, Plantilla, ItemPlantilla } = require('../../src/models');
+const {
+  Workspace, Usuario, Proyecto, Equipo, Plantilla, ItemPlantilla,
+  ProyectoPermiso, TareaProgramada,
+} = require('../../src/models');
 
 let counter = 0;
 function uniq(prefix) {
@@ -54,6 +57,24 @@ async function createItemPlantilla(plantilla, overrides = {}) {
   });
 }
 
+async function createProyectoPermiso(proyecto, usuario, nivel = 'ver') {
+  return ProyectoPermiso.create({
+    proyecto_id: proyecto.id,
+    usuario_id:  usuario.id,
+    nivel,
+  });
+}
+
+async function createTareaProgramada(equipo, overrides = {}) {
+  return TareaProgramada.create({
+    equipo_id:   equipo.id,
+    hora:        '09:00:00',
+    dias_semana: [1, 2, 3, 4, 5], // lun-vie
+    activa:      true,
+    ...overrides,
+  });
+}
+
 module.exports = {
   createWorkspace,
   createUsuario,
@@ -61,4 +82,6 @@ module.exports = {
   createEquipo,
   createPlantilla,
   createItemPlantilla,
+  createProyectoPermiso,
+  createTareaProgramada,
 };

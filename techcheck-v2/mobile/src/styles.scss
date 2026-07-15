@@ -409,6 +409,68 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Sin max-height el footer crece sin límite cuando hay imágenes y bloquea el scroll del ion-content */
+  max-height: 45vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Archivos adjuntos en observación general (footer) */
+.obs-archivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.obs-archivo-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+}
+
+.obs-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--ion-color-light-shade);
+  flex-shrink: 0;
+}
+
+.obs-doc-icon {
+  width: 64px;
+  height: 64px;
+  font-size: 2rem;
+  color: var(--ion-color-medium);
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--ion-color-light);
+  flex-shrink: 0;
+}
+
+.obs-del-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  ion-icon { font-size: 1.1rem; }
+}
+
+.obs-upload-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
 }
 
 .obs-textarea {
