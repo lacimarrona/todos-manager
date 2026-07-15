@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
@@ -38,11 +38,18 @@ export class ProyectoListComponent implements OnInit {
   readonly loading   = signal(false);
   readonly isAdmin   = this.auth.isAdmin;
 
+  private readonly activeWsId = computed(() => this.auth.user()?.workspace_id);
+
   constructor() {
+    // Recargar proyectos cada vez que cambie el workspace activo
+    effect(() => {
+      const wsId = this.activeWsId();
+      if (wsId) this.load();
+    }, { allowSignalWrites: true });
     addIcons({ add, folderOpenOutline, pencilOutline, trashOutline, chevronForwardOutline, downloadOutline, timeOutline, cloudUploadOutline });
   }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { /* la carga inicial y los cambios de workspace los gestiona el effect */ }
 
   load() {
     this.loading.set(true);

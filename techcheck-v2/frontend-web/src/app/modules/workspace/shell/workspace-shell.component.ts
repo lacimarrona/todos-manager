@@ -74,9 +74,10 @@ export class WorkspaceShellComponent {
     this.auth.switchWorkspace(wsId).subscribe({
       next: async () => {
         await this.menuCtrl.close('workspace-menu');
-        // Navegar a la raíz limpia para que la lista de proyectos se recargue
-        // con los datos del nuevo workspace (evita usar proyectos del workspace anterior)
-        await this.navCtrl.navigateRoot('/workspace/proyectos');
+        // navigateRoot limpia el stack de Ionic cuando el usuario está en una
+        // página más profunda (equipos, revisiones…). Si ya está en /proyectos,
+        // el effect reactivo del componente recarga los datos automáticamente.
+        this.navCtrl.navigateRoot('/workspace/proyectos');
         const t = await this.toastCtrl.create({ message: 'Workspace cambiado', duration: 2000, color: 'success' });
         await t.present();
       },
