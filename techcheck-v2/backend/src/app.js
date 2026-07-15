@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const { sequelize } = require('./config/database');
 require('./models'); // registra modelos y asociaciones
 
+const auth          = require('./middleware/auth');
 const authRoutes    = require('./routes/auth.routes');
 const adminRoutes   = require('./routes/admin.routes');
 const usuarioRoutes = require('./routes/usuario.routes');
@@ -115,7 +116,7 @@ app.use('/api/plantillas',         plantillaRoutes);
 app.use('/api/tareas-programadas', tareaRoutes);
 app.use('/api/tecnicos',           tecnicoRoutes);
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', auth, async (req, res) => {
   try {
     await sequelize.authenticate();
     res.json({ status: 'ok', db: 'connected' });

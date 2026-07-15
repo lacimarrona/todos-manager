@@ -10,6 +10,8 @@ const RefreshToken = sequelize.define(
     usuario_id: { type: DataTypes.INTEGER, allowNull: false },
     token_hash: { type: DataTypes.STRING(255), allowNull: false, unique: true },
     expires_at: { type: DataTypes.DATE, allowNull: false },
+    user_agent: { type: DataTypes.STRING(500), allowNull: true },
+    ip: { type: DataTypes.STRING(50), allowNull: true },
   },
   {
     tableName: 'refresh_tokens',

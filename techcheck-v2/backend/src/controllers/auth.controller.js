@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 const { Usuario, RefreshToken, Workspace, UsuarioWorkspace } = require('../models');
 
 const BCRYPT_COST = 12;
@@ -79,7 +80,8 @@ const authController = {
 
       const valid = await bcrypt.compare(password, usuario.password_hash);
       if (!valid) {
-        console.warn('[security] login_failed', { email, ip: req.ip, ts: new Date().toISOString() });
+        const maskedEmail = email.replace(/^(.).+(@.+)$/, '$1***$2');
+        console.warn('[security] login_failed', { email: maskedEmail, ip: req.ip, ts: new Date().toISOString() });
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
@@ -90,6 +92,8 @@ const authController = {
         usuario_id: usuario.id,
         token_hash: hashToken(rawRefresh),
         expires_at: new Date(Date.now() + REFRESH_TTL_MS),
+        user_agent: req.headers['user-agent']?.slice(0, 500) ?? null,
+        ip: req.ip ?? null,
       });
 
       // httpOnly cookie para web; también en body para clientes móviles/API
@@ -221,6 +225,50 @@ const authController = {
       return res.json(data);
     } catch (err) {
       console.error('[auth/me]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  async sessions(req, res) {
+    try {
+      const tokens = await RefreshToken.findAll({
+        where: { usuario_id: req.user.sub },
+        attributes: ['id', 'user_agent', 'ip', 'created_at', 'expires_at'],
+        order: [['created_at', 'DESC']],
+      });
+      return res.json(tokens);
+    } catch (err) {
+      console.error('[auth/sessions]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  async revokeSession(req, res) {
+    try {
+      const { id } = req.params;
+      const token = await RefreshToken.findOne({
+        where: { id, usuario_id: req.user.sub },
+      });
+      if (!token) return res.status(404).json({ error: 'Sesión no encontrada' });
+      await token.destroy();
+      return res.json({ message: 'Sesión cerrada' });
+    } catch (err) {
+      console.error('[auth/revokeSession]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  async revokeOtherSessions(req, res) {
+    try {
+      const currentToken = req.cookies?.tc_refresh;
+      const where = { usuario_id: req.user.sub };
+      if (currentToken) {
+        where.token_hash = { [Op.ne]: hashToken(currentToken) };
+      }
+      const count = await RefreshToken.destroy({ where });
+      return res.json({ message: `${count} sesión(es) cerrada(s)` });
+    } catch (err) {
+      console.error('[auth/revokeOtherSessions]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
     }
   },

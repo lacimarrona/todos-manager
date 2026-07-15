@@ -12,5 +12,8 @@ router.post('/logout',           auth, authController.logout);
 router.get('/me',                auth, authController.me);
 router.post('/change-password',  auth, authController.changePassword);
 router.post('/switch-workspace', auth, authController.switchWorkspace);
+router.get('/sessions',          auth, authController.sessions);
+router.delete('/sessions',       auth, authController.revokeOtherSessions);
+router.delete('/sessions/:id',   auth, authController.revokeSession);
 
 module.exports = router;

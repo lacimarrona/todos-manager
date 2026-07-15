@@ -8,12 +8,24 @@ import { StorageService } from './storage.service';
 import { User } from '../models/user.model';
 import { LoginRequest, LoginResponse, RefreshResponse, JwtPayload } from '../models/auth.model';
 
-const USER_CACHE_KEY  = 'tc_user_cache';
-const LOCAL_AUTH_KEY  = 'tc_local_auth';
+const USER_CACHE_KEY   = 'tc_user_cache';
+const LOCAL_AUTH_KEY   = 'tc_local_auth';
+const DEVICE_SALT_KEY  = 'tc_device_salt';
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Salt único por instalación almacenado en EncryptedSharedPreferences.
+// Añade entropía al hash offline para que no sea reversible si se extrae el hash.
+async function getOrCreateDeviceSalt(): Promise<string> {
+  const { value } = await Preferences.get({ key: DEVICE_SALT_KEY });
+  if (value) return value;
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const salt = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  await Preferences.set({ key: DEVICE_SALT_KEY, value: salt });
+  return salt;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +49,8 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.base}/login`, creds).pipe(
       switchMap(async res => {
         await this.storage.setTokens(res.access_token, res.refresh_token);
-        const hash = await sha256(`${creds.email}:${creds.password}`);
+        const salt = await getOrCreateDeviceSalt();
+        const hash = await sha256(`${salt}:${creds.email}:${creds.password}`);
         await Preferences.set({ key: LOCAL_AUTH_KEY, value: hash });
       }),
       switchMap(() => this.loadMe()),
@@ -47,7 +60,8 @@ export class AuthService {
   async loginOffline(email: string, password: string): Promise<boolean> {
     const { value: savedHash } = await Preferences.get({ key: LOCAL_AUTH_KEY });
     if (!savedHash) return false;
-    const hash = await sha256(`${email}:${password}`);
+    const salt = await getOrCreateDeviceSalt();
+    const hash = await sha256(`${salt}:${email}:${password}`);
     if (hash !== savedHash) return false;
     return (await this.loadMeFromCache()) !== null;
   }

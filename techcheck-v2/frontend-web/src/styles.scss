@@ -1024,3 +1024,15 @@ ion-button[fill="clear"] {
 .equipo-card.estado-en_proceso { border-left: 4px solid #3b82f6; }
 .equipo-card.estado-terminado  { border-left: 4px solid #22c55e; }
 .equipo-card.estado-archivado  { border-left: 4px solid #94a3b8; }
+
+/* ── Sessions modal ─────────────────────────────────────────── */
+.badge-current {
+  display: inline-block;
+  font-size: 10px;
+  background: var(--ion-color-primary);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}

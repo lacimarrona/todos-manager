@@ -2,7 +2,7 @@ import { Component, inject, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
-  IonList, IonItem, IonLabel, IonIcon, IonButton, IonBadge,
+  IonList, IonItem, IonLabel, IonIcon, IonButton,
   IonRouterOutlet,
   MenuController, ModalController, ToastController, NavController,
 } from '@ionic/angular/standalone';
@@ -10,10 +10,11 @@ import { addIcons } from 'ionicons';
 import {
   peopleOutline, folderOpenOutline, logOutOutline, personCircleOutline,
   documentTextOutline, timeOutline, constructOutline, keyOutline,
-  swapHorizontalOutline, checkmarkCircleOutline,
+  swapHorizontalOutline, checkmarkCircleOutline, phonePortraitOutline,
 } from 'ionicons/icons';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChangePasswordModalComponent } from './change-password-modal/change-password-modal.component';
+import { SessionsModalComponent } from './sessions-modal/sessions-modal.component';
 
 interface NavItem {
   label: string;
@@ -28,7 +29,7 @@ interface NavItem {
   imports: [
     RouterLink, RouterLinkActive,
     IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
-    IonList, IonItem, IonLabel, IonIcon, IonButton, IonBadge,
+    IonList, IonItem, IonLabel, IonIcon, IonButton,
     IonRouterOutlet,
   ],
   templateUrl: './workspace-shell.component.html',
@@ -56,7 +57,7 @@ export class WorkspaceShellComponent {
     addIcons({
       peopleOutline, folderOpenOutline, logOutOutline, personCircleOutline,
       documentTextOutline, timeOutline, constructOutline, keyOutline,
-      swapHorizontalOutline, checkmarkCircleOutline,
+      swapHorizontalOutline, checkmarkCircleOutline, phonePortraitOutline,
     });
   }
 
@@ -66,6 +67,12 @@ export class WorkspaceShellComponent {
   async openChangePassword() {
     await this.menuCtrl.close('workspace-menu');
     const modal = await this.modalCtrl.create({ component: ChangePasswordModalComponent });
+    await modal.present();
+  }
+
+  async openSessions() {
+    await this.menuCtrl.close('workspace-menu');
+    const modal = await this.modalCtrl.create({ component: SessionsModalComponent });
     await modal.present();
   }
 
