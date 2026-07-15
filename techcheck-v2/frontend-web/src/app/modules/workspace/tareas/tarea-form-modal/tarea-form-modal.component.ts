@@ -6,12 +6,15 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { close } from 'ionicons/icons';
+import { close, calendarOutline, checkboxOutline } from 'ionicons/icons';
 import { TareaService } from '../../../../core/services/tarea.service';
 import { ProyectoService } from '../../../../core/services/proyecto.service';
+import { UserService } from '../../../../core/services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { TareaProgramada } from '../../../../core/models/tarea.model';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { Equipo } from '../../../../core/models/equipo.model';
+import { User } from '../../../../core/models/user.model';
 
 @Component({
   selector: 'app-tarea-form-modal',
@@ -29,8 +32,12 @@ export class TareaFormModalComponent implements OnInit {
 
   private readonly svc         = inject(TareaService);
   private readonly proyectoSvc = inject(ProyectoService);
+  private readonly userSvc     = inject(UserService);
+  private readonly auth        = inject(AuthService);
   private readonly modalCtrl   = inject(ModalController);
   private readonly toastCtrl   = inject(ToastController);
+
+  readonly isAdmin = this.auth.isAdmin;
 
   readonly DAYS = [
     { value: 0, label: 'Dom' }, { value: 1, label: 'Lun' }, { value: 2, label: 'Mar' },
@@ -40,6 +47,7 @@ export class TareaFormModalComponent implements OnInit {
 
   readonly proyectos    = signal<Proyecto[]>([]);
   readonly equipos      = signal<Equipo[]>([]);
+  readonly usuarios     = signal<User[]>([]);
   readonly selectedDays = signal<number[]>([]);
   readonly saving       = signal(false);
   readonly loadingEqs   = signal(false);
@@ -47,6 +55,8 @@ export class TareaFormModalComponent implements OnInit {
   readonly proyectoId   = signal<number>(0);
   readonly equipoId     = signal<number>(0);
   readonly hora         = signal('');
+  readonly asignadoAId  = signal<number | null>(null);
+  readonly fechaFin     = signal<string>('');
 
   readonly isValid = computed(() => {
     if (this.isEdit) return !!this.hora() && this.selectedDays().length > 0;
@@ -55,16 +65,24 @@ export class TareaFormModalComponent implements OnInit {
 
   get isEdit() { return !!this.tarea; }
 
-  constructor() { addIcons({ close }); }
+  constructor() { addIcons({ close, calendarOutline, checkboxOutline }); }
 
   ngOnInit() {
     if (this.isEdit) {
       this.hora.set(this.tarea!.hora.substring(0, 5));
       this.selectedDays.set([...this.tarea!.dias_semana]);
+      this.asignadoAId.set(this.tarea!.asignado_a_id);
+      this.fechaFin.set(this.tarea!.fecha_fin ?? '');
     } else {
       this.proyectoSvc.list().subscribe({
         next: ps => this.proyectos.set(ps),
         error: () => this.toast('Error al cargar proyectos', 'danger'),
+      });
+    }
+    if (this.isAdmin()) {
+      this.userSvc.list().subscribe({
+        next: us => this.usuarios.set(us.filter(u => u.rol !== 'superadmin')),
+        error: () => {},
       });
     }
   }
@@ -94,6 +112,20 @@ export class TareaFormModalComponent implements OnInit {
     );
   }
 
+  selectAllWeek() {
+    this.selectedDays.set([0, 1, 2, 3, 4, 5, 6]);
+  }
+
+  onlyThisWeek() {
+    // Selecciona todos los días Y pone fecha_fin al domingo más próximo
+    this.selectedDays.set([0, 1, 2, 3, 4, 5, 6]);
+    const hoy = new Date();
+    const diasHastaDomingo = 7 - hoy.getDay(); // getDay() 0=dom, si ya es domingo = 7 (semana siguiente)
+    const domingo = new Date(hoy);
+    domingo.setDate(hoy.getDate() + (hoy.getDay() === 0 ? 0 : diasHastaDomingo));
+    this.fechaFin.set(domingo.toISOString().slice(0, 10));
+  }
+
   dismiss() { this.modalCtrl.dismiss(null, 'cancel'); }
 
   submit() {
@@ -101,13 +133,27 @@ export class TareaFormModalComponent implements OnInit {
     this.error.set(null);
     this.saving.set(true);
 
+    const fechaFinVal = this.fechaFin() || null;
+    const asignadoId  = this.isAdmin() ? (this.asignadoAId() || null) : null;
+
     if (this.isEdit) {
-      this.svc.update(this.tarea!.id, { hora: this.hora(), dias_semana: this.selectedDays() }).subscribe({
+      this.svc.update(this.tarea!.id, {
+        hora:          this.hora(),
+        dias_semana:   this.selectedDays(),
+        asignado_a_id: asignadoId,
+        fecha_fin:     fechaFinVal,
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al guardar'); },
       });
     } else {
-      this.svc.create({ equipo_id: this.equipoId(), hora: this.hora(), dias_semana: this.selectedDays() }).subscribe({
+      this.svc.create({
+        equipo_id:     this.equipoId(),
+        hora:          this.hora(),
+        dias_semana:   this.selectedDays(),
+        asignado_a_id: asignadoId,
+        fecha_fin:     fechaFinVal,
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al crear tarea'); },
       });

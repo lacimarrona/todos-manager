@@ -40,7 +40,7 @@
         type="password"
         [value]="password()"
         (ionInput)="password.set($event.detail.value ?? '')"
-        placeholder="Mínimo 6 caracteres"
+        placeholder="Mínimo 12 caracteres"
         autocomplete="new-password">
         <ion-input-password-toggle slot="end"></ion-input-password-toggle>
       </ion-input>
@@ -59,6 +59,7 @@
       </ion-select>
     </ion-item>
 
+    <!-- Crear: selector de workspace inicial -->
     @if (!isEdit && rol() !== 'superadmin') {
       <ion-item>
         <ion-select
@@ -75,6 +76,56 @@
       </ion-item>
     }
   </ion-list>
+
+  <!-- Editar: gestión de workspaces (multi-workspace) -->
+  @if (isEdit && rol() !== 'superadmin') {
+    <div class="ws-memberships-section" style="margin-top:16px">
+      <p class="ws-memberships-title" style="font-weight:600;margin-bottom:8px">Workspaces del usuario</p>
+
+      <!-- Workspaces actuales -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        @for (ws of userWorkspaces(); track ws.id) {
+          <div class="ws-badge" style="display:flex;align-items:center;gap:4px;background:var(--ion-color-primary-tint);color:var(--ion-color-primary-shade);padding:4px 10px;border-radius:16px;font-size:0.85rem">
+            {{ ws.nombre }}
+            <ion-icon
+              name="close-circle"
+              style="cursor:pointer;font-size:1rem"
+              (click)="removeWorkspace(ws.id)">
+            </ion-icon>
+          </div>
+        }
+        @if (userWorkspaces().length === 0) {
+          <p style="color:var(--ion-color-medium);font-size:0.85rem;margin:0">Sin workspaces asignados</p>
+        }
+      </div>
+
+      <!-- Agregar workspace -->
+      @if (workspacesDisponibles().length > 0) {
+        <div style="display:flex;gap:8px;align-items:center">
+          <ion-select
+            placeholder="Agregar workspace"
+            [value]="wsParaAgregar()"
+            (ionChange)="wsParaAgregar.set($event.detail.value)"
+            interface="popover"
+            style="flex:1;border:1px solid var(--ion-color-light-shade);border-radius:8px;padding:0 8px">
+            @for (ws of workspacesDisponibles(); track ws.id) {
+              <ion-select-option [value]="ws.id">{{ ws.nombre }}</ion-select-option>
+            }
+          </ion-select>
+          <ion-button
+            size="small"
+            [disabled]="!wsParaAgregar() || addingWs()"
+            (click)="addWorkspace()">
+            @if (addingWs()) {
+              <ion-spinner name="crescent" style="width:16px;height:16px"></ion-spinner>
+            } @else {
+              <ion-icon name="add-circle-outline" slot="icon-only"></ion-icon>
+            }
+          </ion-button>
+        </div>
+      }
+    </div>
+  }
 
   @if (error()) {
     <ion-text color="danger"><p class="form-error">{{ error() }}</p></ion-text>

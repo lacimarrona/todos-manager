@@ -1,24 +1,33 @@
 'use strict';
 
-const Workspace        = require('./Workspace');
-const Usuario          = require('./Usuario');
-const RefreshToken     = require('./RefreshToken');
-const Proyecto         = require('./Proyecto');
-const Plantilla        = require('./Plantilla');
-const ItemPlantilla    = require('./ItemPlantilla');
-const Equipo           = require('./Equipo');
-const ItemEquipo       = require('./ItemEquipo');
-const ArchivoGuia      = require('./ArchivoGuia');
-const Revision         = require('./Revision');
-const ItemRevision     = require('./ItemRevision');
-const ArchivoRevision  = require('./ArchivoRevision');
+const Workspace         = require('./Workspace');
+const Usuario           = require('./Usuario');
+const UsuarioWorkspace  = require('./UsuarioWorkspace');
+const RefreshToken      = require('./RefreshToken');
+const Proyecto          = require('./Proyecto');
+const Plantilla         = require('./Plantilla');
+const ItemPlantilla     = require('./ItemPlantilla');
+const Equipo            = require('./Equipo');
+const ItemEquipo        = require('./ItemEquipo');
+const ArchivoGuia       = require('./ArchivoGuia');
+const Revision          = require('./Revision');
+const ItemRevision      = require('./ItemRevision');
+const ArchivoRevision   = require('./ArchivoRevision');
 const TareaProgramada   = require('./TareaProgramada');
 const Tecnico           = require('./Tecnico');
 const ArchivoObsGeneral = require('./ArchivoObsGeneral');
 
-// ── Workspace ↔ Usuario ──────────────────────────────────────────────────────
+// ── Workspace ↔ Usuario (FK primario = workspace activo) ─────────────────────
 Workspace.hasMany(Usuario,   { foreignKey: 'workspace_id', as: 'usuarios' });
 Usuario.belongsTo(Workspace, { foreignKey: 'workspace_id', as: 'workspace' });
+
+// ── Usuario ↔ Workspace (many-to-many, membresías gestionadas por superadmin) ─
+Usuario.belongsToMany(Workspace, {
+  through: UsuarioWorkspace, foreignKey: 'usuario_id', otherKey: 'workspace_id', as: 'workspaces',
+});
+Workspace.belongsToMany(Usuario, {
+  through: UsuarioWorkspace, foreignKey: 'workspace_id', otherKey: 'usuario_id', as: 'miembros',
+});
 
 // ── Workspace ↔ Proyecto ─────────────────────────────────────────────────────
 Workspace.hasMany(Proyecto,   { foreignKey: 'workspace_id', as: 'proyectos' });
@@ -80,6 +89,12 @@ ArchivoRevision.belongsTo(ItemRevision,  { foreignKey: 'item_rev_id', as: 'item_
 Equipo.hasMany(TareaProgramada,    { foreignKey: 'equipo_id', as: 'tareas_programadas' });
 TareaProgramada.belongsTo(Equipo,  { foreignKey: 'equipo_id', as: 'equipo' });
 
+// ── Usuario ↔ TareaProgramada (asignado / creador) ───────────────────────────
+Usuario.hasMany(TareaProgramada, { foreignKey: 'asignado_a_id', as: 'tareas_asignadas' });
+TareaProgramada.belongsTo(Usuario, { foreignKey: 'asignado_a_id', as: 'asignado_a' });
+Usuario.hasMany(TareaProgramada, { foreignKey: 'creado_por_id', as: 'tareas_creadas' });
+TareaProgramada.belongsTo(Usuario, { foreignKey: 'creado_por_id', as: 'creado_por' });
+
 // ── Usuario ↔ RefreshToken ───────────────────────────────────────────────────
 Usuario.hasMany(RefreshToken,   { foreignKey: 'usuario_id', as: 'refresh_tokens' });
 RefreshToken.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
@@ -93,7 +108,7 @@ Revision.hasMany(ArchivoObsGeneral,    { foreignKey: 'revision_id', as: 'archivo
 ArchivoObsGeneral.belongsTo(Revision,  { foreignKey: 'revision_id', as: 'revision' });
 
 module.exports = {
-  Workspace, Usuario, RefreshToken,
+  Workspace, Usuario, UsuarioWorkspace, RefreshToken,
   Proyecto, Plantilla, ItemPlantilla,
   Equipo, ItemEquipo, ArchivoGuia,
   Revision, ItemRevision, ArchivoRevision,

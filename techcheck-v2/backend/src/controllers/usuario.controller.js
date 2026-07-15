@@ -2,7 +2,7 @@
 
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
-const { Usuario, Workspace } = require('../models');
+const { Usuario, Workspace, UsuarioWorkspace } = require('../models');
 
 function omitPassword(usuario) {
   const { password_hash, ...data } = usuario.toJSON();
@@ -90,6 +90,11 @@ const usuarioController = {
         rol: rolFinal,
       });
 
+      // Registrar membresía en tabla de junction
+      if (workspaceId) {
+        await UsuarioWorkspace.findOrCreate({ where: { usuario_id: nuevo.id, workspace_id: workspaceId } });
+      }
+
       return res.status(201).json(omitPassword(nuevo));
     } catch (err) {
       console.error('[usuario/create]', err);
@@ -162,4 +167,74 @@ const usuarioController = {
   },
 };
 
-module.exports = usuarioController;
+// ── Gestión de membresías de workspace (solo superadmin) ─────────────────────
+
+const workspaceMembershipController = {
+  // GET /api/usuarios/:id/workspaces
+  async listWorkspaces(req, res) {
+    try {
+      const usuario = await Usuario.findByPk(req.params.id, {
+        include: [{ model: Workspace, as: 'workspaces', through: { attributes: [] }, attributes: ['id', 'nombre'] }],
+      });
+      if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.json(usuario.workspaces);
+    } catch (err) {
+      console.error('[usuario/listWorkspaces]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  // POST /api/usuarios/:id/workspaces  { workspace_id }
+  async addWorkspace(req, res) {
+    try {
+      const usuario = await Usuario.findByPk(req.params.id);
+      if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+      if (usuario.rol === 'superadmin') return res.status(400).json({ error: 'El superadmin no pertenece a workspaces' });
+
+      const { workspace_id } = req.body;
+      if (!workspace_id) return res.status(400).json({ error: 'workspace_id es requerido' });
+
+      const workspace = await Workspace.findByPk(workspace_id);
+      if (!workspace) return res.status(404).json({ error: 'Workspace no encontrado' });
+
+      const [, created] = await UsuarioWorkspace.findOrCreate({
+        where: { usuario_id: usuario.id, workspace_id },
+      });
+
+      // Si el usuario no tenía workspace activo, asignarlo
+      if (!usuario.workspace_id) {
+        await usuario.update({ workspace_id });
+      }
+
+      return res.status(created ? 201 : 200).json({ message: 'Membresía registrada', workspace: { id: workspace.id, nombre: workspace.nombre } });
+    } catch (err) {
+      console.error('[usuario/addWorkspace]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  // DELETE /api/usuarios/:id/workspaces/:workspaceId
+  async removeWorkspace(req, res) {
+    try {
+      const usuario = await Usuario.findByPk(req.params.id);
+      if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+      const workspaceId = parseInt(req.params.workspaceId);
+
+      await UsuarioWorkspace.destroy({ where: { usuario_id: usuario.id, workspace_id: workspaceId } });
+
+      // Si era el workspace activo, cambiarlo a otro que tenga o a null
+      if (usuario.workspace_id === workspaceId) {
+        const otra = await UsuarioWorkspace.findOne({ where: { usuario_id: usuario.id } });
+        await usuario.update({ workspace_id: otra ? otra.workspace_id : null });
+      }
+
+      return res.json({ message: 'Membresía eliminada' });
+    } catch (err) {
+      console.error('[usuario/removeWorkspace]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+};
+
+module.exports = { usuarioController, workspaceMembershipController };

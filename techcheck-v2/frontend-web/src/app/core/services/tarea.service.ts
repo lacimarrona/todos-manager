@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
-import { TareaProgramada } from '../models/tarea.model';
+import { TareaProgramada, CreateTareaDto, UpdateTareaDto } from '../models/tarea.model';
 
 @Injectable({ providedIn: 'root' })
 export class TareaService {
@@ -13,15 +13,8 @@ export class TareaService {
     );
   }
 
-  create(dto: { equipo_id: number; hora: string; dias_semana: number[] }) {
-    return this.api.post<TareaProgramada>('/tareas-programadas', dto);
-  }
-
-  update(id: number, dto: { hora?: string; dias_semana?: number[] }) {
-    return this.api.put<TareaProgramada>(`/tareas-programadas/${id}`, dto);
-  }
-
-  remove(id: number) { return this.api.delete(`/tareas-programadas/${id}`); }
-
-  toggle(id: number) { return this.api.patch<TareaProgramada>(`/tareas-programadas/${id}/toggle`); }
+  create(dto: CreateTareaDto)            { return this.api.post<TareaProgramada>('/tareas-programadas', dto); }
+  update(id: number, dto: UpdateTareaDto){ return this.api.put<TareaProgramada>(`/tareas-programadas/${id}`, dto); }
+  remove(id: number)                     { return this.api.delete(`/tareas-programadas/${id}`); }
+  toggle(id: number)                     { return this.api.patch<{ id: number; activa: boolean }>(`/tareas-programadas/${id}/toggle`); }
 }

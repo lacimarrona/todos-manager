@@ -3,7 +3,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Usuario, RefreshToken } = require('../models');
+const { Usuario, RefreshToken, Workspace, UsuarioWorkspace } = require('../models');
 
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días en ms
 
@@ -36,6 +36,14 @@ function hashToken(raw) {
 function safeUser(usuario) {
   const { password_hash, ...rest } = usuario.toJSON();
   return rest;
+}
+
+async function userWithWorkspaces(usuario) {
+  const u = await Usuario.findByPk(usuario.id, {
+    attributes: { exclude: ['password_hash'] },
+    include: [{ model: Workspace, as: 'workspaces', through: { attributes: [] }, attributes: ['id', 'nombre'] }],
+  });
+  return u ? u.toJSON() : safeUser(usuario);
 }
 
 const authController = {
@@ -77,9 +85,9 @@ const authController = {
 
       return res.json({
         access_token: accessToken,
-        refresh_token: rawRefresh, // móvil lo usa directamente; web usa la cookie
+        refresh_token: rawRefresh,
         token_type: 'Bearer',
-        user: safeUser(usuario),
+        user: await userWithWorkspaces(usuario),
       });
     } catch (err) {
       console.error('[auth/login]', err);
@@ -183,6 +191,7 @@ const authController = {
     try {
       const usuario = await Usuario.findByPk(req.user.sub, {
         attributes: { exclude: ['password_hash'] },
+        include: [{ model: Workspace, as: 'workspaces', through: { attributes: [] }, attributes: ['id', 'nombre'] }],
       });
 
       if (!usuario) {
@@ -192,6 +201,26 @@ const authController = {
       return res.json(usuario);
     } catch (err) {
       console.error('[auth/me]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  async switchWorkspace(req, res) {
+    try {
+      const { workspace_id } = req.body;
+      if (!workspace_id) return res.status(400).json({ error: 'workspace_id es requerido' });
+
+      const membership = await UsuarioWorkspace.findOne({
+        where: { usuario_id: req.user.sub, workspace_id },
+      });
+      if (!membership) return res.status(403).json({ error: 'No perteneces a ese workspace' });
+
+      const newPayload = { sub: req.user.sub, rol: req.user.rol, workspace_id };
+      const accessToken = generateAccessToken(newPayload);
+
+      return res.json({ access_token: accessToken, token_type: 'Bearer' });
+    } catch (err) {
+      console.error('[auth/switchWorkspace]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });
     }
   },

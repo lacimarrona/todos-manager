@@ -42,6 +42,12 @@
             <strong>{{ horaCorta(t.hora) }}</strong>
             &nbsp;·&nbsp;{{ diasLabel(t.dias_semana) }}
           </p>
+          @if (t.asignado_a) {
+            <p class="tarea-meta"><strong>Asignado:</strong> {{ t.asignado_a.nombre }}</p>
+          }
+          @if (t.fecha_fin) {
+            <p class="tarea-meta"><strong>Hasta:</strong> {{ t.fecha_fin }}</p>
+          }
         </ion-label>
 
         <ion-toggle

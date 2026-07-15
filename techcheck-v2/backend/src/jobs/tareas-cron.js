@@ -40,11 +40,16 @@ async function procesarTareasProgramadas() {
       }],
     });
 
-    // Filtrar por hora y día en memoria (evita función SQL sobre JSON)
+    const hoyStr = ahoraBogota.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // Filtrar por hora, día y fecha_fin en memoria (evita función SQL sobre JSON)
     const coinciden = tareas.filter(t => {
       if (horaString(t.hora) !== horaActual) return false;
       const dias = Array.isArray(t.dias_semana) ? t.dias_semana : [];
-      return dias.includes(diaActual);
+      if (!dias.includes(diaActual)) return false;
+      // Si tiene fecha_fin y ya expiró, no procesar
+      if (t.fecha_fin && t.fecha_fin < hoyStr) return false;
+      return true;
     });
 
     if (!coinciden.length) return;

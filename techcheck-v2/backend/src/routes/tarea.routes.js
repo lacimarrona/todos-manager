@@ -7,8 +7,9 @@ const c     = require('../controllers/tarea.controller');
 
 const router = Router();
 
-// Solo admin y superadmin gestionan tareas programadas
-router.use(auth, roles('admin', 'superadmin'));
+// Todos los usuarios autenticados pueden ver y crear sus propias tareas.
+// El controlador aplica la visibilidad y permisos por rol.
+router.use(auth);
 
 router.get('/',         c.list);
 router.get('/:id',      c.getOne);

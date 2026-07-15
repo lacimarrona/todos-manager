@@ -19,7 +19,7 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Edit mode: show equipo info (read-only) -->
+  <!-- Edit: info del equipo (solo lectura) -->
   @if (isEdit && tarea?.equipo) {
     <div class="tarea-equipo-info">
       <p class="tarea-equipo-nombre">{{ tarea!.equipo!.nombre }}</p>
@@ -29,7 +29,7 @@
     </div>
   }
 
-  <!-- Create mode: project + equipo selectors -->
+  <!-- Create: selección de proyecto y equipo -->
   @if (!isEdit) {
     <ion-list lines="full" class="form-list">
       <ion-item>
@@ -81,6 +81,19 @@
   <!-- Días de la semana -->
   <div class="dias-section">
     <p class="dias-label">Días de la semana *</p>
+
+    <!-- Botones rápidos -->
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <ion-button size="small" fill="outline" (click)="selectAllWeek()">
+        <ion-icon name="checkbox-outline" slot="start"></ion-icon>
+        Toda la semana
+      </ion-button>
+      <ion-button size="small" fill="outline" color="warning" (click)="onlyThisWeek()">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+        Solo esta semana
+      </ion-button>
+    </div>
+
     <div class="dias-grid">
       @for (day of DAYS; track day.value) {
         <ion-item lines="none" class="dia-item">
@@ -100,6 +113,37 @@
       </p>
     }
   </div>
+
+  <!-- Fecha fin -->
+  <ion-list lines="full" class="form-list" style="margin-top:8px">
+    <ion-item>
+      <ion-input
+        label="Válida hasta (opcional)"
+        labelPlacement="stacked"
+        [value]="fechaFin()"
+        (ionChange)="fechaFin.set($event.detail.value ?? '')"
+        type="date"
+        placeholder="Indefinido">
+      </ion-input>
+    </ion-item>
+
+    <!-- Asignar a usuario (solo admin) -->
+    @if (isAdmin()) {
+      <ion-item>
+        <ion-select
+          label="Asignado a (opcional)"
+          labelPlacement="stacked"
+          [value]="asignadoAId()"
+          (ionChange)="asignadoAId.set($event.detail.value)"
+          placeholder="Visible para todos los admins">
+          <ion-select-option [value]="null">— Sin asignar —</ion-select-option>
+          @for (u of usuarios(); track u.id) {
+            <ion-select-option [value]="u.id">{{ u.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+    }
+  </ion-list>
 
   @if (error()) {
     <ion-text color="danger"><p class="form-error">{{ error() }}</p></ion-text>

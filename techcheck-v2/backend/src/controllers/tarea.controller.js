@@ -1,13 +1,13 @@
 'use strict';
 
-const { TareaProgramada, Equipo, Proyecto } = require('../models');
+const { Op } = require('sequelize');
+const { TareaProgramada, Equipo, Proyecto, Usuario } = require('../models');
 const { wsId } = require('../utils/workspace');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-// Acepta "HH:MM" o "HH:MM:SS"; rechaza cualquier otro formato
 function normalizarHora(hora) {
-  if (/^\d{2}:\d{2}$/.test(hora))    return `${hora}:00`;
+  if (/^\d{2}:\d{2}$/.test(hora))       return `${hora}:00`;
   if (/^\d{2}:\d{2}:\d{2}$/.test(hora)) return hora;
   return null;
 }
@@ -20,6 +20,8 @@ function validarDias(dias) {
   );
 }
 
+const usuarioAttrs = ['id', 'nombre', 'email'];
+
 const tareaIncludes = [
   {
     model: Equipo,
@@ -27,17 +29,23 @@ const tareaIncludes = [
     attributes: ['id', 'nombre', 'tecnico_asignado_id'],
     include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'nombre', 'workspace_id'] }],
   },
+  { model: Usuario, as: 'asignado_a', attributes: usuarioAttrs, required: false },
+  { model: Usuario, as: 'creado_por', attributes: usuarioAttrs, required: false },
 ];
 
-// Carga la tarea verificando acceso por workspace
-async function findTareaConAcceso(tareaId, workspaceId) {
+async function findTareaConAcceso(tareaId, req) {
   const tarea = await TareaProgramada.findByPk(tareaId, { include: tareaIncludes });
   if (!tarea) return null;
-  if (workspaceId && tarea.equipo.proyecto.workspace_id !== workspaceId) return null;
+  const wid = wsId(req);
+  if (wid && tarea.equipo.proyecto.workspace_id !== wid) return null;
+
+  // Usuarios solo ven sus propias tareas
+  if (req.user.rol === 'usuario') {
+    if (tarea.asignado_a_id !== req.user.sub && tarea.creado_por_id !== req.user.sub) return null;
+  }
   return tarea;
 }
 
-// Verifica que un equipo pertenece al workspace del usuario
 async function findEquipoConAcceso(equipoId, workspaceId) {
   const equipo = await Equipo.findByPk(equipoId, {
     include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id'] }],
@@ -52,11 +60,20 @@ async function findEquipoConAcceso(equipoId, workspaceId) {
 const tareaController = {
   async list(req, res) {
     try {
-      // Filtrar por equipo si se pasa ?equipo_id=X
       const whereEquipo = {};
       if (req.query.equipo_id) whereEquipo.id = req.query.equipo_id;
 
+      // Usuarios normales solo ven sus tareas asignadas o creadas por ellos
+      const whereTarea = {};
+      if (req.user.rol === 'usuario') {
+        whereTarea[Op.or] = [
+          { asignado_a_id: req.user.sub },
+          { creado_por_id: req.user.sub },
+        ];
+      }
+
       const tareas = await TareaProgramada.findAll({
+        where: whereTarea,
         include: [
           {
             model: Equipo,
@@ -67,10 +84,11 @@ const tareaController = {
               model: Proyecto,
               as: 'proyecto',
               attributes: ['id', 'nombre', 'workspace_id'],
-              // Filtro por workspace cuando no es superadmin
               ...(wsId(req) ? { where: { workspace_id: wsId(req) } } : {}),
             }],
           },
+          { model: Usuario, as: 'asignado_a', attributes: usuarioAttrs, required: false },
+          { model: Usuario, as: 'creado_por', attributes: usuarioAttrs, required: false },
         ],
         order: [['id', 'DESC']],
       });
@@ -83,7 +101,7 @@ const tareaController = {
 
   async getOne(req, res) {
     try {
-      const tarea = await findTareaConAcceso(req.params.id, wsId(req));
+      const tarea = await findTareaConAcceso(req.params.id, req);
       if (!tarea) return res.status(404).json({ error: 'Tarea programada no encontrada' });
       return res.json(tarea);
     } catch (err) {
@@ -94,7 +112,7 @@ const tareaController = {
 
   async create(req, res) {
     try {
-      const { equipo_id, hora, dias_semana, activa } = req.body;
+      const { equipo_id, hora, dias_semana, activa, asignado_a_id, fecha_fin } = req.body;
 
       if (!equipo_id) return res.status(400).json({ error: 'equipo_id es requerido' });
 
@@ -111,11 +129,17 @@ const tareaController = {
       const equipo = await findEquipoConAcceso(equipo_id, wsId(req));
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
+      // Solo admins pueden asignar la tarea a otro usuario; usuarios siempre se asignan a sí mismos
+      const asignadoId = req.user.rol !== 'usuario' && asignado_a_id ? asignado_a_id : null;
+
       const tarea = await TareaProgramada.create({
         equipo_id,
-        hora: horaNorm,
+        hora:          horaNorm,
         dias_semana,
-        activa: activa !== undefined ? Boolean(activa) : true,
+        activa:        activa !== undefined ? Boolean(activa) : true,
+        asignado_a_id: asignadoId,
+        creado_por_id: req.user.sub,
+        fecha_fin:     fecha_fin || null,
       });
 
       await tarea.reload({ include: tareaIncludes });
@@ -128,29 +152,36 @@ const tareaController = {
 
   async update(req, res) {
     try {
-      const tarea = await findTareaConAcceso(req.params.id, wsId(req));
+      const tarea = await findTareaConAcceso(req.params.id, req);
       if (!tarea) return res.status(404).json({ error: 'Tarea programada no encontrada' });
+
+      // Usuario solo edita sus propias tareas
+      if (req.user.rol === 'usuario') {
+        if (tarea.creado_por_id !== req.user.sub) {
+          return res.status(403).json({ error: 'No tienes permiso para editar esta tarea' });
+        }
+      }
 
       const updates = {};
 
       if (req.body.hora !== undefined) {
         const horaNorm = normalizarHora(req.body.hora);
-        if (!horaNorm) {
-          return res.status(400).json({ error: 'hora debe tener formato HH:MM o HH:MM:SS' });
-        }
+        if (!horaNorm) return res.status(400).json({ error: 'hora debe tener formato HH:MM o HH:MM:SS' });
         updates.hora = horaNorm;
       }
-
       if (req.body.dias_semana !== undefined) {
         if (!validarDias(req.body.dias_semana)) {
-          return res.status(400).json({
-            error: 'dias_semana debe ser un array no vacío de enteros entre 0 y 6',
-          });
+          return res.status(400).json({ error: 'dias_semana debe ser un array no vacío de enteros entre 0 y 6' });
         }
         updates.dias_semana = req.body.dias_semana;
       }
-
       if (req.body.activa !== undefined) updates.activa = Boolean(req.body.activa);
+      if (req.body.fecha_fin !== undefined) updates.fecha_fin = req.body.fecha_fin || null;
+
+      // Solo admin puede reasignar
+      if (req.user.rol !== 'usuario' && req.body.asignado_a_id !== undefined) {
+        updates.asignado_a_id = req.body.asignado_a_id || null;
+      }
 
       await tarea.update(updates);
       await tarea.reload({ include: tareaIncludes });
@@ -163,8 +194,12 @@ const tareaController = {
 
   async remove(req, res) {
     try {
-      const tarea = await findTareaConAcceso(req.params.id, wsId(req));
+      const tarea = await findTareaConAcceso(req.params.id, req);
       if (!tarea) return res.status(404).json({ error: 'Tarea programada no encontrada' });
+
+      if (req.user.rol === 'usuario' && tarea.creado_por_id !== req.user.sub) {
+        return res.status(403).json({ error: 'No tienes permiso para eliminar esta tarea' });
+      }
 
       await tarea.destroy();
       return res.json({ message: 'Tarea programada eliminada correctamente' });
@@ -174,11 +209,14 @@ const tareaController = {
     }
   },
 
-  // PATCH /:id/toggle — activa o desactiva sin enviar el body completo
   async toggle(req, res) {
     try {
-      const tarea = await findTareaConAcceso(req.params.id, wsId(req));
+      const tarea = await findTareaConAcceso(req.params.id, req);
       if (!tarea) return res.status(404).json({ error: 'Tarea programada no encontrada' });
+
+      if (req.user.rol === 'usuario' && tarea.creado_por_id !== req.user.sub) {
+        return res.status(403).json({ error: 'No tienes permiso para modificar esta tarea' });
+      }
 
       await tarea.update({ activa: !tarea.activa });
       return res.json({ id: tarea.id, activa: tarea.activa });
