@@ -67,17 +67,21 @@ function buildRevisionIncludes() {
   ];
 }
 
-// Carga la revisión verificando que pertenece al workspace del usuario
-async function findRevisionConAcceso(revisionId, workspaceId) {
+// Carga la revisión verificando workspace y restricción de proyecto
+async function findRevisionConAcceso(revisionId, workspaceId, userId, rol) {
   const revision = await Revision.findByPk(revisionId, {
     include: [{
       model: Equipo,
       as: 'equipo',
-      include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id'] }],
+      include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id', 'restringido'] }],
     }],
   });
   if (!revision) return null;
   if (workspaceId && revision.equipo.proyecto.workspace_id !== workspaceId) return null;
+  if (rol === 'usuario' && revision.equipo.proyecto.restringido) {
+    const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: revision.equipo.proyecto.id, usuario_id: userId } });
+    if (!permiso) return null;
+  }
   return revision;
 }
 
@@ -86,13 +90,17 @@ const revisionController = {
 
   async listByEquipo(req, res) {
     try {
-      // Verificar que el equipo pertenece al workspace
+      // Verificar que el equipo pertenece al workspace y proyecto no es restringido sin permiso
       const equipo = await Equipo.findByPk(req.params.equipoId, {
-        include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id'] }],
+        include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id', 'restringido'] }],
       });
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
       if (wsId(req) && equipo.proyecto.workspace_id !== wsId(req)) {
         return res.status(404).json({ error: 'Equipo no encontrado' });
+      }
+      if (req.user.rol === 'usuario' && equipo.proyecto.restringido) {
+        const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: equipo.proyecto.id, usuario_id: req.user.sub } });
+        if (!permiso) return res.status(403).json({ error: 'Sin acceso al proyecto' });
       }
 
       const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -125,7 +133,7 @@ const revisionController = {
 
   async getOne(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       await revision.reload({ include: buildRevisionIncludes() });
@@ -233,7 +241,7 @@ const revisionController = {
   // Actualiza estado y/u observación general de la revisión
   async update(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       const ESTADOS = ['pendiente', 'en_proceso', 'terminado'];
@@ -273,7 +281,7 @@ const revisionController = {
 
   async remove(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       await revision.destroy();
@@ -290,7 +298,7 @@ const revisionController = {
   // El técnico marca completado, agrega nota
   async updateItem(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {
@@ -328,7 +336,7 @@ const revisionController = {
 
   async addArchivo(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {
@@ -417,7 +425,7 @@ const revisionController = {
 
   async addArchivoObs(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
       if (revision.estado === 'terminado') {
         return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
@@ -440,7 +448,7 @@ const revisionController = {
 
   async removeArchivoObs(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
       if (revision.estado === 'terminado') {
         return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
@@ -461,7 +469,7 @@ const revisionController = {
 
   async removeArchivo(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req));
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {

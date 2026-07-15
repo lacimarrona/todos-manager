@@ -80,7 +80,7 @@ const proyectoController = {
 
   async create(req, res) {
     try {
-      const { nombre, descripcion, workspace_id } = req.body;
+      const { nombre, descripcion, workspace_id, restringido } = req.body;
       if (!nombre) return res.status(400).json({ error: 'nombre es requerido' });
 
       const workspaceId = req.user.rol === 'superadmin'
@@ -95,6 +95,7 @@ const proyectoController = {
         workspace_id: workspaceId,
         nombre,
         descripcion,
+        restringido: restringido ?? false,
         creado_por: req.user.sub,
       });
       return res.status(201).json(proyecto);
