@@ -139,10 +139,10 @@ export class RevisionModalComponent implements OnInit {
           this.revision.update(r => r ? { ...r, estado: 'en_proceso' } : r);
         }
       },
-      error: () => {
+      error: (err) => {
         this.savingItems.update(s => { const n = new Set(s); n.delete(item.id); return n; });
         this.updateItemInSignal(item.id, { checked: !checked }); // revert
-        this.toast('Error al guardar', 'danger');
+        this.toast(err?.error?.error ?? 'Error al guardar', 'danger');
       },
     });
   }
@@ -161,9 +161,9 @@ export class RevisionModalComponent implements OnInit {
         this.savingItems.update(s => { const n = new Set(s); n.delete(itemId); return n; });
         this.updateItemInSignal(itemId, { nota: updated.nota });
       },
-      error: () => {
+      error: (err) => {
         this.savingItems.update(s => { const n = new Set(s); n.delete(itemId); return n; });
-        this.toast('Error al guardar nota', 'danger');
+        this.toast(err?.error?.error ?? 'Error al guardar nota', 'danger');
       },
     });
   }
