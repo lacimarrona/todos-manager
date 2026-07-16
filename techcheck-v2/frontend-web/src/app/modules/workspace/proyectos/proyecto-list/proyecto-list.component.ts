@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed, effect } from '@angular/core';
+import { Component, signal, inject, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,

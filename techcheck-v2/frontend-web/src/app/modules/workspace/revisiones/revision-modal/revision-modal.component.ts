@@ -12,7 +12,7 @@ import {
   imagesOutline, checkmarkDoneOutline, clipboardOutline,
 } from 'ionicons/icons';
 import { RevisionService } from '../../../../core/services/revision.service';
-import { Revision, ItemRevision, ArchivoObsGeneral, CalidadRevision } from '../../../../core/models/revision.model';
+import { Revision, ItemRevision, CalidadRevision } from '../../../../core/models/revision.model';
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

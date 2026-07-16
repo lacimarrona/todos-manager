@@ -24,10 +24,6 @@ export class RevisionService {
     return this.api.post<ArchivoRevision>(`/revisiones/${revisionId}/items/${itemRevId}/archivos`, dto);
   }
 
-  listByProyecto(proyectoId: number) {
-    return this.api.get<Revision[]>(`/revisiones?proyecto_id=${proyectoId}`);
-  }
-
   addArchivoObs(revisionId: number, dto: { url: string; tipo: string }) {
     return this.api.post<ArchivoObsGeneral>(`/revisiones/${revisionId}/archivos-obs`, dto);
   }

@@ -6,7 +6,7 @@ const { Proyecto, Equipo, ItemEquipo, ArchivoGuia, Usuario, Workspace,
         Revision, ItemRevision, ArchivoRevision, ProyectoPermiso,
         TareaProgramada } = require('../models');
 const { wsIdFiltrable: wsId } = require('../utils/workspace');
-const { csvCell, csvRow } = require('../utils/csv');
+const { csvRow } = require('../utils/csv');
 
 function fmtDate(d) { return d ? new Date(d).toISOString().replace('T', ' ').slice(0, 19) : ''; }
 

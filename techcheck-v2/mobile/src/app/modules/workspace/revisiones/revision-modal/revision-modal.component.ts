@@ -26,7 +26,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 import { RevisionService } from '../../../../core/services/revision.service';
 import { OfflineSyncService } from '../../../../core/services/offline-sync.service';
-import { Revision, ItemRevision, ArchivoObsGeneral, CalidadRevision } from '../../../../core/models/revision.model';
+import { Revision, ItemRevision, CalidadRevision } from '../../../../core/models/revision.model';
 
 @Component({
   selector: 'app-revision-modal',

@@ -18,10 +18,6 @@ export class RevisionService {
 
   remove(id: number) { return this.api.delete(`/revisiones/${id}`); }
 
-  listByProyecto(proyectoId: number, params?: { estado?: string; texto?: string }) {
-    return this.api.get<Revision[]>(`/revisiones`, { proyecto_id: proyectoId, ...params });
-  }
-
   updateItem(revisionId: number, itemRevId: number, dto: { checked?: boolean; nota?: string | null }) {
     return this.api.put<ItemRevision>(`/revisiones/${revisionId}/items/${itemRevId}`, dto);
   }

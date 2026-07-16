@@ -119,4 +119,4 @@ function iniciarCron() {
   log('[cron] Tareas programadas activas (cada minuto, zona: America/Bogota)');
 }
 
-module.exports = { iniciarCron, procesarTareasProgramadas };
+module.exports = { iniciarCron };
