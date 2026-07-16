@@ -67,8 +67,11 @@ function buildRevisionIncludes() {
   ];
 }
 
-// Carga la revisión verificando workspace y restricción de proyecto
-async function findRevisionConAcceso(revisionId, workspaceId, userId, rol) {
+// Sentinel para distinguir "no existe / sin workspace" de "existe pero nivel insuficiente"
+const FORBIDDEN = Symbol('FORBIDDEN');
+
+// Carga la revisión verificando workspace, existencia de permiso y opcionalmente nivel 'editar'
+async function findRevisionConAcceso(revisionId, workspaceId, userId, rol, requireEditar = false) {
   const revision = await Revision.findByPk(revisionId, {
     include: [{
       model: Equipo,
@@ -81,6 +84,7 @@ async function findRevisionConAcceso(revisionId, workspaceId, userId, rol) {
   if (rol === 'usuario' && revision.equipo.proyecto.restringido) {
     const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: revision.equipo.proyecto.id, usuario_id: userId } });
     if (!permiso) return null;
+    if (requireEditar && permiso.nivel !== 'editar') return FORBIDDEN;
   }
   return revision;
 }
@@ -194,11 +198,18 @@ const revisionController = {
 
       // Verificar acceso al equipo a través del proyecto
       const equipo = await Equipo.findByPk(equipo_id, {
-        include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id'] }],
+        include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id', 'restringido'] }],
       });
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
       if (wsId(req) && equipo.proyecto.workspace_id !== wsId(req)) {
         return res.status(404).json({ error: 'Equipo no encontrado' });
+      }
+      // Proyectos restringidos: se requiere permiso nivel 'editar' para crear revisiones
+      if (req.user.rol === 'usuario' && equipo.proyecto.restringido) {
+        const permiso = await ProyectoPermiso.findOne({ where: { proyecto_id: equipo.proyecto.id, usuario_id: req.user.sub } });
+        if (!permiso || permiso.nivel !== 'editar') {
+          return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
+        }
       }
 
       if (!(await tecnicoValido(tecnico_id, wsId(req)))) {
@@ -241,7 +252,8 @@ const revisionController = {
   // Actualiza estado y/u observación general de la revisión
   async update(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       const ESTADOS = ['pendiente', 'en_proceso', 'terminado'];
@@ -298,7 +310,8 @@ const revisionController = {
   // El técnico marca completado, agrega nota
   async updateItem(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {
@@ -336,7 +349,8 @@ const revisionController = {
 
   async addArchivo(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {
@@ -425,7 +439,8 @@ const revisionController = {
 
   async addArchivoObs(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
       if (revision.estado === 'terminado') {
         return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
@@ -448,7 +463,8 @@ const revisionController = {
 
   async removeArchivoObs(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
       if (revision.estado === 'terminado') {
         return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
@@ -469,7 +485,8 @@ const revisionController = {
 
   async removeArchivo(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
+      if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       if (revision.estado === 'terminado') {
