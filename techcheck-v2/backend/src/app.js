@@ -103,9 +103,11 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Aplicar rate limiter a los endpoints de autenticación (login y refresh)
-app.use('/api/auth/login',   authRateLimiter);
-app.use('/api/auth/refresh', authRateLimiter);
+// Aplicar rate limiter a los endpoints de autenticación
+const changePasswordRateLimiter = makeRateLimiter(10, 15 * 60 * 1000);
+app.use('/api/auth/login',           authRateLimiter);
+app.use('/api/auth/refresh',         authRateLimiter);
+app.use('/api/auth/change-password', changePasswordRateLimiter);
 app.use('/api/auth',      authRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/usuarios',  usuarioRoutes);
@@ -128,11 +130,15 @@ app.get('/api/health', auth, async (req, res) => {
 // ── Middleware global de errores ──────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {
-  console.error('[global-error]', err);
-  if (res.headersSent) return;
   const isProd = process.env.NODE_ENV === 'production';
-  // En producción los errores 5xx usan mensaje genérico para no filtrar
-  // detalles de la BD (nombres de tablas, constraints de Sequelize, etc.)
+  // En producción solo se loggea lo mínimo para no volcar stack traces, nombres
+  // de tablas de Sequelize ni queries SQL a stdout del contenedor.
+  if (isProd) {
+    console.error('[global-error]', { message: err.message, status: err.status, code: err.code });
+  } else {
+    console.error('[global-error]', err);
+  }
+  if (res.headersSent) return;
   const clientMsg = (isProd && (!err.status || err.status >= 500))
     ? 'Error interno del servidor'
     : (err.message || 'Error interno del servidor');

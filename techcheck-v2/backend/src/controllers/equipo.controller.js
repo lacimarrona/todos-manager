@@ -1,17 +1,25 @@
 'use strict';
 
 const ExcelJS  = require('exceljs');
-const { Equipo, ItemEquipo, ArchivoGuia, Proyecto, Usuario, Revision, ItemRevision } = require('../models');
+const { Equipo, ItemEquipo, ArchivoGuia, Proyecto, Usuario, Revision, ItemRevision, ProyectoPermiso } = require('../models');
 const { wsId } = require('../utils/workspace');
-const { csvCell, csvRow } = require('../utils/csv');
+const { csvRow } = require('../utils/csv');
 
-// Carga el equipo verificando que su proyecto pertenece al workspace del usuario
-async function findEquipoConAcceso(equipoId, workspaceId) {
+// Carga el equipo verificando workspace y, si el proyecto es restringido,
+// que el usuario tenga permiso explícito (misma lógica que findProyectoConAcceso).
+async function findEquipoConAcceso(equipoId, workspaceId, userId, rol) {
   const equipo = await Equipo.findByPk(equipoId, {
-    include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id'] }],
+    include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'workspace_id', 'restringido'] }],
   });
   if (!equipo) return null;
   if (workspaceId && equipo.proyecto.workspace_id !== workspaceId) return null;
+
+  if (rol === 'usuario' && equipo.proyecto.restringido) {
+    const permiso = await ProyectoPermiso.findOne({
+      where: { proyecto_id: equipo.proyecto.id, usuario_id: userId },
+    });
+    if (!permiso) return null;
+  }
   return equipo;
 }
 
@@ -51,7 +59,7 @@ const equipoController = {
 
   async getOne(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       await equipo.reload({ include: equipoIncludes });
@@ -112,7 +120,7 @@ const equipoController = {
 
   async update(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const { nombre, plantilla_id, tecnico_asignado_id, tiempo_limite } = req.body;
@@ -130,7 +138,7 @@ const equipoController = {
 
   async remove(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       await equipo.destroy();
@@ -144,7 +152,7 @@ const equipoController = {
   // POST /api/equipos/:id/clonar
   async clonar(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const { proyecto_id, nombre } = req.body;
@@ -205,7 +213,7 @@ const equipoController = {
 
   async listItems(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const items = await ItemEquipo.findAll({
@@ -222,7 +230,7 @@ const equipoController = {
 
   async addItem(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const { label, observacion_guia, orden } = req.body;
@@ -246,7 +254,7 @@ const equipoController = {
 
   async updateItem(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const item = await ItemEquipo.findOne({
@@ -265,7 +273,7 @@ const equipoController = {
 
   async removeItem(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const item = await ItemEquipo.findOne({
@@ -285,7 +293,7 @@ const equipoController = {
 
   async addArchivoGuia(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const item = await ItemEquipo.findOne({
@@ -313,7 +321,7 @@ const equipoController = {
 
   async archivar(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
       if (equipo.archivado) return res.status(400).json({ error: 'El equipo ya está archivado' });
 
@@ -449,7 +457,7 @@ const equipoController = {
 
   async exportarJSON(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       await equipo.reload({ include: equipoIncludes });
@@ -476,7 +484,7 @@ const equipoController = {
 
   async exportarCSV(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       await equipo.reload({ include: equipoIncludes });
@@ -527,7 +535,7 @@ const equipoController = {
 
   async removeArchivoGuia(req, res) {
     try {
-      const equipo = await findEquipoConAcceso(req.params.id, wsId(req));
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
       if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
 
       const item = await ItemEquipo.findOne({

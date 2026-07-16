@@ -12,6 +12,9 @@ RUN npm run build -- --configuration production
 # ── Etapa 2: Servidor nginx ───────────────────────────────────────────────────
 FROM nginx:1.28-alpine
 
+# Actualizar todos los paquetes del SO para eliminar CVEs de alpine
+RUN apk upgrade --no-cache
+
 # Eliminar config default de nginx
 RUN rm /etc/nginx/conf.d/default.conf
 

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
-    <cache-path name="my_cache_images" path="." />
+    <!-- external-files-path está aislado al directorio privado de la app en almacenamiento externo,
+         a diferencia de external-path que exponía la raíz completa del almacenamiento. -->
+    <external-files-path name="techcheck_images" path="Pictures/" />
+    <cache-path name="techcheck_cache" path="." />
 </paths>

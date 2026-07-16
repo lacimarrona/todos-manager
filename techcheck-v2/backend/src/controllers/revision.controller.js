@@ -11,7 +11,7 @@ function validarDataUrl(url, tipo) {
 }
 
 const { sequelize } = require('../config/database');
-const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario, ItemPlantilla } = require('../models');
+const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario } = require('../models');
 const { wsId } = require('../utils/workspace');
 
 // Verifica acceso al proyecto incluyendo la restricción de proyecto_permisos
@@ -451,6 +451,12 @@ const revisionController = {
 
       if (!validarDataUrl(url, tipo)) {
         return res.status(400).json({ error: 'Tipo de archivo no permitido o formato de Data URL inválido' });
+      }
+
+      const MAX_ARCHIVOS_OBS = 10;
+      const countObs = await ArchivoObsGeneral.count({ where: { revision_id: revision.id } });
+      if (countObs >= MAX_ARCHIVOS_OBS) {
+        return res.status(400).json({ error: `Máximo ${MAX_ARCHIVOS_OBS} archivos de observación general por revisión` });
       }
 
       const archivo = await ArchivoObsGeneral.create({ revision_id: revision.id, url, tipo });

@@ -23,6 +23,9 @@ mobile/android/app/build/
 mobile/android/.gradle/
 mobile/android/local.properties
 
+# Variables de entorno del móvil (contiene la URL del backend)
+mobile/src/environments/environment.ts
+
 # IDE
 .idea/
 .vscode/settings.json
