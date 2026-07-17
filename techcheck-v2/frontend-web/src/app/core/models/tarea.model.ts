@@ -4,6 +4,12 @@ export interface TareaUsuario {
   email: string;
 }
 
+export interface ElementoGrupoRef {
+  id: number;
+  valor: string;
+  descripcion?: string;
+}
+
 export interface TareaProgramada {
   id: number;
   equipo_id: number;
@@ -13,12 +19,18 @@ export interface TareaProgramada {
   asignado_a_id: number | null;
   creado_por_id: number | null;
   fecha_fin: string | null;
+  grupo_elemento_id: number | null;
   equipo?: {
     id: number;
     nombre: string;
     tecnico_asignado_id?: number | null;
     proyecto?: { id: number; nombre: string; workspace_id: number };
   };
+  grupo_elemento?: {
+    id: number;
+    nombre: string;
+    elementos?: ElementoGrupoRef[];
+  } | null;
   asignado_a?: TareaUsuario | null;
   creado_por?: TareaUsuario | null;
   createdAt?: string;

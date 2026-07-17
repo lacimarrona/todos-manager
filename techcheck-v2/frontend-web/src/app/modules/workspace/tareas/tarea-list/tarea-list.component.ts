@@ -1,16 +1,19 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
   IonList, IonItem, IonLabel, IonFab, IonFabButton, IonSpinner, IonToggle,
-  IonMenuButton,
+  IonMenuButton, IonBadge,
   ModalController, AlertController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, timeOutline, trashOutline, pencilOutline, toggleOutline } from 'ionicons/icons';
+import { add, timeOutline, trashOutline, pencilOutline, toggleOutline, playCircleOutline, layersOutline } from 'ionicons/icons';
 import { TareaService } from '../../../../core/services/tarea.service';
+import { RevisionService } from '../../../../core/services/revision.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TareaProgramada } from '../../../../core/models/tarea.model';
 import { TareaFormModalComponent } from '../tarea-form-modal/tarea-form-modal.component';
+import { RevisionModalComponent } from '../../revisiones/revision-modal/revision-modal.component';
 
 @Component({
   selector: 'app-tarea-list',
@@ -18,16 +21,19 @@ import { TareaFormModalComponent } from '../tarea-form-modal/tarea-form-modal.co
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
     IonList, IonItem, IonLabel, IonFab, IonFabButton, IonSpinner, IonToggle,
-    IonMenuButton,
+    IonMenuButton, IonBadge,
   ],
   templateUrl: './tarea-list.component.html',
 })
 export class TareaListComponent implements OnInit {
   private readonly svc       = inject(TareaService);
+  private readonly revSvc    = inject(RevisionService);
   private readonly auth      = inject(AuthService);
   private readonly modalCtrl = inject(ModalController);
   private readonly alertCtrl = inject(AlertController);
   private readonly toastCtrl = inject(ToastController);
+
+  readonly ejecutando = signal<number | null>(null);
 
   readonly tareas  = signal<TareaProgramada[]>([]);
   readonly loading = signal(false);
@@ -36,7 +42,7 @@ export class TareaListComponent implements OnInit {
   private readonly DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   constructor() {
-    addIcons({ add, timeOutline, trashOutline, pencilOutline, toggleOutline });
+    addIcons({ add, timeOutline, trashOutline, pencilOutline, toggleOutline, playCircleOutline, layersOutline });
   }
 
   ngOnInit() { this.load(); }
@@ -104,6 +110,56 @@ export class TareaListComponent implements OnInit {
       ],
     });
     await alert.present();
+  }
+
+  async ejecutar(t: TareaProgramada, event: Event) {
+    event.stopPropagation();
+    if (this.ejecutando()) return;
+    this.ejecutando.set(t.id);
+
+    try {
+      let elementoId: number | null = null;
+
+      // Si la tarea tiene catálogo, pedir al usuario que seleccione el elemento
+      if (t.grupo_elemento?.elementos?.length) {
+        const inputs = t.grupo_elemento.elementos.map(e => ({
+          type: 'radio' as const,
+          label: e.descripcion ? `${e.valor} — ${e.descripcion}` : e.valor,
+          value: e.id,
+        }));
+        const alert = await this.alertCtrl.create({
+          header: `Seleccionar ${t.grupo_elemento.nombre}`,
+          message: '¿Qué elemento vas a revisar hoy?',
+          inputs,
+          buttons: [
+            { text: 'Cancelar', role: 'cancel' },
+            { text: 'Continuar', role: 'confirm' },
+          ],
+        });
+        await alert.present();
+        const { role, data } = await alert.onDidDismiss();
+        if (role !== 'confirm' || !data?.values) {
+          this.ejecutando.set(null);
+          return;
+        }
+        elementoId = data.values as number;
+      }
+
+      const revision = await firstValueFrom(
+        this.revSvc.create({ equipo_id: t.equipo_id, elemento_seleccionado_id: elementoId })
+      );
+      this.ejecutando.set(null);
+
+      const modal = await this.modalCtrl.create({
+        component: RevisionModalComponent,
+        componentProps: { revisionId: revision.id, equipoNombre: t.equipo?.nombre ?? '' },
+        cssClass: 'revision-modal',
+      });
+      await modal.present();
+    } catch {
+      this.ejecutando.set(null);
+      this.toast('Error al iniciar la revisión', 'danger');
+    }
   }
 
   private delete(t: TareaProgramada) {

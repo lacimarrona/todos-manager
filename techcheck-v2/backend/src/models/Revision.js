@@ -20,6 +20,7 @@ const Revision = sequelize.define(
       allowNull: true,
       defaultValue: null,
     },
+    elemento_seleccionado_id: { type: DataTypes.INTEGER, allowNull: true },
   },
   { tableName: 'revisiones', underscored: true }
 );

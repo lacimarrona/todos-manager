@@ -12,11 +12,12 @@ import { addIcons } from 'ionicons';
 import {
   clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
   add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
-  calendarOutline, checkmarkCircleOutline,
+  calendarOutline, checkmarkCircleOutline, layersOutline,
 } from 'ionicons/icons';
 import { ProyectoService, TareaVencida } from '../../../../core/services/proyecto.service';
 import { EquipoService } from '../../../../core/services/equipo.service';
 import { RevisionService } from '../../../../core/services/revision.service';
+import { TareaService } from '../../../../core/services/tarea.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PlantillaService } from '../../../../core/services/plantilla.service';
 import { Equipo, RevisionEstado } from '../../../../core/models/equipo.model';
@@ -42,6 +43,7 @@ export class EquipoListComponent implements OnInit {
   private readonly proyectoSvc  = inject(ProyectoService);
   private readonly equipoSvc    = inject(EquipoService);
   private readonly revSvc       = inject(RevisionService);
+  private readonly tareaSvc     = inject(TareaService);
   private readonly auth         = inject(AuthService);
   private readonly plantillaSvc = inject(PlantillaService);
   private readonly modalCtrl    = inject(ModalController);
@@ -73,7 +75,7 @@ export class EquipoListComponent implements OnInit {
     addIcons({
       clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
       add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
-      calendarOutline, checkmarkCircleOutline,
+      calendarOutline, checkmarkCircleOutline, layersOutline,
     });
   }
 
@@ -144,7 +146,39 @@ export class EquipoListComponent implements OnInit {
       if (activa) {
         revisionId = activa.id;
       } else {
-        const nueva = await firstValueFrom(this.revSvc.create({ equipo_id: equipo.id }));
+        // Verificar si el equipo tiene una tarea activa con catálogo
+        let elementoId: number | null = null;
+        const tareas = await firstValueFrom(this.tareaSvc.list(equipo.id));
+        const tareaConCatalogo = tareas.find(t => t.activa && t.grupo_elemento?.elementos?.length);
+
+        if (tareaConCatalogo) {
+          const grupo = tareaConCatalogo.grupo_elemento!;
+          const inputs = grupo.elementos!.map(e => ({
+            type: 'radio' as const,
+            label: e.descripcion ? `${e.valor} — ${e.descripcion}` : e.valor,
+            value: e.id,
+          }));
+          const alert = await this.alertCtrl.create({
+            header: `Seleccionar ${grupo.nombre}`,
+            message: '¿Qué elemento vas a revisar?',
+            inputs,
+            buttons: [
+              { text: 'Cancelar', role: 'cancel' },
+              { text: 'Continuar', role: 'confirm' },
+            ],
+          });
+          await alert.present();
+          const { role, data } = await alert.onDidDismiss();
+          if (role !== 'confirm' || !data?.values) {
+            this.abriendo.set(null);
+            return;
+          }
+          elementoId = data.values as number;
+        }
+
+        const nueva = await firstValueFrom(
+          this.revSvc.create({ equipo_id: equipo.id, elemento_seleccionado_id: elementoId })
+        );
         revisionId = nueva.id;
       }
 

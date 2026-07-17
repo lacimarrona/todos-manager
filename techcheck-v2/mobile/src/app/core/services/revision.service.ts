@@ -8,7 +8,7 @@ export class RevisionService {
 
   getOne(id: number) { return this.api.get<Revision>(`/revisiones/${id}`); }
 
-  create(dto: { equipo_id: number; tecnico_id?: number }) {
+  create(dto: { equipo_id: number; tecnico_id?: number; elemento_seleccionado_id?: number | null }) {
     return this.api.post<Revision>('/revisiones', dto);
   }
 

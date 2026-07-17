@@ -11,6 +11,7 @@ import { TareaService } from '../../../../core/services/tarea.service';
 import { ProyectoService } from '../../../../core/services/proyecto.service';
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { GrupoElementoService, GrupoElemento } from '../../../../core/services/grupo-elemento.service';
 import { TareaProgramada } from '../../../../core/models/tarea.model';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { Equipo } from '../../../../core/models/equipo.model';
@@ -33,6 +34,7 @@ export class TareaFormModalComponent implements OnInit {
   private readonly svc         = inject(TareaService);
   private readonly proyectoSvc = inject(ProyectoService);
   private readonly userSvc     = inject(UserService);
+  private readonly grupoSvc    = inject(GrupoElementoService);
   private readonly auth        = inject(AuthService);
   private readonly modalCtrl   = inject(ModalController);
   private readonly toastCtrl   = inject(ToastController);
@@ -45,18 +47,20 @@ export class TareaFormModalComponent implements OnInit {
     { value: 6, label: 'Sáb' },
   ];
 
-  readonly proyectos    = signal<Proyecto[]>([]);
-  readonly equipos      = signal<Equipo[]>([]);
-  readonly usuarios     = signal<User[]>([]);
-  readonly selectedDays = signal<number[]>([]);
-  readonly saving       = signal(false);
-  readonly loadingEqs   = signal(false);
-  readonly error        = signal<string | null>(null);
-  readonly proyectoId   = signal<number>(0);
-  readonly equipoId     = signal<number>(0);
-  readonly hora         = signal('');
-  readonly asignadoAId  = signal<number | null>(null);
-  readonly fechaFin     = signal<string>('');
+  readonly proyectos       = signal<Proyecto[]>([]);
+  readonly equipos         = signal<Equipo[]>([]);
+  readonly usuarios        = signal<User[]>([]);
+  readonly grupos          = signal<GrupoElemento[]>([]);
+  readonly selectedDays    = signal<number[]>([]);
+  readonly saving          = signal(false);
+  readonly loadingEqs      = signal(false);
+  readonly error           = signal<string | null>(null);
+  readonly proyectoId      = signal<number>(0);
+  readonly equipoId        = signal<number>(0);
+  readonly hora            = signal('');
+  readonly asignadoAId     = signal<number | null>(null);
+  readonly fechaFin        = signal<string>('');
+  readonly grupoElementoId = signal<number | null>(null);
 
   readonly isValid = computed(() => {
     if (this.isEdit) return !!this.hora() && this.selectedDays().length > 0;
@@ -73,6 +77,7 @@ export class TareaFormModalComponent implements OnInit {
       this.selectedDays.set([...this.tarea!.dias_semana]);
       this.asignadoAId.set(this.tarea!.asignado_a_id);
       this.fechaFin.set(this.tarea!.fecha_fin ?? '');
+      this.grupoElementoId.set(this.tarea!.grupo_elemento_id ?? null);
     } else {
       this.proyectoSvc.list().subscribe({
         next: ps => this.proyectos.set(ps),
@@ -82,6 +87,10 @@ export class TareaFormModalComponent implements OnInit {
     if (this.isAdmin()) {
       this.userSvc.list().subscribe({
         next: us => this.usuarios.set(us.filter(u => u.rol !== 'superadmin')),
+        error: () => {},
+      });
+      this.grupoSvc.listGrupos().subscribe({
+        next: gs => this.grupos.set(gs.filter(g => g.activo)),
         error: () => {},
       });
     }
@@ -133,27 +142,30 @@ export class TareaFormModalComponent implements OnInit {
     this.error.set(null);
     this.saving.set(true);
 
-    const fechaFinVal = this.fechaFin() || null;
-    const asignadoId  = this.isAdmin() ? (this.asignadoAId() || null) : null;
+    const fechaFinVal    = this.fechaFin() || null;
+    const asignadoId     = this.isAdmin() ? (this.asignadoAId() || null) : null;
+    const grupoId        = this.isAdmin() ? (this.grupoElementoId() || null) : null;
 
     if (this.isEdit) {
       this.svc.update(this.tarea!.id, {
-        hora:          this.hora(),
-        dias_semana:   this.selectedDays(),
-        asignado_a_id: asignadoId,
-        fecha_fin:     fechaFinVal,
-      }).subscribe({
+        hora:              this.hora(),
+        dias_semana:       this.selectedDays(),
+        asignado_a_id:     asignadoId,
+        fecha_fin:         fechaFinVal,
+        grupo_elemento_id: grupoId,
+      } as any).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al guardar'); },
       });
     } else {
       this.svc.create({
-        equipo_id:     this.equipoId(),
-        hora:          this.hora(),
-        dias_semana:   this.selectedDays(),
-        asignado_a_id: asignadoId,
-        fecha_fin:     fechaFinVal,
-      }).subscribe({
+        equipo_id:         this.equipoId(),
+        hora:              this.hora(),
+        dias_semana:       this.selectedDays(),
+        asignado_a_id:     asignadoId,
+        fecha_fin:         fechaFinVal,
+        grupo_elemento_id: grupoId,
+      } as any).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al crear tarea'); },
       });

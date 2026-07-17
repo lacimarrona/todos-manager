@@ -13,7 +13,8 @@ const TareaProgramada = sequelize.define(
     activa:        { type: DataTypes.BOOLEAN,  allowNull: false, defaultValue: true },
     asignado_a_id: { type: DataTypes.INTEGER,  allowNull: true },
     creado_por_id: { type: DataTypes.INTEGER,  allowNull: true },
-    fecha_fin:     { type: DataTypes.DATEONLY, allowNull: true },
+    fecha_fin:        { type: DataTypes.DATEONLY, allowNull: true },
+    grupo_elemento_id:{ type: DataTypes.INTEGER,  allowNull: true },
   },
   { tableName: 'tareas_programadas', underscored: true }
 );

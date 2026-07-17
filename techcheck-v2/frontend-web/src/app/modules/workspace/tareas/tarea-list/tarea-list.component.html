@@ -48,7 +48,28 @@
           @if (t.fecha_fin) {
             <p class="tarea-meta"><strong>Hasta:</strong> {{ t.fecha_fin }}</p>
           }
+          @if (t.grupo_elemento) {
+            <p class="tarea-meta catalogo-badge">
+              <ion-icon name="layers-outline"></ion-icon>
+              {{ t.grupo_elemento.nombre }}
+            </p>
+          }
         </ion-label>
+
+        <ion-button
+          fill="solid"
+          size="small"
+          color="primary"
+          slot="end"
+          [disabled]="ejecutando() === t.id"
+          (click)="ejecutar(t, $event)"
+          style="margin-right:4px">
+          @if (ejecutando() === t.id) {
+            <ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner>
+          } @else {
+            <ion-icon slot="icon-only" name="play-circle-outline"></ion-icon>
+          }
+        </ion-button>
 
         <ion-toggle
           slot="end"

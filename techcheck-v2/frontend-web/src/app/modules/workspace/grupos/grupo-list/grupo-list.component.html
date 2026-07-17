@@ -1,0 +1,170 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      @if (grupoActivo()) {
+        <ion-button (click)="volverAGrupos()">
+          <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      } @else {
+        <ion-menu-button></ion-menu-button>
+      }
+    </ion-buttons>
+    <ion-title>{{ grupoActivo() ? grupoActivo()!.nombre : 'Catálogos' }}</ion-title>
+    <ion-buttons slot="end">
+      @if (grupoActivo()) {
+        <ion-button (click)="openNuevoElemento()">
+          <ion-icon name="add" slot="icon-only"></ion-icon>
+        </ion-button>
+      } @else {
+        <ion-button (click)="openNuevoGrupo()">
+          <ion-icon name="add" slot="icon-only"></ion-icon>
+        </ion-button>
+      }
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (loading()) {
+    <div class="flex-center" style="padding:60px 0;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+  <!-- ── Vista de elementos de un grupo ─────────────────────── -->
+  } @else if (grupoActivo(); as g) {
+    <div class="list-container">
+      <p class="section-hint">Elementos de este catálogo. Los técnicos podrán seleccionar uno al ejecutar una tarea.</p>
+
+      @if (!g.elementos?.length) {
+        <div class="empty-state">
+          <ion-icon name="list-outline"></ion-icon>
+          <p>Sin elementos. Agrega el primero con el botón +</p>
+        </div>
+      }
+
+      @for (e of g.elementos; track e.id) {
+        <div class="list-item" [class.inactivo]="!e.activo">
+          <div class="item-main">
+            <span class="item-valor">{{ e.valor }}</span>
+            @if (e.descripcion) {
+              <span class="item-desc">{{ e.descripcion }}</span>
+            }
+            @if (!e.activo) {
+              <ion-badge color="medium">Inactivo</ion-badge>
+            }
+          </div>
+          <div class="item-actions">
+            <ion-button fill="clear" size="small" (click)="openEditarElemento(e)">
+              <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="deleteElemento(e)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      }
+    </div>
+
+  <!-- ── Lista de grupos ────────────────────────────────────── -->
+  } @else {
+    <div class="list-container">
+      <p class="section-hint">Los catálogos permiten agrupar elementos (placas, seriales, etc.) para seleccionarlos al ejecutar tareas programadas.</p>
+
+      @if (!grupos().length) {
+        <div class="empty-state">
+          <ion-icon name="list-outline"></ion-icon>
+          <p>No hay catálogos. Crea el primero con el botón +</p>
+        </div>
+      }
+
+      @for (g of grupos(); track g.id) {
+        <div class="list-item" [class.inactivo]="!g.activo">
+          <div class="item-main" (click)="verElementos(g)" style="cursor:pointer; flex:1;">
+            <span class="item-valor">{{ g.nombre }}</span>
+            @if (g.descripcion) {
+              <span class="item-desc">{{ g.descripcion }}</span>
+            }
+            <span class="item-count">{{ g.elementos?.length ?? 0 }} elementos</span>
+          </div>
+          <div class="item-actions">
+            <ion-button fill="clear" size="small" (click)="verElementos(g)">
+              <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="openEditarGrupo(g)">
+              <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" color="danger" (click)="deleteGrupo(g)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</ion-content>
+
+<!-- ── Modal: nuevo/editar grupo ─────────────────────────────── -->
+<ion-modal [isOpen]="showGrupoModal" (didDismiss)="showGrupoModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ editingGrupoId ? 'Editar catálogo' : 'Nuevo catálogo' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showGrupoModal = false">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="form-field">
+        <label class="form-label">Nombre *</label>
+        <ion-input [(ngModel)]="editingGrupo.nombre" placeholder="Ej: Vehículos, Computadores…" fill="outline"></ion-input>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Descripción</label>
+        <ion-textarea [(ngModel)]="editingGrupo.descripcion" placeholder="Descripción opcional" fill="outline" rows="2"></ion-textarea>
+      </div>
+      @if (editingGrupoId) {
+        <div class="form-field toggle-row">
+          <label class="form-label">Activo</label>
+          <ion-toggle [(ngModel)]="editingGrupo.activo"></ion-toggle>
+        </div>
+      }
+      <ion-button expand="block" (click)="saveGrupo()" [disabled]="!editingGrupo.nombre?.trim()">
+        Guardar
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ── Modal: nuevo/editar elemento ──────────────────────────── -->
+<ion-modal [isOpen]="showElementoModal" (didDismiss)="showElementoModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ editingElementoId ? 'Editar elemento' : 'Nuevo elemento' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showElementoModal = false">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="form-field">
+        <label class="form-label">Valor *</label>
+        <ion-input [(ngModel)]="editingElemento.valor" placeholder="Ej: ABC-123, PC-SALA-01…" fill="outline"></ion-input>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Descripción</label>
+        <ion-textarea [(ngModel)]="editingElemento.descripcion" placeholder="Descripción opcional" fill="outline" rows="2"></ion-textarea>
+      </div>
+      @if (editingElementoId) {
+        <div class="form-field toggle-row">
+          <label class="form-label">Activo</label>
+          <ion-toggle [(ngModel)]="editingElemento.activo"></ion-toggle>
+        </div>
+      }
+      <ion-button expand="block" (click)="saveElemento()" [disabled]="!editingElemento.valor?.trim()">
+        Guardar
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
