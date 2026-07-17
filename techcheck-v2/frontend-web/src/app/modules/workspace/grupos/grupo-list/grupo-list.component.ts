@@ -7,7 +7,7 @@ import {
   AlertController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, pencilOutline, trashOutline, chevronForwardOutline, listOutline, checkmarkOutline, closeOutline } from 'ionicons/icons';
+import { add, pencilOutline, trashOutline, chevronForwardOutline, chevronBackOutline, listOutline, checkmarkOutline, closeOutline } from 'ionicons/icons';
 import { GrupoElementoService, GrupoElemento, ElementoGrupo } from '../../../../core/services/grupo-elemento.service';
 
 @Component({
@@ -157,6 +157,6 @@ export class GrupoListComponent implements OnInit {
   }
 
   constructor() {
-    addIcons({ add, pencilOutline, trashOutline, chevronForwardOutline, listOutline, checkmarkOutline, closeOutline });
+    addIcons({ add, pencilOutline, trashOutline, chevronForwardOutline, chevronBackOutline, listOutline, checkmarkOutline, closeOutline });
   }
 }
