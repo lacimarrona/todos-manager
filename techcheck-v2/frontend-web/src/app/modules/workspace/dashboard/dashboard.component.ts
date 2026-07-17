@@ -1,4 +1,4 @@
-import { Component, signal, inject, effect } from '@angular/core';
+import { Component, signal, inject, effect, DestroyRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonMenuButton, IonButtons,
@@ -6,6 +6,8 @@ import {
 } from '@ionic/angular/standalone';
 import { DashboardService, DashboardStats } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
+
+const REFRESH_INTERVAL_MS = 30_000;
 
 @Component({
   selector: 'app-dashboard',
@@ -16,10 +18,12 @@ import { AuthService } from '../../../core/services/auth.service';
     IonSpinner, IonRefresher, IonRefresherContent,
   ],
   templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent {
-  private readonly svc  = inject(DashboardService);
-  private readonly auth = inject(AuthService);
+  private readonly svc     = inject(DashboardService);
+  private readonly auth    = inject(AuthService);
+  private readonly destroy = inject(DestroyRef);
 
   readonly stats   = signal<DashboardStats | null>(null);
   readonly loading = signal(true);
@@ -30,6 +34,9 @@ export class DashboardComponent {
       this.auth.user();
       this.load();
     });
+
+    const timer = setInterval(() => this.load(), REFRESH_INTERVAL_MS);
+    this.destroy.onDestroy(() => clearInterval(timer));
   }
 
   load(event?: { target: { complete: () => void } }) {
