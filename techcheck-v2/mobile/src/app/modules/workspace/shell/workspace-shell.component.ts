@@ -11,7 +11,7 @@ import {
   peopleOutline, folderOpenOutline, logOutOutline, personCircleOutline,
   documentTextOutline, timeOutline, constructOutline, keyOutline,
   swapHorizontalOutline, checkmarkCircleOutline, phonePortraitOutline,
-  barChartOutline,
+  barChartOutline, layersOutline,
 } from 'ionicons/icons';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChangePasswordModalComponent } from './change-password-modal/change-password-modal.component';
@@ -51,6 +51,7 @@ export class WorkspaceShellComponent {
     { label: 'Proyectos',          icon: 'folder-open-outline',   path: '/workspace/proyectos' },
     { label: 'Plantillas',         icon: 'document-text-outline', path: '/workspace/plantillas', adminOnly: true },
     { label: 'Técnicos',           icon: 'construct-outline',     path: '/workspace/tecnicos',   adminOnly: true },
+    { label: 'Catálogos',          icon: 'layers-outline',        path: '/workspace/catalogos',  adminOnly: true },
     { label: 'Tareas Programadas', icon: 'time-outline',          path: '/workspace/tareas',     adminOnly: true },
     { label: 'Usuarios',           icon: 'people-outline',        path: '/workspace/usuarios',   adminOnly: true },
   ];
@@ -60,7 +61,7 @@ export class WorkspaceShellComponent {
       peopleOutline, folderOpenOutline, logOutOutline, personCircleOutline,
       documentTextOutline, timeOutline, constructOutline, keyOutline,
       swapHorizontalOutline, checkmarkCircleOutline, phonePortraitOutline,
-      barChartOutline,
+      barChartOutline, layersOutline,
     });
   }
 

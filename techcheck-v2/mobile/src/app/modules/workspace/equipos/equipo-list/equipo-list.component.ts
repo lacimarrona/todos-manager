@@ -19,6 +19,7 @@ import {
 import { ProyectoService, TareaVencida } from '../../../../core/services/proyecto.service';
 import { EquipoService } from '../../../../core/services/equipo.service';
 import { RevisionService } from '../../../../core/services/revision.service';
+import { TareaService } from '../../../../core/services/tarea.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PlantillaService } from '../../../../core/services/plantilla.service';
 import { OfflineSyncService } from '../../../../core/services/offline-sync.service';
@@ -43,6 +44,7 @@ export class EquipoListComponent implements OnInit {
   private readonly proyectoSvc  = inject(ProyectoService);
   private readonly equipoSvc    = inject(EquipoService);
   private readonly revSvc       = inject(RevisionService);
+  private readonly tareaSvc     = inject(TareaService);
   private readonly auth         = inject(AuthService);
   private readonly plantillaSvc = inject(PlantillaService);
   private readonly offlineSync  = inject(OfflineSyncService);
@@ -309,11 +311,15 @@ export class EquipoListComponent implements OnInit {
         if (accion === 'ver') {
           revisionId = latest.id;
         } else {
-          const nueva = await firstValueFrom(this.revSvc.create({ equipo_id: equipo.id }));
+          const elementoId = await this.askElemento(equipo.id);
+          if (elementoId === false) { this.abriendo.set(null); return; }
+          const nueva = await firstValueFrom(this.revSvc.create({ equipo_id: equipo.id, elemento_seleccionado_id: elementoId }));
           revisionId = nueva.id;
         }
       } else {
-        const nueva = await firstValueFrom(this.revSvc.create({ equipo_id: equipo.id }));
+        const elementoId = await this.askElemento(equipo.id);
+        if (elementoId === false) { this.abriendo.set(null); return; }
+        const nueva = await firstValueFrom(this.revSvc.create({ equipo_id: equipo.id, elemento_seleccionado_id: elementoId }));
         revisionId = nueva.id;
       }
 
@@ -330,6 +336,37 @@ export class EquipoListComponent implements OnInit {
     } catch {
       this.abriendo.set(null);
       this.toast('Error al abrir la revisión', 'danger');
+    }
+  }
+
+  // Devuelve el elemento_id seleccionado, null si no hay catálogo, o false si el usuario canceló
+  private async askElemento(equipoId: number): Promise<number | null | false> {
+    try {
+      const tareas = await firstValueFrom(this.tareaSvc.list(equipoId));
+      const tarea = tareas.find(t => t.activa && t.grupo_elemento?.elementos?.length);
+      if (!tarea) return null;
+
+      const grupo = tarea.grupo_elemento!;
+      const inputs = grupo.elementos!.map(e => ({
+        type: 'radio' as const,
+        label: e.descripcion ? `${e.valor} — ${e.descripcion}` : e.valor,
+        value: e.id,
+      }));
+
+      return new Promise(async resolve => {
+        const alert = await this.alertCtrl.create({
+          header: `Seleccionar ${grupo.nombre}`,
+          message: '¿Qué elemento vas a revisar?',
+          inputs,
+          buttons: [
+            { text: 'Cancelar', role: 'cancel', handler: () => resolve(false) },
+            { text: 'Continuar', role: 'confirm', handler: (data) => resolve(data as number) },
+          ],
+        });
+        await alert.present();
+      });
+    } catch {
+      return null;
     }
   }
 

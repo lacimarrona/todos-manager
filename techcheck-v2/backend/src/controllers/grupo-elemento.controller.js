@@ -1,7 +1,7 @@
 'use strict';
 
 const { GrupoElemento, ElementoGrupo } = require('../models');
-const { wsId } = require('../middleware/auth');
+const { wsId } = require('../utils/workspace');
 
 // ── Grupos ────────────────────────────────────────────────────────────────────
 

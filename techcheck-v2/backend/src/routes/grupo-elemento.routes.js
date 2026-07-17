@@ -1,7 +1,8 @@
 'use strict';
 
 const router = require('express').Router();
-const { auth, roles } = require('../middleware/auth');
+const auth  = require('../middleware/auth');
+const roles = require('../middleware/roles');
 const c = require('../controllers/grupo-elemento.controller');
 
 router.use(auth);
