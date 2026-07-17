@@ -1,0 +1,155 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="dashboard-page">
+  <ion-refresher slot="fixed" (ionRefresh)="load($any($event))">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  @if (loading()) {
+    <div class="flex-center" style="padding: 60px 0;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (error()) {
+    <div class="empty-state">
+      <p class="text-danger">{{ error() }}</p>
+    </div>
+  } @else if (stats(); as s) {
+
+    <!-- ── Esta semana ──────────────────────────────────────────────── -->
+    <div class="dash-section">
+      <div class="semana-card">
+        <div class="semana-header">
+          <span class="semana-label">Esta semana</span>
+          <span class="semana-num">{{ s.esta_semana.terminadas }} / {{ s.esta_semana.total }}</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill"
+               [style.width.%]="pct(s.esta_semana.terminadas, s.esta_semana.total)">
+          </div>
+        </div>
+        <span class="semana-sub">
+          {{ pct(s.esta_semana.terminadas, s.esta_semana.total) }}% de revisiones completadas
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Tiles de revisiones ─────────────────────────────────────── -->
+    <div class="dash-section">
+      <h3 class="dash-title">Revisiones</h3>
+      <div class="tiles-grid">
+        <div class="tile tile-total">
+          <span class="tile-num">{{ s.resumen.total }}</span>
+          <span class="tile-lbl">Total</span>
+        </div>
+        <div class="tile tile-ok">
+          <span class="tile-num">{{ s.resumen.terminadas }}</span>
+          <span class="tile-lbl">Terminadas</span>
+        </div>
+        <div class="tile tile-proceso">
+          <span class="tile-num">{{ s.resumen.en_proceso }}</span>
+          <span class="tile-lbl">En proceso</span>
+        </div>
+        <div class="tile tile-pend">
+          <span class="tile-num">{{ s.resumen.pendientes }}</span>
+          <span class="tile-lbl">Pendientes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tiles de calidad + workspace ───────────────────────────── -->
+    <div class="dash-section">
+      <h3 class="dash-title">Calidad y workspace</h3>
+      <div class="tiles-grid">
+        <div class="tile tile-problema">
+          <span class="tile-num">{{ s.resumen.con_problemas }}</span>
+          <span class="tile-lbl">Con problemas</span>
+        </div>
+        <div class="tile tile-obs">
+          <span class="tile-num">{{ s.resumen.con_observaciones }}</span>
+          <span class="tile-lbl">Con observaciones</span>
+        </div>
+        <div class="tile tile-total">
+          <span class="tile-num">{{ s.proyectos_total }}</span>
+          <span class="tile-lbl">Proyectos</span>
+        </div>
+        <div class="tile tile-total">
+          <span class="tile-num">{{ s.equipos_total }}</span>
+          <span class="tile-lbl">Equipos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Top técnicos y equipos ──────────────────────────────────── -->
+    <div class="dash-section dash-cols">
+
+      <div class="dash-col">
+        <h3 class="dash-title">Top técnicos</h3>
+        @if (s.top_tecnicos.length === 0) {
+          <p class="dash-empty">Sin datos</p>
+        }
+        @for (t of s.top_tecnicos; track t.id; let i = $index) {
+          <div class="ranking-row">
+            <span class="ranking-pos">{{ i + 1 }}</span>
+            <div class="ranking-info">
+              <span class="ranking-name">{{ t.nombre }}</span>
+              <span class="ranking-sub">{{ t.terminadas }} / {{ t.total }} terminadas</span>
+            </div>
+            <span class="ranking-badge">{{ t.total }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="dash-col">
+        <h3 class="dash-title">Top equipos</h3>
+        @if (s.top_equipos.length === 0) {
+          <p class="dash-empty">Sin datos</p>
+        }
+        @for (e of s.top_equipos; track e.id; let i = $index) {
+          <div class="ranking-row">
+            <span class="ranking-pos">{{ i + 1 }}</span>
+            <div class="ranking-info">
+              <span class="ranking-name">{{ e.nombre }}</span>
+              <span class="ranking-sub">{{ e.proyecto }}</span>
+            </div>
+            <span class="ranking-badge" [class.badge-problema]="e.problemas > 0">{{ e.total }}</span>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Revisiones recientes ────────────────────────────────────── -->
+    <div class="dash-section">
+      <h3 class="dash-title">Revisiones recientes</h3>
+      @if (s.recientes.length === 0) {
+        <p class="dash-empty">Sin revisiones registradas</p>
+      }
+      @for (r of s.recientes; track r.id) {
+        <div class="reciente-row">
+          <div class="reciente-info">
+            <span class="reciente-equipo">{{ r.equipo }}</span>
+            <span class="reciente-proyecto">{{ r.proyecto }}</span>
+          </div>
+          <div class="reciente-badges">
+            <span class="badge" [class]="estadoClass(r.estado)">{{ estadoLabel(r.estado) }}</span>
+            @if (r.calidad) {
+              <span class="badge" [class]="calidadClass(r.calidad)">{{ calidadLabel(r.calidad) }}</span>
+            }
+          </div>
+          <div class="reciente-meta">
+            <span>{{ r.tecnico ?? '—' }}</span>
+            <span class="reciente-fecha">{{ r.fecha | date:'dd/MM HH:mm' }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+  }
+</ion-content>

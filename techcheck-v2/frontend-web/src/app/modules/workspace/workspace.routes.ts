@@ -51,6 +51,13 @@ export const WORKSPACE_ROUTES: Routes = [
         loadComponent: () =>
           import('./tecnicos/tecnico-list/tecnico-list.component').then(m => m.TecnicoListComponent),
       },
+      {
+        path: 'dashboard',
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'superadmin'] },
+        loadComponent: () =>
+          import('./dashboard/dashboard.component').then(m => m.DashboardComponent),
+      },
       { path: '', redirectTo: 'proyectos', pathMatch: 'full' },
     ],
   },
