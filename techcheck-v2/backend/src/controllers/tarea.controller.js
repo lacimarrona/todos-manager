@@ -1,7 +1,7 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { TareaProgramada, Equipo, Proyecto, Usuario } = require('../models');
+const { TareaProgramada, Equipo, Proyecto, Usuario, GrupoElemento, ElementoGrupo } = require('../models');
 const { wsId } = require('../utils/workspace');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -31,6 +31,13 @@ const tareaIncludes = [
   },
   { model: Usuario, as: 'asignado_a', attributes: usuarioAttrs, required: false },
   { model: Usuario, as: 'creado_por', attributes: usuarioAttrs, required: false },
+  {
+    model: GrupoElemento,
+    as: 'grupo_elemento',
+    attributes: ['id', 'nombre'],
+    required: false,
+    include: [{ model: ElementoGrupo, as: 'elementos', where: { activo: true }, required: false, attributes: ['id', 'valor', 'descripcion'] }],
+  },
 ];
 
 async function findTareaConAcceso(tareaId, req) {
@@ -89,6 +96,13 @@ const tareaController = {
           },
           { model: Usuario, as: 'asignado_a', attributes: usuarioAttrs, required: false },
           { model: Usuario, as: 'creado_por', attributes: usuarioAttrs, required: false },
+          {
+            model: GrupoElemento,
+            as: 'grupo_elemento',
+            attributes: ['id', 'nombre'],
+            required: false,
+            include: [{ model: ElementoGrupo, as: 'elementos', where: { activo: true }, required: false, attributes: ['id', 'valor', 'descripcion'] }],
+          },
         ],
         order: [['id', 'DESC']],
       });
@@ -132,14 +146,16 @@ const tareaController = {
       // Solo admins pueden asignar la tarea a otro usuario; usuarios siempre se asignan a sí mismos
       const asignadoId = req.user.rol !== 'usuario' && asignado_a_id ? asignado_a_id : null;
 
+      const { grupo_elemento_id } = req.body;
       const tarea = await TareaProgramada.create({
         equipo_id,
-        hora:          horaNorm,
+        hora:             horaNorm,
         dias_semana,
-        activa:        activa !== undefined ? Boolean(activa) : true,
-        asignado_a_id: asignadoId,
-        creado_por_id: req.user.sub,
-        fecha_fin:     fecha_fin || null,
+        activa:           activa !== undefined ? Boolean(activa) : true,
+        asignado_a_id:    asignadoId,
+        creado_por_id:    req.user.sub,
+        fecha_fin:        fecha_fin || null,
+        grupo_elemento_id: grupo_elemento_id || null,
       });
 
       await tarea.reload({ include: tareaIncludes });
@@ -178,9 +194,10 @@ const tareaController = {
       if (req.body.activa !== undefined) updates.activa = Boolean(req.body.activa);
       if (req.body.fecha_fin !== undefined) updates.fecha_fin = req.body.fecha_fin || null;
 
-      // Solo admin puede reasignar
-      if (req.user.rol !== 'usuario' && req.body.asignado_a_id !== undefined) {
-        updates.asignado_a_id = req.body.asignado_a_id || null;
+      // Solo admin puede reasignar y cambiar grupo
+      if (req.user.rol !== 'usuario') {
+        if (req.body.asignado_a_id !== undefined) updates.asignado_a_id = req.body.asignado_a_id || null;
+        if (req.body.grupo_elemento_id !== undefined) updates.grupo_elemento_id = req.body.grupo_elemento_id || null;
       }
 
       await tarea.update(updates);

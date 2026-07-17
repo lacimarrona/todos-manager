@@ -142,6 +142,21 @@
           }
         </ion-select>
       </ion-item>
+
+      <!-- Catálogo de elementos (opcional) -->
+      <ion-item>
+        <ion-select
+          label="Catálogo de elementos (opcional)"
+          labelPlacement="stacked"
+          [value]="grupoElementoId()"
+          (ionChange)="grupoElementoId.set($event.detail.value)"
+          placeholder="Sin catálogo">
+          <ion-select-option [value]="null">— Sin catálogo —</ion-select-option>
+          @for (g of grupos(); track g.id) {
+            <ion-select-option [value]="g.id">{{ g.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
     }
   </ion-list>
 

@@ -52,6 +52,13 @@ export const WORKSPACE_ROUTES: Routes = [
           import('./tecnicos/tecnico-list/tecnico-list.component').then(m => m.TecnicoListComponent),
       },
       {
+        path: 'catalogos',
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'superadmin'] },
+        loadComponent: () =>
+          import('./grupos/grupo-list/grupo-list.component').then(m => m.GrupoListComponent),
+      },
+      {
         path: 'dashboard',
         canActivate: [roleGuard],
         data: { roles: ['admin', 'superadmin'] },

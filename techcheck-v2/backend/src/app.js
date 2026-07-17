@@ -17,7 +17,8 @@ const revisionRoutes   = require('./routes/revision.routes');
 const plantillaRoutes  = require('./routes/plantilla.routes');
 const tareaRoutes      = require('./routes/tarea.routes');
 const tecnicoRoutes    = require('./routes/tecnico.routes');
-const dashboardRoutes  = require('./routes/dashboard.routes');
+const dashboardRoutes      = require('./routes/dashboard.routes');
+const grupoElementoRoutes  = require('./routes/grupo-elemento.routes');
 
 const app = express();
 
@@ -119,6 +120,7 @@ app.use('/api/plantillas',         plantillaRoutes);
 app.use('/api/tareas-programadas', tareaRoutes);
 app.use('/api/tecnicos',           tecnicoRoutes);
 app.use('/api/dashboard',          dashboardRoutes);
+app.use('/api/grupos-elementos',   grupoElementoRoutes);
 
 app.get('/api/health', auth, async (req, res) => {
   try {

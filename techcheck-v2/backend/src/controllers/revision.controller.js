@@ -11,7 +11,7 @@ function validarDataUrl(url, tipo) {
 }
 
 const { sequelize } = require('../config/database');
-const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario } = require('../models');
+const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario, ElementoGrupo } = require('../models');
 const { wsId } = require('../utils/workspace');
 
 // Verifica acceso al proyecto incluyendo la restricción de proyecto_permisos
@@ -63,6 +63,12 @@ function buildRevisionIncludes() {
       as: 'equipo',
       attributes: ['id', 'nombre'],
       include: [{ model: Proyecto, as: 'proyecto', attributes: ['id', 'nombre', 'workspace_id'] }],
+    },
+    {
+      model: ElementoGrupo,
+      as: 'elemento_seleccionado',
+      attributes: ['id', 'valor', 'descripcion'],
+      required: false,
     },
   ];
 }
@@ -222,11 +228,13 @@ const revisionController = {
         order: [['orden', 'ASC']],
       });
 
+      const { elemento_seleccionado_id } = req.body;
       const revision = await Revision.create({
         equipo_id,
         tecnico_id: tecnico_id || null,
         observacion_general: observacion_general || null,
         estado: 'pendiente',
+        elemento_seleccionado_id: elemento_seleccionado_id || null,
       });
 
       if (itemsEquipo.length) {

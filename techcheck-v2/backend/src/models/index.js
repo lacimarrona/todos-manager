@@ -17,6 +17,8 @@ const TareaProgramada   = require('./TareaProgramada');
 const Tecnico           = require('./Tecnico');
 const ArchivoObsGeneral = require('./ArchivoObsGeneral');
 const ProyectoPermiso   = require('./ProyectoPermiso');
+const GrupoElemento     = require('./GrupoElemento');
+const ElementoGrupo     = require('./ElementoGrupo');
 
 // ── Workspace ↔ Usuario (FK primario = workspace activo) ─────────────────────
 Workspace.hasMany(Usuario,   { foreignKey: 'workspace_id', as: 'usuarios' });
@@ -114,10 +116,27 @@ ProyectoPermiso.belongsTo(Proyecto,  { foreignKey: 'proyecto_id', as: 'proyecto'
 ProyectoPermiso.belongsTo(Usuario,   { foreignKey: 'usuario_id',  as: 'usuario' });
 Usuario.hasMany(ProyectoPermiso,     { foreignKey: 'usuario_id',  as: 'permisos_proyecto' });
 
+// ── Workspace ↔ GrupoElemento ────────────────────────────────────────────────
+Workspace.hasMany(GrupoElemento,    { foreignKey: 'workspace_id', as: 'grupos_elementos' });
+GrupoElemento.belongsTo(Workspace,  { foreignKey: 'workspace_id', as: 'workspace' });
+
+// ── GrupoElemento ↔ ElementoGrupo ───────────────────────────────────────────
+GrupoElemento.hasMany(ElementoGrupo,   { foreignKey: 'grupo_id', as: 'elementos' });
+ElementoGrupo.belongsTo(GrupoElemento, { foreignKey: 'grupo_id', as: 'grupo' });
+
+// ── TareaProgramada ↔ GrupoElemento ─────────────────────────────────────────
+TareaProgramada.belongsTo(GrupoElemento, { foreignKey: 'grupo_elemento_id', as: 'grupo_elemento' });
+GrupoElemento.hasMany(TareaProgramada,   { foreignKey: 'grupo_elemento_id', as: 'tareas_programadas' });
+
+// ── Revision ↔ ElementoGrupo ─────────────────────────────────────────────────
+Revision.belongsTo(ElementoGrupo,   { foreignKey: 'elemento_seleccionado_id', as: 'elemento_seleccionado' });
+ElementoGrupo.hasMany(Revision,     { foreignKey: 'elemento_seleccionado_id', as: 'revisiones' });
+
 module.exports = {
   Workspace, Usuario, UsuarioWorkspace, RefreshToken,
   Proyecto, Plantilla, ItemPlantilla,
   Equipo, ItemEquipo, ArchivoGuia,
   Revision, ItemRevision, ArchivoRevision,
   TareaProgramada, Tecnico, ArchivoObsGeneral, ProyectoPermiso,
+  GrupoElemento, ElementoGrupo,
 };
