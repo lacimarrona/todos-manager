@@ -10,6 +10,7 @@ import { addIcons } from 'ionicons';
 import { close } from 'ionicons/icons';
 import { TareaService } from '../../../../core/services/tarea.service';
 import { ProyectoService } from '../../../../core/services/proyecto.service';
+import { GrupoElementoService, GrupoElemento } from '../../../../core/services/grupo-elemento.service';
 import { TareaProgramada } from '../../../../core/models/tarea.model';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { Equipo } from '../../../../core/models/equipo.model';
@@ -30,6 +31,7 @@ export class TareaFormModalComponent implements OnInit {
 
   private readonly svc          = inject(TareaService);
   private readonly proyectoSvc  = inject(ProyectoService);
+  private readonly grupoSvc     = inject(GrupoElementoService);
   private readonly modalCtrl    = inject(ModalController);
   private readonly toastCtrl    = inject(ToastController);
   private readonly alertCtrl    = inject(AlertController);
@@ -47,12 +49,14 @@ export class TareaFormModalComponent implements OnInit {
     hora:        ['', [Validators.required, Validators.pattern(/^\d{2}:\d{2}$/)]],
   });
 
-  readonly proyectos    = signal<Proyecto[]>([]);
-  readonly equipos      = signal<Equipo[]>([]);
-  readonly selectedDays = signal<number[]>([]);
-  readonly saving       = signal(false);
-  readonly loadingEqs   = signal(false);
-  readonly error        = signal<string | null>(null);
+  readonly proyectos       = signal<Proyecto[]>([]);
+  readonly equipos         = signal<Equipo[]>([]);
+  readonly grupos          = signal<GrupoElemento[]>([]);
+  readonly selectedDays    = signal<number[]>([]);
+  readonly grupoElementoId = signal<number | null>(null);
+  readonly saving          = signal(false);
+  readonly loadingEqs      = signal(false);
+  readonly error           = signal<string | null>(null);
 
   get isEdit() { return !!this.tarea; }
 
@@ -63,6 +67,12 @@ export class TareaFormModalComponent implements OnInit {
   onAnyInteraction() { this.form.markAsDirty(); }
 
   ngOnInit() {
+    // Cargar catálogos para ambos modos (campo opcional)
+    this.grupoSvc.listGrupos().subscribe({
+      next: gs => this.grupos.set(gs.filter(g => g.activo)),
+      error: () => {},
+    });
+
     if (this.isEdit) {
       this.form.get('proyecto_id')!.clearValidators();
       this.form.get('equipo_id')!.clearValidators();
@@ -70,6 +80,7 @@ export class TareaFormModalComponent implements OnInit {
       this.form.get('equipo_id')!.updateValueAndValidity();
       this.form.patchValue({ hora: this.tarea!.hora.substring(0, 5) });
       this.selectedDays.set([...this.tarea!.dias_semana]);
+      this.grupoElementoId.set(this.tarea!.grupo_elemento_id ?? null);
       this.form.markAsPristine();
     } else {
       this.proyectoSvc.list().subscribe({
@@ -112,6 +123,12 @@ export class TareaFormModalComponent implements OnInit {
     );
   }
 
+  onGrupoChange(event: Event) {
+    const val = (event as CustomEvent<{ value: number | null }>).detail.value;
+    this.grupoElementoId.set(val ?? null);
+    this.form.markAsDirty();
+  }
+
   dismiss() { this.modalCtrl.dismiss(null, 'cancel'); }
 
   private async confirmSalir(): Promise<boolean> {
@@ -136,14 +153,23 @@ export class TareaFormModalComponent implements OnInit {
     this.saving.set(true);
 
     if (this.isEdit) {
-      this.svc.update(this.tarea!.id, { hora, dias_semana: this.selectedDays() }).subscribe({
+      this.svc.update(this.tarea!.id, {
+        hora,
+        dias_semana: this.selectedDays(),
+        grupo_elemento_id: this.grupoElementoId(),
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al guardar'); },
       });
     } else {
       const { equipo_id } = this.form.getRawValue();
       if (!equipo_id) { this.saving.set(false); return; }
-      this.svc.create({ equipo_id, hora, dias_semana: this.selectedDays() }).subscribe({
+      this.svc.create({
+        equipo_id,
+        hora,
+        dias_semana: this.selectedDays(),
+        grupo_elemento_id: this.grupoElementoId(),
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al crear tarea'); },
       });

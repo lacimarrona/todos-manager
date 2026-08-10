@@ -273,7 +273,7 @@ const revisionController = {
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       const ESTADOS = ['pendiente', 'en_proceso', 'terminado'];
-      const { estado, observacion_general, tecnico_id, estado_calidad } = req.body;
+      const { estado, observacion_general, tecnico_id, estado_calidad, elemento_seleccionado_id } = req.body;
 
       if (estado && !ESTADOS.includes(estado)) {
         return res.status(400).json({ error: `estado debe ser: ${ESTADOS.join(', ')}` });
@@ -298,7 +298,19 @@ const revisionController = {
         return res.status(404).json({ error: 'Técnico no encontrado' });
       }
 
-      await revision.update({ estado, observacion_general, tecnico_id, estado_calidad });
+      // Validar elemento_seleccionado_id si se envía en el cuerpo
+      if (elemento_seleccionado_id !== undefined && elemento_seleccionado_id !== null) {
+        const elemento = await ElementoGrupo.findOne({
+          where: { id: elemento_seleccionado_id },
+          include: [{ model: GrupoElemento, as: 'grupo', where: { workspace_id: wsId(req) }, attributes: [] }],
+        });
+        if (!elemento) return res.status(400).json({ error: 'Elemento no válido para este workspace' });
+      }
+
+      const updates = { estado, observacion_general, tecnico_id, estado_calidad };
+      if (elemento_seleccionado_id !== undefined) updates.elemento_seleccionado_id = elemento_seleccionado_id || null;
+
+      await revision.update(updates);
       await revision.reload({ include: buildRevisionIncludes() });
       return res.json(revision);
     } catch (err) {

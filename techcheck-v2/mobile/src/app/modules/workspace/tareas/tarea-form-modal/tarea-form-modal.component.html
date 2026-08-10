@@ -77,6 +77,23 @@
       </ion-item>
     </ion-list>
 
+    <!-- Catálogo (opcional) -->
+    <ion-list lines="full" class="form-list">
+      <ion-item>
+        <ion-select
+          label="Catálogo (opcional)"
+          labelPlacement="stacked"
+          [value]="grupoElementoId()"
+          (ionChange)="onGrupoChange($event)"
+          placeholder="Sin catálogo">
+          <ion-select-option [value]="null">Sin catálogo</ion-select-option>
+          @for (g of grupos(); track g.id) {
+            <ion-select-option [value]="g.id">{{ g.nombre }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+    </ion-list>
+
     <!-- Días de la semana -->
     <div class="dias-section">
       <p class="dias-label">Días de la semana *</p>
