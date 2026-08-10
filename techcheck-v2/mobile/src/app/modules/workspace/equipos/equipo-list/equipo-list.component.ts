@@ -353,18 +353,20 @@ export class EquipoListComponent implements OnInit {
         value: e.id,
       }));
 
-      return new Promise(async resolve => {
-        const alert = await this.alertCtrl.create({
-          header: `Seleccionar ${grupo.nombre}`,
-          message: '¿Qué elemento vas a revisar?',
-          inputs,
-          buttons: [
-            { text: 'Cancelar', role: 'cancel', handler: () => resolve(false) },
-            { text: 'Continuar', role: 'confirm', handler: (data) => resolve(data as number) },
-          ],
-        });
-        await alert.present();
+      const alert = await this.alertCtrl.create({
+        header: `Seleccionar ${grupo.nombre}`,
+        message: '¿Qué elemento vas a revisar?',
+        inputs,
+        backdropDismiss: false,
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          { text: 'Continuar', role: 'confirm' },
+        ],
       });
+      await alert.present();
+      const { role, data } = await alert.onDidDismiss();
+      if (role !== 'confirm' || !data?.values) return false;
+      return data.values as number;
     } catch {
       return null;
     }

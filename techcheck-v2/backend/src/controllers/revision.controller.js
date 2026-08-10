@@ -11,7 +11,7 @@ function validarDataUrl(url, tipo) {
 }
 
 const { sequelize } = require('../config/database');
-const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario, ElementoGrupo } = require('../models');
+const { Revision, ItemRevision, ArchivoRevision, ArchivoObsGeneral, Equipo, Proyecto, ProyectoPermiso, ItemEquipo, Usuario, ElementoGrupo, GrupoElemento } = require('../models');
 const { wsId } = require('../utils/workspace');
 
 // Verifica acceso al proyecto incluyendo la restricción de proyecto_permisos
@@ -229,6 +229,14 @@ const revisionController = {
       });
 
       const { elemento_seleccionado_id } = req.body;
+      if (elemento_seleccionado_id) {
+        const elemento = await ElementoGrupo.findOne({
+          where: { id: elemento_seleccionado_id },
+          include: [{ model: GrupoElemento, as: 'grupo', where: { workspace_id: wsId(req) }, attributes: [] }],
+        });
+        if (!elemento) return res.status(400).json({ error: 'Elemento no válido para este workspace' });
+      }
+
       const revision = await Revision.create({
         equipo_id,
         tecnico_id: tecnico_id || null,

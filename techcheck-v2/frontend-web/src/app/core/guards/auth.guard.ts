@@ -12,7 +12,7 @@ export const authGuard: CanActivateFn = () => {
   // Already has user in memory
   if (auth.isLogged()) return true;
 
-  // Has access token in memory → load user from /me
+  // Has access token in sessionStorage → load user from /me
   if (storage.getAccessToken()) {
     return auth.loadMe().pipe(
       switchMap(() => of(true)),

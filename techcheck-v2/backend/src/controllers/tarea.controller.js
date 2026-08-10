@@ -147,6 +147,11 @@ const tareaController = {
       const asignadoId = req.user.rol !== 'usuario' && asignado_a_id ? asignado_a_id : null;
 
       const { grupo_elemento_id } = req.body;
+      if (grupo_elemento_id) {
+        const grupo = await GrupoElemento.findOne({ where: { id: grupo_elemento_id, workspace_id: wsId(req) } });
+        if (!grupo) return res.status(400).json({ error: 'Catálogo no válido para este workspace' });
+      }
+
       const tarea = await TareaProgramada.create({
         equipo_id,
         hora:             horaNorm,
@@ -197,7 +202,14 @@ const tareaController = {
       // Solo admin puede reasignar y cambiar grupo
       if (req.user.rol !== 'usuario') {
         if (req.body.asignado_a_id !== undefined) updates.asignado_a_id = req.body.asignado_a_id || null;
-        if (req.body.grupo_elemento_id !== undefined) updates.grupo_elemento_id = req.body.grupo_elemento_id || null;
+        if (req.body.grupo_elemento_id !== undefined) {
+          const gid = req.body.grupo_elemento_id || null;
+          if (gid) {
+            const grupo = await GrupoElemento.findOne({ where: { id: gid, workspace_id: wsId(req) } });
+            if (!grupo) return res.status(400).json({ error: 'Catálogo no válido para este workspace' });
+          }
+          updates.grupo_elemento_id = gid;
+        }
       }
 
       await tarea.update(updates);

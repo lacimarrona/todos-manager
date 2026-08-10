@@ -42,6 +42,7 @@ export interface CreateTareaDto {
   dias_semana: number[];
   asignado_a_id?: number | null;
   fecha_fin?: string | null;
+  grupo_elemento_id?: number | null;
 }
 
 export interface UpdateTareaDto {
@@ -50,4 +51,5 @@ export interface UpdateTareaDto {
   asignado_a_id?: number | null;
   fecha_fin?: string | null;
   activa?: boolean;
+  grupo_elemento_id?: number | null;
 }

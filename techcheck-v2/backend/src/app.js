@@ -33,8 +33,9 @@ if (process.env.NODE_ENV === 'production') {
 const authAttempts = new Map();
 function makeRateLimiter(max, windowMs) {
   return function rateLimiter(req, res, next) {
-    const ip = req.ip || 'unknown';
-    const key = `${req.originalUrl}:${ip}`;
+    // X-Forwarded-For is set by nginx; falls back to direct IP if no proxy
+    const ip = (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+    const key = `${req.path}:${ip}`;
     const now = Date.now();
     const entry = authAttempts.get(key);
     if (!entry || now > entry.resetAt) {
@@ -50,7 +51,8 @@ function makeRateLimiter(max, windowMs) {
     next();
   };
 }
-const authRateLimiter = makeRateLimiter(5, 15 * 60 * 1000);
+const authRateLimiter    = makeRateLimiter(5,  15 * 60 * 1000); // login: 5 per 15 min
+const refreshRateLimiter = makeRateLimiter(60, 15 * 60 * 1000); // refresh: 60 per 15 min (reloads)
 
 // Limpiar entradas expiradas cada hora para evitar crecimiento ilimitado del Map.
 // .unref() evita que este timer mantenga el proceso vivo (necesario para que los
@@ -108,7 +110,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Aplicar rate limiter a los endpoints de autenticación
 const changePasswordRateLimiter = makeRateLimiter(10, 15 * 60 * 1000);
 app.use('/api/auth/login',           authRateLimiter);
-app.use('/api/auth/refresh',         authRateLimiter);
+app.use('/api/auth/refresh',         refreshRateLimiter);
 app.use('/api/auth/change-password', changePasswordRateLimiter);
 app.use('/api/auth',      authRoutes);
 app.use('/api/admin',     adminRoutes);

@@ -1,23 +1,22 @@
 import { Injectable } from '@angular/core';
 
-// El access token vive en memoria (variable de instancia), no en localStorage,
-// para eliminar el riesgo de XSS. El refresh_token ya estaba en cookie httpOnly.
-// Consecuencia: al refrescar la pestaña se pierde el access token → el interceptor
-// llama automáticamente a /refresh con la cookie httpOnly y lo renueva sin que el
-// usuario note nada (salvo una petición adicional al cargar).
+// Access token stored in sessionStorage: persists across page reloads within the
+// same tab but is cleared when the browser tab closes. The httpOnly refresh cookie
+// is still used as fallback when sessionStorage is empty (new tab, session expiry).
+const ACCESS_TOKEN_KEY = 'tc_at';
+
 @Injectable({ providedIn: 'root' })
 export class StorageService {
-  private _accessToken: string | null = null;
 
   getAccessToken(): string | null {
-    return this._accessToken;
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
   setTokens(accessToken: string, _refreshToken?: string): void {
-    this._accessToken = accessToken;
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   }
 
   clearTokens(): void {
-    this._accessToken = null;
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   }
 }
