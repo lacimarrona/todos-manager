@@ -153,7 +153,7 @@ export class TareaFormModalComponent implements OnInit {
         asignado_a_id:     asignadoId,
         fecha_fin:         fechaFinVal,
         grupo_elemento_id: grupoId,
-      } as any).subscribe({
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al guardar'); },
       });
@@ -165,7 +165,7 @@ export class TareaFormModalComponent implements OnInit {
         asignado_a_id:     asignadoId,
         fecha_fin:         fechaFinVal,
         grupo_elemento_id: grupoId,
-      } as any).subscribe({
+      }).subscribe({
         next: () => { this.saving.set(false); this.modalCtrl.dismiss(null, 'saved'); },
         error: err => { this.saving.set(false); this.error.set(err?.error?.error ?? 'Error al crear tarea'); },
       });

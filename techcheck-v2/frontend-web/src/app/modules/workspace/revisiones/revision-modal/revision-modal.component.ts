@@ -9,7 +9,7 @@ import { addIcons } from 'ionicons';
 import {
   checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
   attachOutline, closeCircle, documentOutline, closeOutline,
-  imagesOutline, checkmarkDoneOutline, clipboardOutline,
+  imagesOutline, checkmarkDoneOutline, clipboardOutline, layersOutline,
 } from 'ionicons/icons';
 import { RevisionService } from '../../../../core/services/revision.service';
 import { Revision, ItemRevision, CalidadRevision } from '../../../../core/models/revision.model';
@@ -76,7 +76,7 @@ export class RevisionModalComponent implements OnInit {
     addIcons({
       checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
       attachOutline, closeCircle, documentOutline, closeOutline,
-      imagesOutline, checkmarkDoneOutline, clipboardOutline,
+      imagesOutline, checkmarkDoneOutline, clipboardOutline, layersOutline,
     });
   }
 

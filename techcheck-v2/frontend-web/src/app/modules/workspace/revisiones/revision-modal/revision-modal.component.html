@@ -33,6 +33,17 @@
   }
 
   @if (!loading() && revision()) {
+    @if (revision()!.elemento_seleccionado) {
+      <div class="elemento-badge">
+        <ion-icon name="layers-outline"></ion-icon>
+        <span>{{ revision()!.elemento_seleccionado!.valor }}
+          @if (revision()!.elemento_seleccionado!.descripcion) {
+            <em> — {{ revision()!.elemento_seleccionado!.descripcion }}</em>
+          }
+        </span>
+      </div>
+    }
+
     @if (revision()!.items.length === 0) {
       <div class="empty-state">
         <ion-icon name="clipboard-outline"></ion-icon>

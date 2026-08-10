@@ -34,6 +34,8 @@ export interface Revision {
   estado: RevisionEstado;
   estado_calidad: CalidadRevision | null;
   observacion_general: string | null;
+  elemento_seleccionado_id: number | null;
+  elemento_seleccionado?: { id: number; valor: string; descripcion?: string } | null;
   items: ItemRevision[];
   archivos_obs?: ArchivoObsGeneral[];
   tecnico?: Pick<User, 'id' | 'nombre' | 'email'> | null;

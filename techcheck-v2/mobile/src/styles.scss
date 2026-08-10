@@ -306,6 +306,19 @@
   font-size: 0.75rem;
 }
 
+.elemento-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  border-bottom: 1px solid var(--ion-color-light-shade);
+  font-size: 0.85rem;
+  color: var(--ion-color-primary);
+  ion-icon { font-size: 1rem; flex-shrink: 0; }
+  em { color: var(--ion-color-medium); font-style: normal; }
+}
+
 /* Revisión item */
 .revision-list  { padding: 0; }
 

@@ -12,7 +12,7 @@ import { addIcons } from 'ionicons';
 import {
   checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
   cameraOutline, attachOutline, closeCircle, documentOutline, closeOutline,
-  checkmarkDoneOutline, cloudOfflineOutline, clipboardOutline,
+  checkmarkDoneOutline, cloudOfflineOutline, clipboardOutline, layersOutline,
 } from 'ionicons/icons';
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -87,7 +87,7 @@ export class RevisionModalComponent implements OnInit {
     addIcons({
       checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
       cameraOutline, attachOutline, closeCircle, documentOutline, closeOutline,
-      checkmarkDoneOutline, cloudOfflineOutline, clipboardOutline,
+      checkmarkDoneOutline, cloudOfflineOutline, clipboardOutline, layersOutline,
     });
   }
 
