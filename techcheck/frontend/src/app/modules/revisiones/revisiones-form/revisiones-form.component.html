@@ -59,7 +59,25 @@
                 [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'">
                 <span *ngIf="item.checked">✓</span>
               </button>
-              <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
+              <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
+              <!-- Botones de estado por ítem -->
+              <div class="flex gap-1 shrink-0">
+                <button (click)="setItemEstado(i, 'ok')" title="Sin problemas"
+                  class="px-2 py-0.5 text-xs rounded-full border transition-all"
+                  [ngClass]="item.estado === 'ok' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 text-gray-400 hover:border-green-400 hover:text-green-600'">
+                  ✓ OK
+                </button>
+                <button (click)="setItemEstado(i, 'observacion')" title="Con observación"
+                  class="px-2 py-0.5 text-xs rounded-full border transition-all"
+                  [ngClass]="item.estado === 'observacion' ? 'bg-yellow-400 border-yellow-400 text-white' : 'border-gray-200 text-gray-400 hover:border-yellow-400 hover:text-yellow-600'">
+                  ⚠ Obs
+                </button>
+                <button (click)="setItemEstado(i, 'problema')" title="Con problema"
+                  class="px-2 py-0.5 text-xs rounded-full border transition-all"
+                  [ngClass]="item.estado === 'problema' ? 'bg-red-500 border-red-500 text-white' : 'border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600'">
+                  ✗ Prob
+                </button>
+              </div>
             </div>
             <div class="pl-9">
               <input type="text" [value]="item.nota" (input)="updateNota(i, $any($event.target).value)"

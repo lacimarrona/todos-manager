@@ -1,10 +1,25 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Revision, Proyecto, ArchivoAdjunto } from '../../../core/models/models';
 import { DonePipe } from '../../../shared/done.pipe';
 import { RevisionesService } from '../../../core/services/otros.services';
 import { ProyectosService } from '../../../core/services/proyectos.service';
+
+export interface ResumenEquipo {
+  nombre: string;
+  totalRevisiones: number;
+  ultimaFecha: string;
+  ultimoEstado: string;
+  itemsConProblema: number;
+  itemsConObservacion: number;
+}
+
+export interface ItemProblematico {
+  label: string;
+  problemas: number;
+  observaciones: number;
+}
 
 @Component({
   selector: 'app-historial-list',
@@ -13,15 +28,72 @@ import { ProyectosService } from '../../../core/services/proyectos.service';
   templateUrl: './historial-list.component.html'
 })
 export class HistorialListComponent implements OnInit {
-  vista = signal<'proyectos' | 'revisiones'>('proyectos');
+  vista = signal<'proyectos' | 'revisiones' | 'informe'>('proyectos');
   proyectos = signal<Proyecto[]>([]);
   proyectoActual = signal<Proyecto | null>(null);
   revisiones = signal<Revision[]>([]);
+  todasRevisiones = signal<Revision[]>([]);
   cargando = signal(true);
   error = signal('');
   revisionDetalle = signal<Revision | null>(null);
   filtroEstado = '';
   filtroTexto = '';
+
+  readonly resumenEquipos = computed<ResumenEquipo[]>(() => {
+    const revs = this.todasRevisiones();
+    const byEquipo = new Map<string, Revision[]>();
+    for (const r of revs) {
+      const key = r.equipoNombre || r.equipoId;
+      if (!byEquipo.has(key)) byEquipo.set(key, []);
+      byEquipo.get(key)!.push(r);
+    }
+    return Array.from(byEquipo.entries()).map(([nombre, revisions]) => {
+      const sorted = [...revisions].sort((a, b) => b.creadoEn.localeCompare(a.creadoEn));
+      const ultima = sorted[0];
+      let itemsConProblema = 0;
+      let itemsConObservacion = 0;
+      for (const rev of revisions) {
+        for (const item of rev.items) {
+          if (item.estado === 'problema') itemsConProblema++;
+          else if (item.estado === 'observacion') itemsConObservacion++;
+        }
+      }
+      return {
+        nombre,
+        totalRevisiones: revisions.length,
+        ultimaFecha: ultima.creadoEn,
+        ultimoEstado: ultima.estado,
+        itemsConProblema,
+        itemsConObservacion,
+      };
+    }).sort((a, b) => (b.itemsConProblema + b.itemsConObservacion) - (a.itemsConProblema + a.itemsConObservacion));
+  });
+
+  readonly itemsProblematicos = computed<ItemProblematico[]>(() => {
+    const byLabel = new Map<string, { problemas: number; observaciones: number }>();
+    for (const rev of this.todasRevisiones()) {
+      for (const item of rev.items) {
+        if (!item.estado || item.estado === 'ok') continue;
+        if (!byLabel.has(item.label)) byLabel.set(item.label, { problemas: 0, observaciones: 0 });
+        const entry = byLabel.get(item.label)!;
+        if (item.estado === 'problema') entry.problemas++;
+        else if (item.estado === 'observacion') entry.observaciones++;
+      }
+    }
+    return Array.from(byLabel.entries())
+      .map(([label, c]) => ({ label, ...c }))
+      .sort((a, b) => (b.problemas * 2 + b.observaciones) - (a.problemas * 2 + a.observaciones));
+  });
+
+  readonly statsGeneral = computed(() => {
+    const revs = this.todasRevisiones();
+    return {
+      total: revs.length,
+      ok: revs.filter(r => r.estado === 'ok').length,
+      observacion: revs.filter(r => r.estado === 'observacion').length,
+      problema: revs.filter(r => r.estado === 'problema').length,
+    };
+  });
 
   constructor(
     private revisionesSvc: RevisionesService,
@@ -44,36 +116,48 @@ export class HistorialListComponent implements OnInit {
     this.cargarRevisionesProyecto(proyecto.id);
   }
 
+  verInformeProyecto(proyecto: Proyecto, event: Event) {
+    event.stopPropagation();
+    this.proyectoActual.set(proyecto);
+    this.vista.set('informe');
+    this.cargarRevisionesProyecto(proyecto.id, true);
+  }
+
   volverAProyectos() {
     this.vista.set('proyectos');
     this.proyectoActual.set(null);
     this.revisiones.set([]);
+    this.todasRevisiones.set([]);
     this.cargarProyectos();
   }
 
-cargarRevisionesProyecto(proyectoId: string) {
-  this.cargando.set(true);
-  this.proyectosSvc.getTodosEquipos(proyectoId).subscribe({
-    next: equipos => {
-      this.revisionesSvc.getAll().subscribe({
-        next: revisiones => {
-          const equipoIds = equipos.map(e => e.id);
-          const delProyecto = revisiones.filter(r => {
-            if (!equipoIds.includes(r.equipoId)) return false;
-            // Solo revisiones donde todos los items estan marcados
-            if (r.items.length === 0) return false;
-            const completados = r.items.filter(i => i.checked).length;
-            return completados === r.items.length;
-          });
-          this.revisiones.set(delProyecto);
-          this.cargando.set(false);
-        },
-        error: () => { this.error.set('Error al cargar historial'); this.cargando.set(false); }
-      });
-    },
-    error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
-  });
-}
+  volverARevisiones() {
+    this.vista.set('revisiones');
+  }
+
+  cargarRevisionesProyecto(proyectoId: string, todasIncluyendoParciales = false) {
+    this.cargando.set(true);
+    this.proyectosSvc.getTodosEquipos(proyectoId).subscribe({
+      next: equipos => {
+        this.revisionesSvc.getAll().subscribe({
+          next: revisiones => {
+            const equipoIds = equipos.map((e: any) => e.id);
+            const completadas = revisiones.filter(r => {
+              if (!equipoIds.includes(r.equipoId)) return false;
+              if (r.items.length === 0) return false;
+              const completados = r.items.filter(i => i.checked).length;
+              return completados === r.items.length;
+            });
+            this.revisiones.set(completadas);
+            this.todasRevisiones.set(todasIncluyendoParciales ? revisiones.filter((r: Revision) => equipoIds.includes(r.equipoId)) : completadas);
+            this.cargando.set(false);
+          },
+          error: () => { this.error.set('Error al cargar historial'); this.cargando.set(false); }
+        });
+      },
+      error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
+    });
+  }
 
   get revisionesFiltradas(): Revision[] {
     return this.revisiones().filter(r => {
@@ -99,6 +183,8 @@ cargarRevisionesProyecto(proyectoId: string) {
   }
 
   trackById(_: number, r: any) { return r.id; }
+
+  range(n: number): number[] { return Array.from({ length: Math.min(n, 10) }, (_, i) => i); }
 
   archivoData(a: ArchivoAdjunto | string): string {
     if (typeof a === 'string') return a;

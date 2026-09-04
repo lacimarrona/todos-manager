@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Equipo, Tecnico, RevisionForm, ItemRevision, EstadoRevision } from '../../../core/models/models';
+import { Equipo, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem } from '../../../core/models/models';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { TecnicosService, RevisionesService } from '../../../core/services/otros.services';
 
@@ -65,6 +65,14 @@ export class RevisionesFormComponent implements OnInit {
   updateNota(idx: number, nota: string) {
     const updated = [...this.items()];
     updated[idx] = { ...updated[idx], nota };
+    this.items.set(updated);
+  }
+
+  setItemEstado(idx: number, estado: EstadoItem) {
+    const updated = [...this.items()];
+    // Toggle: si ya está seleccionado, lo limpia
+    const current = updated[idx].estado;
+    updated[idx] = { ...updated[idx], estado: current === estado ? null : estado };
     this.items.set(updated);
   }
 

@@ -14,16 +14,19 @@
     <p class="text-sm">Aun no hay proyectos registrados</p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando()">
-    <div *ngFor="let p of proyectos(); trackBy: trackById" (click)="entrarProyecto(p)"
-      class="bg-white border border-gray-200 rounded-xl p-5 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all group">
-      <div class="flex items-center gap-3 mb-3">
+    <div *ngFor="let p of proyectos(); trackBy: trackById"
+      class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-300 transition-all group">
+      <div class="flex items-center gap-3 mb-3 cursor-pointer" (click)="entrarProyecto(p)">
         <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-200 transition-colors">📁</div>
         <div class="min-w-0">
           <h3 class="font-semibold text-gray-800 truncate">{{ p.nombre }}</h3>
           <p *ngIf="p.descripcion" class="text-xs text-gray-400 mt-0.5 truncate">{{ p.descripcion }}</p>
         </div>
       </div>
-      <p class="text-xs text-gray-400">Ver historial de revisiones</p>
+      <div class="flex gap-2">
+        <button (click)="entrarProyecto(p)" class="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">📋 Historial</button>
+        <button (click)="verInformeProyecto(p, $event)" class="flex-1 px-3 py-1.5 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">📊 Informe</button>
+      </div>
     </div>
   </div>
 </div>
@@ -123,10 +126,21 @@
       </div>
       <h4 class="text-sm font-semibold text-gray-600 mb-3">Items revisados</h4>
       <div class="space-y-2 mb-5">
-        <div *ngFor="let item of r.items" class="flex gap-3 p-2.5 rounded-lg" [ngClass]="item.checked ? 'bg-green-50' : 'bg-gray-50'">
+        <div *ngFor="let item of r.items" class="flex gap-3 p-2.5 rounded-lg"
+          [ngClass]="{
+            'bg-red-50 border border-red-100': item.estado === 'problema',
+            'bg-yellow-50 border border-yellow-100': item.estado === 'observacion',
+            'bg-green-50': item.checked && !item.estado,
+            'bg-gray-50': !item.checked && !item.estado
+          }">
           <span class="text-base leading-none mt-0.5">{{ item.checked ? '✅' : '⬜' }}</span>
-          <div>
-            <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
+              <span *ngIf="item.estado === 'observacion'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">⚠ Observación</span>
+              <span *ngIf="item.estado === 'problema'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">✗ Problema</span>
+              <span *ngIf="item.estado === 'ok'" class="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">✓ OK</span>
+            </div>
             <div *ngIf="item.nota" class="text-xs text-gray-500 mt-0.5">💬 {{ item.nota }}</div>
 <div *ngIf="item.archivos && item.archivos.length > 0" class="flex flex-wrap gap-2 mt-1">
   <div *ngFor="let archivo of item.archivos" class="relative group cursor-pointer">
@@ -158,5 +172,160 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- VISTA 3: INFORME DEL PROYECTO -->
+<div class="p-7 max-w-6xl" *ngIf="vista() === 'informe'">
+  <div class="flex items-center gap-2 text-sm text-gray-400 mb-5">
+    <button (click)="volverAProyectos()" class="hover:text-blue-600 transition-colors">Historial</button>
+    <span>/</span>
+    <span class="text-gray-700 font-medium">{{ proyectoActual()?.nombre }}</span>
+    <span>/</span>
+    <span class="text-gray-500">Informe</span>
+  </div>
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-800">📊 Informe — {{ proyectoActual()?.nombre }}</h1>
+      <p class="text-sm text-gray-400 mt-1">Resumen general de revisiones y estado de equipos</p>
+    </div>
+    <button (click)="volverAProyectos()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+  </div>
+
+  <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando informe...</div>
+
+  <div *ngIf="!cargando()" class="space-y-6">
+
+    <!-- Stats generales -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-gray-800">{{ statsGeneral().total }}</div>
+        <div class="text-xs text-gray-400 mt-1">Revisiones totales</div>
+      </div>
+      <div class="bg-white border border-green-200 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-green-600">{{ statsGeneral().ok }}</div>
+        <div class="text-xs text-gray-400 mt-1">Sin problemas (OK)</div>
+      </div>
+      <div class="bg-white border border-yellow-200 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-yellow-500">{{ statsGeneral().observacion }}</div>
+        <div class="text-xs text-gray-400 mt-1">Con observaciones</div>
+      </div>
+      <div class="bg-white border border-red-200 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-red-600">{{ statsGeneral().problema }}</div>
+        <div class="text-xs text-gray-400 mt-1">Con problemas</div>
+      </div>
+    </div>
+
+    <!-- Barra de estado global -->
+    <div *ngIf="statsGeneral().total > 0" class="bg-white border border-gray-200 rounded-xl p-4">
+      <h3 class="text-sm font-semibold text-gray-600 mb-3">Distribución de estados</h3>
+      <div class="flex rounded-full overflow-hidden h-4 gap-0.5">
+        <div *ngIf="statsGeneral().ok > 0"
+          class="bg-green-500 transition-all"
+          [style.flex]="statsGeneral().ok"
+          [title]="statsGeneral().ok + ' OK'"></div>
+        <div *ngIf="statsGeneral().observacion > 0"
+          class="bg-yellow-400 transition-all"
+          [style.flex]="statsGeneral().observacion"
+          [title]="statsGeneral().observacion + ' con observaciones'"></div>
+        <div *ngIf="statsGeneral().problema > 0"
+          class="bg-red-500 transition-all"
+          [style.flex]="statsGeneral().problema"
+          [title]="statsGeneral().problema + ' con problemas'"></div>
+      </div>
+      <div class="flex gap-4 mt-2 text-xs text-gray-500">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span> OK ({{ statsGeneral().total > 0 ? ((statsGeneral().ok / statsGeneral().total) * 100 | number:'1.0-0') : 0 }}%)</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-yellow-400 rounded-full inline-block"></span> Observaciones ({{ statsGeneral().total > 0 ? ((statsGeneral().observacion / statsGeneral().total) * 100 | number:'1.0-0') : 0 }}%)</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full inline-block"></span> Problemas ({{ statsGeneral().total > 0 ? ((statsGeneral().problema / statsGeneral().total) * 100 | number:'1.0-0') : 0 }}%)</span>
+      </div>
+    </div>
+
+    <!-- Estado por equipo -->
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div class="px-5 py-3 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-600">Estado por equipo</h3>
+      </div>
+      <div *ngIf="resumenEquipos().length === 0" class="text-center py-10 text-gray-400 text-sm">Sin revisiones registradas</div>
+      <table *ngIf="resumenEquipos().length > 0" class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Equipo</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Revisiones</th>
+            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Última revisión</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Último estado</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Ítems ⚠</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Ítems ✗</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let eq of resumenEquipos()" class="hover:bg-gray-50 transition-colors"
+            [ngClass]="{ 'bg-red-50/50': eq.itemsConProblema > 0 }">
+            <td class="px-5 py-3 font-medium text-gray-800">{{ eq.nombre }}</td>
+            <td class="px-4 py-3 text-center text-gray-500">{{ eq.totalRevisiones }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ eq.ultimaFecha | date:'dd/MM/yyyy' }}</td>
+            <td class="px-4 py-3 text-center">
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full"
+                [ngClass]="{
+                  'bg-green-100 text-green-700': eq.ultimoEstado === 'ok',
+                  'bg-yellow-100 text-yellow-700': eq.ultimoEstado === 'observacion',
+                  'bg-red-100 text-red-700': eq.ultimoEstado === 'problema'
+                }">{{ estadoLabel(eq.ultimoEstado) }}</span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span *ngIf="eq.itemsConObservacion > 0" class="text-yellow-600 font-semibold">{{ eq.itemsConObservacion }}</span>
+              <span *ngIf="eq.itemsConObservacion === 0" class="text-gray-300">—</span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span *ngIf="eq.itemsConProblema > 0" class="text-red-600 font-semibold">{{ eq.itemsConProblema }}</span>
+              <span *ngIf="eq.itemsConProblema === 0" class="text-gray-300">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Ítems problemáticos recurrentes -->
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden" *ngIf="itemsProblematicos().length > 0">
+      <div class="px-5 py-3 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-600">Ítems con observaciones o problemas</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Solo ítems marcados con estado ⚠ Obs o ✗ Prob en alguna revisión</p>
+      </div>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Ítem</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-yellow-600">⚠ Observaciones</th>
+            <th class="text-center px-4 py-2.5 text-xs font-semibold text-red-600">✗ Problemas</th>
+            <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Severidad</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let item of itemsProblematicos()" class="hover:bg-gray-50">
+            <td class="px-5 py-3 text-gray-800">{{ item.label }}</td>
+            <td class="px-4 py-3 text-center">
+              <span *ngIf="item.observaciones > 0" class="text-yellow-600 font-semibold">{{ item.observaciones }}</span>
+              <span *ngIf="item.observaciones === 0" class="text-gray-300">—</span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span *ngIf="item.problemas > 0" class="text-red-600 font-semibold">{{ item.problemas }}</span>
+              <span *ngIf="item.problemas === 0" class="text-gray-300">—</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex gap-1">
+                <span *ngFor="let _ of range(item.problemas)" class="w-2.5 h-2.5 bg-red-500 rounded-full inline-block"></span>
+                <span *ngFor="let _ of range(item.observaciones)" class="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block"></span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="statsGeneral().total === 0" class="text-center py-16 text-gray-400">
+      <div class="text-5xl mb-4">📊</div>
+      <h3 class="text-base font-medium text-gray-500 mb-1">Sin datos</h3>
+      <p class="text-sm">Aún no hay revisiones en este proyecto para generar un informe</p>
+    </div>
+
   </div>
 </div>

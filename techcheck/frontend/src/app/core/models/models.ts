@@ -92,11 +92,13 @@ export interface TecnicoForm {
 
 // ─── REVISION ───────────────────────────────────────────────
 export type EstadoRevision = 'ok' | 'observacion' | 'problema';
+export type EstadoItem = 'ok' | 'observacion' | 'problema';
 
 export interface ItemRevision {
   label: string;
   checked: boolean;
   nota: string;
+  estado?: EstadoItem | null;
   archivos: (ArchivoAdjunto | string)[];
   observacionGuia?: string;
   archivosGuia?: (ArchivoAdjunto | string)[];
