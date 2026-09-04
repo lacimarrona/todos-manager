@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, ArchivoAdjunto } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
@@ -311,6 +311,12 @@ export class EquiposListComponent implements OnInit {
   toggleItem(idx: number) {
     const updated = [...this.itemsRevision()];
     updated[idx] = { ...updated[idx], checked: !updated[idx].checked };
+    this.itemsRevision.set(updated);
+  }
+
+  setItemEstado(idx: number, estado: EstadoItem) {
+    const updated = [...this.itemsRevision()];
+    updated[idx] = { ...updated[idx], estado: updated[idx].estado === estado ? null : estado };
     this.itemsRevision.set(updated);
   }
 
