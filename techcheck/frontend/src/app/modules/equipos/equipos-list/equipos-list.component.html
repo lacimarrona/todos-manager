@@ -63,20 +63,51 @@
       <button (click)="abrirModalNuevoEquipo()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo equipo</button>
     </div>
   </div>
-  <div class="flex gap-2 mb-6">
-    <button (click)="cambiarFiltro('pendiente')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Pendientes</button>
-    <button (click)="cambiarFiltro('en_proceso')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'en_proceso' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">En proceso</button>
-    <button (click)="cambiarFiltro('terminado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'terminado' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Terminados</button>
-    <button (click)="cambiarFiltro('archivado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'archivado' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">📦 Archivados</button>
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex gap-2">
+      <button (click)="cambiarFiltro('pendiente')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Pendientes</button>
+      <button (click)="cambiarFiltro('en_proceso')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'en_proceso' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">En proceso</button>
+      <button (click)="cambiarFiltro('terminado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'terminado' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">Terminados</button>
+      <button (click)="cambiarFiltro('archivado')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroActivo() === 'archivado' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">📦 Archivados</button>
+    </div>
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+      <button (click)="vistaEquipos.set('cards')" class="px-3 py-1.5 text-sm rounded-md transition-colors" [ngClass]="vistaEquipos() === 'cards' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'" title="Vista cards">⊞</button>
+      <button (click)="vistaEquipos.set('tabla')" class="px-3 py-1.5 text-sm rounded-md transition-colors" [ngClass]="vistaEquipos() === 'tabla' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'" title="Vista tabla">☰</button>
+    </div>
   </div>
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
-  <div *ngIf="!cargando() && equipos().length === 0" class="text-center py-16 text-gray-400">
+
+  <!-- Barra de búsqueda y filtros secundarios -->
+  <div *ngIf="!cargando() && equipos().length > 0" class="flex flex-wrap items-center gap-2 mb-4">
+    <div class="relative flex-1 min-w-48">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+      <input type="text" [ngModel]="busquedaEquipo()" (ngModelChange)="busquedaEquipo.set($event)" placeholder="Buscar equipo..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+    </div>
+    <div *ngIf="filtroActivo() !== 'pendiente'" class="flex gap-1">
+      <button (click)="filtroEstadoBadge.set('')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === '' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">Todos</button>
+      <button (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'ok' ? '' : 'ok')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === 'ok' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">✓ OK</button>
+      <button (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'observacion' ? '' : 'observacion')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === 'observacion' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">⚠ Obs</button>
+      <button (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'problema' ? '' : 'problema')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === 'problema' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">✗ Problema</button>
+    </div>
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+      <button (click)="ordenAlfa.set(ordenAlfa() === 'asc' ? '' : 'asc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'asc' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'">A-Z</button>
+      <button (click)="ordenAlfa.set(ordenAlfa() === 'desc' ? '' : 'desc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'desc' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'">Z-A</button>
+    </div>
+    <div *ngIf="filtroActivo() === 'en_proceso'" class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+      <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-desc' ? '' : 'prog-desc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-desc' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Mayor progreso primero">% ↓</button>
+      <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-asc' ? '' : 'prog-asc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-asc' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Menor progreso primero">% ↑</button>
+    </div>
+    <span *ngIf="equiposMostrados().length !== equipos().length" class="text-xs text-gray-400 ml-1">{{ equiposMostrados().length }} de {{ equipos().length }}</span>
+  </div>
+
+  <div *ngIf="!cargando() && equiposMostrados().length === 0" class="text-center py-16 text-gray-400">
     <div class="text-5xl mb-4">💻</div>
     <h3 class="text-base font-medium text-gray-500 mb-1">No hay equipos en este filtro</h3>
   </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando()">
-    <div *ngFor="let equipo of equipos(); trackBy: trackById" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
+  <!-- Vista Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposMostrados().length > 0">
+    <div *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div class="min-w-0">
           <h3 class="font-semibold text-gray-800 text-sm truncate">{{ equipo.nombre }}</h3>
@@ -89,11 +120,18 @@
         <span *ngIf="equipo.tecnicoAsignadoNombre" class="text-xs text-gray-500">👤 {{ equipo.tecnicoAsignadoNombre }}</span>
         <span *ngIf="equipo.ultimaRevision" class="text-xs text-gray-500">🕐 {{ equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm' }}</span>
       </div>
-      <div *ngIf="equipo.ultimaRevision" class="mb-3">
-        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div class="h-full rounded-full transition-all duration-300" [ngClass]="progreso(equipo) === 100 ? 'bg-green-500' : 'bg-blue-500'" [style.width.%]="progreso(equipo)"></div>
+      <div *ngIf="equipo.ultimaRevision && itemStats(equipo).total > 0" class="mb-3">
+        <div class="flex rounded-full overflow-hidden h-2 gap-px">
+          <div *ngIf="itemStats(equipo).ok > 0" class="bg-green-500 transition-all" [style.flex]="itemStats(equipo).ok" [title]="itemStats(equipo).ok + ' OK'"></div>
+          <div *ngIf="itemStats(equipo).observacion > 0" class="bg-yellow-400 transition-all" [style.flex]="itemStats(equipo).observacion" [title]="itemStats(equipo).observacion + ' observaciones'"></div>
+          <div *ngIf="itemStats(equipo).problema > 0" class="bg-red-500 transition-all" [style.flex]="itemStats(equipo).problema" [title]="itemStats(equipo).problema + ' problemas'"></div>
+          <div *ngIf="(itemStats(equipo).ok + itemStats(equipo).observacion + itemStats(equipo).problema) < itemStats(equipo).total" class="bg-gray-200 transition-all" [style.flex]="itemStats(equipo).total - itemStats(equipo).ok - itemStats(equipo).observacion - itemStats(equipo).problema"></div>
         </div>
-        <p class="text-xs text-gray-400 mt-1">{{ progreso(equipo) }}% completado</p>
+        <div class="flex gap-3 mt-1 text-xs text-gray-400">
+          <span *ngIf="itemStats(equipo).ok > 0" class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span>{{ itemStats(equipo).ok }} ok</span>
+          <span *ngIf="itemStats(equipo).observacion > 0" class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-yellow-400 rounded-full inline-block"></span>{{ itemStats(equipo).observacion }} obs</span>
+          <span *ngIf="itemStats(equipo).problema > 0" class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-red-500 rounded-full inline-block"></span>{{ itemStats(equipo).problema }} prob</span>
+        </div>
       </div>
       <div class="flex gap-2 pt-3 border-t border-gray-100">
         <ng-container *ngIf="!equipo.archivado">
@@ -102,8 +140,73 @@
         </ng-container>
         <button (click)="abrirModalExportarEquipo(equipo, $event)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
         <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
+        <button *ngIf="filtroActivo() === 'archivado'" (click)="desachivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
         <button (click)="eliminarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Vista Tabla -->
+  <div *ngIf="!cargando() && vistaEquipos() === 'tabla' && equiposMostrados().length > 0" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Equipo</th>
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Técnico</th>
+            <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ítems</th>
+            <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Progreso</th>
+            <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Última revisión</th>
+            <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-800">{{ equipo.nombre }}</div>
+              <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
+            </td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ equipo.tecnicoAsignadoNombre || '—' }}</td>
+            <td class="px-4 py-3 text-center text-gray-600">{{ equipo.items.length }}</td>
+            <td class="px-4 py-3">
+              <ng-container *ngIf="equipo.ultimaRevision && itemStats(equipo).total > 0; else sinRevision">
+                <div class="flex rounded-full overflow-hidden h-2 gap-px w-32">
+                  <div *ngIf="itemStats(equipo).ok > 0" class="bg-green-500" [style.flex]="itemStats(equipo).ok" [title]="itemStats(equipo).ok + ' OK'"></div>
+                  <div *ngIf="itemStats(equipo).observacion > 0" class="bg-yellow-400" [style.flex]="itemStats(equipo).observacion" [title]="itemStats(equipo).observacion + ' obs'"></div>
+                  <div *ngIf="itemStats(equipo).problema > 0" class="bg-red-500" [style.flex]="itemStats(equipo).problema" [title]="itemStats(equipo).problema + ' prob'"></div>
+                  <div *ngIf="(itemStats(equipo).ok + itemStats(equipo).observacion + itemStats(equipo).problema) < itemStats(equipo).total" class="bg-gray-200" [style.flex]="itemStats(equipo).total - itemStats(equipo).ok - itemStats(equipo).observacion - itemStats(equipo).problema"></div>
+                </div>
+                <div class="flex gap-2 mt-1 text-xs text-gray-400">
+                  <span *ngIf="itemStats(equipo).ok > 0">✓{{ itemStats(equipo).ok }}</span>
+                  <span *ngIf="itemStats(equipo).observacion > 0" class="text-yellow-500">⚠{{ itemStats(equipo).observacion }}</span>
+                  <span *ngIf="itemStats(equipo).problema > 0" class="text-red-500">✗{{ itemStats(equipo).problema }}</span>
+                </div>
+              </ng-container>
+              <ng-template #sinRevision><span class="text-gray-300 text-xs">—</span></ng-template>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span class="text-xs font-medium px-2.5 py-1 rounded-full" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 text-gray-500': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-400">{{ equipo.ultimaRevision ? (equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm') : '—' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex gap-1.5 justify-end">
+                <ng-container *ngIf="!equipo.archivado">
+                  <button (click)="abrirModalRevision(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+                  <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+                </ng-container>
+                <button (click)="abrirModalExportarEquipo(equipo, $event)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
+                <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦</button>
+                <button *ngIf="filtroActivo() === 'archivado'" (click)="desachivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩</button>
+                <button (click)="eliminarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="equiposMostrados().length === 0">
+            <td colspan="7" class="px-4 py-10 text-center text-gray-400 text-sm">No hay equipos en este filtro</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

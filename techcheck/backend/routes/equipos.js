@@ -83,6 +83,18 @@ router.put('/:id/archivar', (req, res) => {
   }
 });
 
+// PUT /api/equipos/:id/desarchivar
+router.put('/:id/desarchivar', (req, res) => {
+  try {
+    const equipo = db.getEquipoById(req.params.id);
+    if (!equipo) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
+    const actualizado = db.updateEquipo(req.params.id, { archivado: false });
+    res.json({ success: true, data: actualizado });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // PUT /api/equipos/:id
 router.put('/:id', (req, res) => {
   try {

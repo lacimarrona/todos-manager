@@ -13,7 +13,7 @@
 3. [Estructura de Directorios](#3-estructura-de-directorios)
 4. [Backend — Node.js / Express](#4-backend--nodejs--express)
    - 4.1 [Configuración (.env)](#41-configuración-env)
-   - 4.2 [Punto de Entrada (index.js)](#42-punto-de-entrada-indexjs)
+   - 4.2 [Punto de Entrada (index.js)](#42-punto-de-entrada-indexjs) 
    - 4.3 [Capa de Acceso a Datos (dataAccess.js)](#43-capa-de-acceso-a-datos-dataaccessjs)
    - 4.4 [Rutas API](#44-rutas-api)
    - 4.5 [Almacenamiento de Datos](#45-almacenamiento-de-datos)

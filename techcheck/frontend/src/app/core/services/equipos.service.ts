@@ -30,6 +30,10 @@ export class EquiposService {
     return this.http.put<ApiResponse<Equipo>>(`${this.url}/${id}/archivar`, {}).pipe(map(r => r.data!));
   }
 
+  desarchivar(id: string): Observable<Equipo> {
+    return this.http.put<ApiResponse<Equipo>>(`${this.url}/${id}/desarchivar`, {}).pipe(map(r => r.data!));
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }

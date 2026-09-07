@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
@@ -18,6 +18,24 @@ type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado';
 })
 export class EquiposListComponent implements OnInit {
   vista = signal<'proyectos' | 'equipos'>('proyectos');
+  vistaEquipos = signal<'cards' | 'tabla'>('cards');
+  busquedaEquipo = signal('');
+  filtroEstadoBadge = signal('');
+  ordenAlfa = signal<'' | 'asc' | 'desc' | 'prog-asc' | 'prog-desc'>('');
+
+  readonly equiposMostrados = computed(() => {
+    let lista = [...this.equipos()];
+    const busq = this.busquedaEquipo().toLowerCase().trim();
+    const estadoFiltro = this.filtroEstadoBadge();
+    const orden = this.ordenAlfa();
+    if (busq) lista = lista.filter(e => e.nombre.toLowerCase().includes(busq) || (e.descripcion || '').toLowerCase().includes(busq));
+    if (estadoFiltro) lista = lista.filter(e => (e.ultimaRevision ? e.ultimaRevision.estado : 'sin-revision') === estadoFiltro);
+    if (orden === 'asc') lista = lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    else if (orden === 'desc') lista = lista.sort((a, b) => b.nombre.localeCompare(a.nombre));
+    else if (orden === 'prog-desc') lista = lista.sort((a, b) => this.progreso(b) - this.progreso(a));
+    else if (orden === 'prog-asc') lista = lista.sort((a, b) => this.progreso(a) - this.progreso(b));
+    return lista;
+  });
 
   proyectos = signal<Proyecto[]>([]);
   proyectoActual = signal<Proyecto | null>(null);
@@ -105,6 +123,9 @@ export class EquiposListComponent implements OnInit {
 
   cambiarFiltro(filtro: FiltroEstado) {
     this.filtroActivo.set(filtro);
+    this.busquedaEquipo.set('');
+    this.filtroEstadoBadge.set('');
+    this.ordenAlfa.set('');
     this.cargarEquiposFiltrados(filtro);
   }
 
@@ -242,6 +263,13 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
+  desachivarEquipo(id: string) {
+    if (!confirm('¿Regresar este equipo a Terminados?')) return;
+    this.equiposSvc.desarchivar(id).subscribe({
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
+    });
+  }
+
   abrirModalRevision(equipo: Equipo) {
     this.equipoRevisando.set(equipo);
     this.tecnicoId = '';
@@ -316,7 +344,8 @@ export class EquiposListComponent implements OnInit {
 
   setItemEstado(idx: number, estado: EstadoItem) {
     const updated = [...this.itemsRevision()];
-    updated[idx] = { ...updated[idx], estado: updated[idx].estado === estado ? null : estado };
+    const toggled = updated[idx].estado === estado ? null : estado;
+    updated[idx] = { ...updated[idx], estado: toggled, checked: toggled !== null ? true : updated[idx].checked };
     this.itemsRevision.set(updated);
   }
 
@@ -531,6 +560,15 @@ export class EquiposListComponent implements OnInit {
     if (!equipo.ultimaRevision || !equipo.items.length) return 0;
     const ok = equipo.ultimaRevision.items.filter(i => i.checked).length;
     return Math.round((ok / equipo.items.length) * 100);
+  }
+
+  itemStats(equipo: Equipo): { ok: number; observacion: number; problema: number; total: number } {
+    if (!equipo.ultimaRevision) return { ok: 0, observacion: 0, problema: 0, total: 0 };
+    const items = equipo.ultimaRevision.items;
+    const ok = items.filter(i => i.estado === 'ok' || (i.checked && !i.estado)).length;
+    const observacion = items.filter(i => i.estado === 'observacion').length;
+    const problema = items.filter(i => i.estado === 'problema').length;
+    return { ok, observacion, problema, total: items.length };
   }
 
   estadoBadge(equipo: Equipo): string {

@@ -33,14 +33,27 @@ export class HistorialListComponent implements OnInit {
   proyectoActual = signal<Proyecto | null>(null);
   revisiones = signal<Revision[]>([]);
   todasRevisiones = signal<Revision[]>([]);
+  equiposInforme = signal<any[]>([]);
+  filtroArchivoInforme = signal<'activos' | 'todos' | 'archivados'>('activos');
   cargando = signal(true);
   error = signal('');
   revisionDetalle = signal<Revision | null>(null);
   filtroEstado = '';
   filtroTexto = '';
 
+  readonly revisionesInforme = computed<Revision[]>(() => {
+    const todas = this.todasRevisiones();
+    const equipos = this.equiposInforme();
+    const filtro = this.filtroArchivoInforme();
+    if (!equipos.length) return todas;
+    const archivadosIds = new Set(equipos.filter((e: any) => e.archivado).map((e: any) => e.id));
+    if (filtro === 'activos') return todas.filter(r => !archivadosIds.has(r.equipoId));
+    if (filtro === 'archivados') return todas.filter(r => archivadosIds.has(r.equipoId));
+    return todas;
+  });
+
   readonly resumenEquipos = computed<ResumenEquipo[]>(() => {
-    const revs = this.todasRevisiones();
+    const revs = this.revisionesInforme();
     const byEquipo = new Map<string, Revision[]>();
     for (const r of revs) {
       const key = r.equipoNombre || r.equipoId;
@@ -71,7 +84,7 @@ export class HistorialListComponent implements OnInit {
 
   readonly itemsProblematicos = computed<ItemProblematico[]>(() => {
     const byLabel = new Map<string, { problemas: number; observaciones: number }>();
-    for (const rev of this.todasRevisiones()) {
+    for (const rev of this.revisionesInforme()) {
       for (const item of rev.items) {
         if (!item.estado || item.estado === 'ok') continue;
         if (!byLabel.has(item.label)) byLabel.set(item.label, { problemas: 0, observaciones: 0 });
@@ -86,7 +99,7 @@ export class HistorialListComponent implements OnInit {
   });
 
   readonly statsGeneral = computed(() => {
-    const revs = this.todasRevisiones();
+    const revs = this.revisionesInforme();
     return {
       total: revs.length,
       ok: revs.filter(r => r.estado === 'ok').length,
@@ -120,6 +133,7 @@ export class HistorialListComponent implements OnInit {
     event.stopPropagation();
     this.proyectoActual.set(proyecto);
     this.vista.set('informe');
+    this.filtroArchivoInforme.set('activos');
     this.cargarRevisionesProyecto(proyecto.id, true);
   }
 
@@ -139,6 +153,7 @@ export class HistorialListComponent implements OnInit {
     this.cargando.set(true);
     this.proyectosSvc.getTodosEquipos(proyectoId).subscribe({
       next: equipos => {
+        if (todasIncluyendoParciales) this.equiposInforme.set(equipos);
         this.revisionesSvc.getAll().subscribe({
           next: revisiones => {
             const equipoIds = equipos.map((e: any) => e.id);
