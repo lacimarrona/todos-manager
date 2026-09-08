@@ -281,13 +281,19 @@ export class EquiposListComponent implements OnInit {
       const completados = ultima.items.filter(i => i.checked).length;
       const total = ultima.items.length;
       if (total > 0) {
-        this.itemsRevision.set(ultima.items.map(i => ({
-          ...i,
-          nota: i.nota || '',
-          archivos: i.archivos || [],
-          observacionGuia: i.observacionGuia || '',
-          archivosGuia: i.archivosGuia || []
-        })));
+        // Merge equipo.items (source of truth) with ultima.items (saved state).
+        // Items added to the equipo after the last revision began appear here with default state.
+        const revisionMap = new Map(ultima.items.map(i => [i.label, i]));
+        this.itemsRevision.set(equipo.items.map(equipoItem => {
+          const label = typeof equipoItem === 'string' ? equipoItem : equipoItem.label;
+          const guia = typeof equipoItem === 'string' ? '' : (equipoItem.observacionGuia || '');
+          const guiaArchivos = typeof equipoItem === 'string' ? [] : (equipoItem.archivosGuia || []);
+          const revItem = revisionMap.get(label);
+          if (revItem) {
+            return { ...revItem, nota: revItem.nota || '', archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
+          }
+          return { label, checked: false, nota: '', estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos };
+        }));
         this.tecnicoId = ultima.tecnicoId || '';
         this.estado = ultima.estado;
         this.observacionGeneral = ultima.observacionGeneral || '';
