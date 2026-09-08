@@ -333,6 +333,20 @@ const equipoController = {
     }
   },
 
+  async desarchivar(req, res) {
+    try {
+      const equipo = await findEquipoConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' });
+      if (!equipo.archivado) return res.status(400).json({ error: 'El equipo no está archivado' });
+
+      await equipo.update({ archivado: false });
+      return res.json({ message: 'Equipo restaurado correctamente' });
+    } catch (err) {
+      console.error('[equipo/desarchivar]', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
   // GET /api/equipos/plantilla-excel → devuelve un .xlsx con la estructura de importación
   async descargarPlantillaExcel(req, res) {
     try {

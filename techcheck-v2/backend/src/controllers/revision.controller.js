@@ -352,15 +352,21 @@ const revisionController = {
       });
       if (!item) return res.status(404).json({ error: 'Ítem de revisión no encontrado' });
 
-      const { checked, nota } = req.body;
+      const { checked, nota, estado_calidad } = req.body;
+      if (estado_calidad !== undefined && estado_calidad !== null && !['ok', 'observacion', 'problema'].includes(estado_calidad)) {
+        return res.status(400).json({ error: 'estado_calidad inválido' });
+      }
+
+      const checkedFinal = estado_calidad != null ? true : (checked !== undefined ? checked : item.checked);
       await item.update({
-        checked: checked !== undefined ? checked : item.checked,
+        checked: checkedFinal,
         nota: nota !== undefined ? nota : item.nota,
+        estado_calidad: estado_calidad !== undefined ? estado_calidad : item.estado_calidad,
       });
 
       // Avanzar el estado de la revisión: pendiente→en_proceso cuando hay ítems chequeados.
       // El estado 'terminado' solo se asigna explícitamente desde update() con estado_calidad.
-      if (checked !== undefined && revision.estado === 'pendiente') {
+      if ((checked !== undefined || estado_calidad != null) && revision.estado === 'pendiente') {
         const anyChecked = (await ItemRevision.findAll({ where: { revision_id: revision.id } })).some(i => i.checked);
         if (anyChecked) await revision.update({ estado: 'en_proceso' });
       }

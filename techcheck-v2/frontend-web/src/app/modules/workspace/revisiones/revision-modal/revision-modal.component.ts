@@ -117,6 +117,27 @@ export class RevisionModalComponent implements OnInit {
     });
   }
 
+  setItemEstado(item: ItemRevision, estado: CalidadRevision) {
+    if (this.isTerminado() || this.isSaving(item.id)) return;
+    const nuevo = item.estado_calidad === estado ? null : estado;
+    this.updateItemInSignal(item.id, { estado_calidad: nuevo, checked: nuevo !== null ? true : item.checked });
+    this.savingItems.update(s => new Set([...s, item.id]));
+    this.revSvc.updateItem(this.revision()!.id, item.id, { estado_calidad: nuevo }).subscribe({
+      next: updated => {
+        this.savingItems.update(s => { const n = new Set(s); n.delete(item.id); return n; });
+        this.updateItemInSignal(item.id, updated);
+        if (nuevo !== null && this.revision()?.estado === 'pendiente') {
+          this.revision.update(r => r ? { ...r, estado: 'en_proceso' } : r);
+        }
+      },
+      error: () => {
+        this.savingItems.update(s => { const n = new Set(s); n.delete(item.id); return n; });
+        this.updateItemInSignal(item.id, { estado_calidad: item.estado_calidad, checked: item.checked });
+        this.toast('Error al guardar estado', 'danger');
+      },
+    });
+  }
+
   toggleCheck(item: ItemRevision, event: Event) {
     const checked = (event as CustomEvent<{ checked: boolean }>).detail.checked;
     // Optimistic update

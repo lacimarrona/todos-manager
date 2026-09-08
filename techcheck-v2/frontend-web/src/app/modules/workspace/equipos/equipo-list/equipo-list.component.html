@@ -87,7 +87,42 @@
   }
 
   @if (filtro() !== 'perdidas') {
-  @if (!loading() && equipos().length === 0) {
+
+  <!-- Barra de búsqueda y filtros secundarios -->
+  @if (!loading() && equipos().length > 0) {
+    <div class="filtros-secundarios">
+      <div class="busqueda-wrap">
+        <ion-icon name="search-outline" class="busqueda-icon"></ion-icon>
+        <input
+          type="text"
+          [ngModel]="busquedaEquipo()"
+          (ngModelChange)="busquedaEquipo.set($event)"
+          placeholder="Buscar equipo..."
+          class="busqueda-input">
+      </div>
+      @if (filtro() !== 'pendiente') {
+        <div class="badge-filtros">
+          <button class="badge-btn" [class.active]="filtroEstadoBadge() === ''" (click)="filtroEstadoBadge.set('')">Todos</button>
+          <button class="badge-btn badge-ok" [class.active]="filtroEstadoBadge() === 'ok'" (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'ok' ? '' : 'ok')">✓ OK</button>
+          <button class="badge-btn badge-obs" [class.active]="filtroEstadoBadge() === 'observacion'" (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'observacion' ? '' : 'observacion')">⚠ Obs</button>
+          <button class="badge-btn badge-prob" [class.active]="filtroEstadoBadge() === 'problema'" (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'problema' ? '' : 'problema')">✗ Prob</button>
+        </div>
+      }
+      <div class="orden-btns">
+        <button class="orden-btn" [class.active]="ordenAlfa() === 'asc'" (click)="ordenAlfa.set(ordenAlfa() === 'asc' ? '' : 'asc')">A-Z</button>
+        <button class="orden-btn" [class.active]="ordenAlfa() === 'desc'" (click)="ordenAlfa.set(ordenAlfa() === 'desc' ? '' : 'desc')">Z-A</button>
+        @if (filtro() === 'en_proceso') {
+          <button class="orden-btn" [class.active]="ordenAlfa() === 'prog-desc'" (click)="ordenAlfa.set(ordenAlfa() === 'prog-desc' ? '' : 'prog-desc')" title="Mayor % primero">% ↓</button>
+          <button class="orden-btn" [class.active]="ordenAlfa() === 'prog-asc'" (click)="ordenAlfa.set(ordenAlfa() === 'prog-asc' ? '' : 'prog-asc')" title="Menor % primero">% ↑</button>
+        }
+      </div>
+      @if (equiposMostrados().length !== equipos().length) {
+        <small class="filtro-count">{{ equiposMostrados().length }} de {{ equipos().length }}</small>
+      }
+    </div>
+  }
+
+  @if (!loading() && equiposMostrados().length === 0) {
     <div class="empty-state">
       <ion-icon name="clipboard-outline"></ion-icon>
       <p>
@@ -101,7 +136,7 @@
   }
 
   <div class="equipo-grid">
-    @for (eq of equipos(); track eq.id) {
+    @for (eq of equiposMostrados(); track eq.id) {
 
       @if (filtro() === 'archivado') {
         <!-- Vista compacta para equipos archivados -->
@@ -127,6 +162,9 @@
             </div>
             @if (isAdmin()) {
               <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:8px">
+                <ion-button fill="clear" size="small" color="success" (click)="desarchivar(eq, $event)" title="Restaurar a Terminados">
+                  <ion-icon slot="icon-only" name="arrow-undo-outline"></ion-icon>
+                </ion-button>
                 <ion-button fill="clear" size="small" color="medium" (click)="exportar(eq, $event)">
                   <ion-icon slot="icon-only" name="download-outline"></ion-icon>
                 </ion-button>
@@ -309,3 +347,64 @@
     </ion-content>
   </ng-template>
 </ion-modal>
+
+<style>
+.filtros-secundarios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.busqueda-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+.busqueda-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ion-color-medium);
+  font-size: 16px;
+}
+.busqueda-input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: var(--ion-background-color, #fff);
+  color: var(--ion-text-color);
+  box-sizing: border-box;
+}
+.badge-filtros, .orden-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.badge-btn, .orden-btn {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--ion-color-light-shade);
+  background: var(--ion-background-color, #fff);
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.badge-btn.active, .orden-btn.active { background: var(--ion-color-primary); color: #fff; border-color: var(--ion-color-primary); }
+.badge-btn.badge-ok.active  { background: var(--ion-color-success); border-color: var(--ion-color-success); }
+.badge-btn.badge-obs.active { background: var(--ion-color-warning); border-color: var(--ion-color-warning); color: #333; }
+.badge-btn.badge-prob.active{ background: var(--ion-color-danger);  border-color: var(--ion-color-danger); }
+.filtro-count { color: var(--ion-color-medium); font-size: 0.8rem; }
+.dist-bar { display: flex; border-radius: 6px; overflow: hidden; height: 6px; gap: 1px; margin: 6px 0 2px; }
+.dist-bar-ok   { background: var(--ion-color-success); }
+.dist-bar-obs  { background: var(--ion-color-warning); }
+.dist-bar-prob { background: var(--ion-color-danger); }
+.dist-bar-gray { background: var(--ion-color-light-shade); }
+.dist-legend   { display: flex; gap: 8px; font-size: 0.7rem; color: var(--ion-color-medium); }
+.item-estado-btns { display: flex; gap: 0; }
+.item-estado-badge { font-size: 0.65rem; }
+</style>

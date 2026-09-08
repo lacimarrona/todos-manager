@@ -39,6 +39,7 @@ export class EquipoService {
   }
   removeItem(equipoId: number, itemId: number) { return this.api.delete(`/equipos/${equipoId}/items/${itemId}`); }
   archivar(id: number) { return this.api.post(`/equipos/${id}/archivar`, {}); }
+  desarchivar(id: number) { return this.api.post(`/equipos/${id}/desarchivar`, {}); }
   importarMasivo(dto: { proyecto_id: number; equipos: { nombre: string }[]; plantilla_id?: number | null; tecnico_asignado_id?: number | null }) {
     return this.api.post<{ message: string; ids: number[] }>('/equipos/importar-masivo', dto);
   }

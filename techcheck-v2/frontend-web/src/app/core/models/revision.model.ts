@@ -15,6 +15,7 @@ export interface ItemRevision {
   label: string;
   checked: boolean;
   nota: string | null;
+  estado_calidad?: CalidadRevision | null;
   archivos?: ArchivoRevision[];
 }
 

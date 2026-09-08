@@ -79,6 +79,34 @@
               <ion-spinner slot="end" name="crescent" color="medium" class="item-spinner"></ion-spinner>
             }
 
+            <!-- Botones de estado por ítem -->
+            @if (!isTerminado()) {
+              <div slot="end" class="item-estado-btns">
+                <ion-button fill="clear" size="small" class="estado-btn"
+                  [color]="item.estado_calidad === 'ok' ? 'success' : 'medium'"
+                  (click)="setItemEstado(item, 'ok')"
+                  title="Sin problemas">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" class="estado-btn"
+                  [color]="item.estado_calidad === 'observacion' ? 'warning' : 'medium'"
+                  (click)="setItemEstado(item, 'observacion')"
+                  title="Con observación">
+                  <ion-icon name="warning-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" class="estado-btn"
+                  [color]="item.estado_calidad === 'problema' ? 'danger' : 'medium'"
+                  (click)="setItemEstado(item, 'problema')"
+                  title="Con problema">
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                </ion-button>
+              </div>
+            } @else if (item.estado_calidad) {
+              <ion-badge slot="end" [color]="calidadColor(item.estado_calidad)" class="item-estado-badge">
+                {{ calidadLabel(item.estado_calidad) }}
+              </ion-badge>
+            }
+
             <ion-button
               slot="end"
               fill="clear"

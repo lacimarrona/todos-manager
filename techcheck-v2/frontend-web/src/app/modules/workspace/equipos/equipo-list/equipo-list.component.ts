@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -12,7 +12,7 @@ import { addIcons } from 'ionicons';
 import {
   clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
   add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
-  calendarOutline, checkmarkCircleOutline, layersOutline,
+  calendarOutline, checkmarkCircleOutline, layersOutline, arrowUndoOutline, searchOutline,
 } from 'ionicons/icons';
 import { ProyectoService, TareaVencida } from '../../../../core/services/proyecto.service';
 import { EquipoService } from '../../../../core/services/equipo.service';
@@ -71,11 +71,31 @@ export class EquipoListComponent implements OnInit {
   // Plantillas para el select de importar
   readonly plantillas = signal<Plantilla[]>([]);
 
+  // Filtros/búsqueda/vista secundaria
+  readonly vistaEquipos      = signal<'cards' | 'tabla'>('cards');
+  readonly busquedaEquipo    = signal('');
+  readonly filtroEstadoBadge = signal('');
+  readonly ordenAlfa         = signal<'' | 'asc' | 'desc' | 'prog-asc' | 'prog-desc'>('');
+
+  readonly equiposMostrados = computed(() => {
+    let lista = [...this.equipos()];
+    const busq = this.busquedaEquipo().toLowerCase().trim();
+    const badge = this.filtroEstadoBadge();
+    const orden = this.ordenAlfa();
+    if (busq) lista = lista.filter(e => e.nombre.toLowerCase().includes(busq));
+    if (badge) lista = lista.filter(e => (e.ultimo_estado ?? 'sin-revision') === badge);
+    if (orden === 'asc')       lista = lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    else if (orden === 'desc') lista = lista.sort((a, b) => b.nombre.localeCompare(a.nombre));
+    else if (orden === 'prog-desc') lista = lista.sort((a, b) => this.progreso(b) - this.progreso(a));
+    else if (orden === 'prog-asc')  lista = lista.sort((a, b) => this.progreso(a) - this.progreso(b));
+    return lista;
+  });
+
   constructor() {
     addIcons({
       clipboardOutline, personOutline, timeOutline, chevronForwardOutline,
       add, pencilOutline, trashOutline, archiveOutline, downloadOutline,
-      calendarOutline, checkmarkCircleOutline, layersOutline,
+      calendarOutline, checkmarkCircleOutline, layersOutline, arrowUndoOutline, searchOutline,
     });
   }
 
@@ -268,6 +288,46 @@ export class EquipoListComponent implements OnInit {
       ],
     });
     await alert.present();
+  }
+
+  async desarchivar(eq: Equipo, event: Event) {
+    event.stopPropagation();
+    const alert = await this.alertCtrl.create({
+      header: 'Restaurar equipo',
+      message: `¿Regresar "${eq.nombre}" a Terminados?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Restaurar',
+          handler: () => {
+            this.equipoSvc.desarchivar(eq.id).subscribe({
+              next:  () => { this.loadEquipos(); this.toast(`"${eq.nombre}" restaurado`); },
+              error: err => this.toast(err?.error?.error ?? 'Error al restaurar', 'danger'),
+            });
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  progreso(eq: Equipo): number {
+    if (!eq.checked_count || !eq.item_count) return 0;
+    return Math.round((eq.checked_count / eq.item_count) * 100);
+  }
+
+  itemStats(eq: Equipo): { ok: number; observacion: number; problema: number; total: number } {
+    const items = (eq as any).ultima_revision_items ?? [];
+    const ok = items.filter((i: any) => i.estado_calidad === 'ok' || (i.checked && !i.estado_calidad)).length;
+    const observacion = items.filter((i: any) => i.estado_calidad === 'observacion').length;
+    const problema = items.filter((i: any) => i.estado_calidad === 'problema').length;
+    return { ok, observacion, problema, total: items.length };
+  }
+
+  resetFiltrosSecundarios() {
+    this.busquedaEquipo.set('');
+    this.filtroEstadoBadge.set('');
+    this.ordenAlfa.set('');
   }
 
   async exportar(eq: Equipo, event: Event) {
