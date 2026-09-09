@@ -269,6 +269,19 @@ function deleteTecnico(id) {
 }
 
 // ─── EXPORTAR / IMPORTAR PROYECTO ───────────────────────────
+
+// Recorre el valor recursivamente y recoge todos los hashes de /api/archivos/{hash}
+function collectArchivoHashes(val, hashes = new Set()) {
+  if (Array.isArray(val)) { val.forEach(item => collectArchivoHashes(item, hashes)); }
+  else if (val && typeof val === 'object') {
+    if (typeof val.url === 'string' && val.url.startsWith('/api/archivos/')) {
+      hashes.add(val.url.replace('/api/archivos/', ''));
+    }
+    Object.values(val).forEach(v => collectArchivoHashes(v, hashes));
+  }
+  return hashes;
+}
+
 function exportarProyecto(proyectoId) {
   const proyecto = getProyectoById(proyectoId);
   if (!proyecto) return null;
@@ -281,7 +294,6 @@ function importarProyecto(datos) {
   const { v4: uuidv4 } = require('uuid');
   const { proyecto, equipos, revisiones, tecnicos } = datos;
 
-  // Crear proyecto con nuevo ID
   const nuevoProyectoId = uuidv4();
   const nuevoProyecto = {
     ...proyecto,
@@ -292,7 +304,6 @@ function importarProyecto(datos) {
   const g = readGlobal();
   g.proyectos.push(nuevoProyecto);
 
-  // Importar tecnicos que no existan
   const tecnicosExistentes = g.tecnicos.map(t => t.email);
   (tecnicos || []).forEach(t => {
     if (!tecnicosExistentes.includes(t.email)) {
@@ -301,7 +312,6 @@ function importarProyecto(datos) {
   });
   writeGlobal(g);
 
-  // Crear archivo del proyecto con equipos y revisiones
   writeProyectoData(nuevoProyectoId, {
     equipos: (equipos || []).map(e => ({ ...e, proyectoIds: [nuevoProyectoId] })),
     revisiones: revisiones || []
@@ -316,6 +326,6 @@ module.exports = {
   getPlantillas, getPlantillaById, createPlantilla, updatePlantilla, deletePlantilla,
   getTecnicos, getTecnicoById, createTecnico, updateTecnico, deleteTecnico,
   getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,
-  exportarProyecto, importarProyecto,
+  exportarProyecto, importarProyecto, collectArchivoHashes,
   readProyectoData, writeProyectoData,
 };

@@ -8,7 +8,7 @@
     <div class="flex gap-2">
   <label class="flex items-center gap-2 px-4 py-2 border border-green-200 text-green-700 text-sm rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
     📂 {{ importandoProyecto() ? 'Importando...' : 'Importar proyecto' }}
-    <input type="file" accept=".json" (change)="onImportarProyecto($event)" class="hidden">
+    <input type="file" accept=".json,.zip" (change)="onImportarProyecto($event)" class="hidden">
   </label>
   <button (click)="abrirModalNuevoProyecto()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nuevo proyecto</button>
 </div>
@@ -374,10 +374,15 @@
     <div class="p-6">
       <p class="text-sm text-gray-500 mb-4">Elige el formato para <strong class="text-gray-700">{{ proyectoExportando?.nombre }}</strong></p>
       <div class="flex gap-3">
+        <button (click)="exportarProyectoZip(proyectoExportando!)" class="flex-1 px-4 py-4 text-sm border border-green-200 text-green-700 rounded-xl hover:bg-green-50 transition-colors text-center">
+          <div class="text-2xl mb-1.5">🗜️</div>
+          <div class="font-medium">ZIP</div>
+          <div class="text-xs text-green-500 mt-0.5">Con imágenes y archivos</div>
+        </button>
         <button (click)="exportarProyectoJSON(proyectoExportando!)" class="flex-1 px-4 py-4 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-center">
           <div class="text-2xl mb-1.5">📄</div>
           <div class="font-medium text-gray-700">JSON</div>
-          <div class="text-xs text-gray-400 mt-0.5">Datos completos</div>
+          <div class="text-xs text-gray-400 mt-0.5">Solo datos, sin archivos</div>
         </button>
         <button (click)="exportarProyectoCSV(proyectoExportando!)" class="flex-1 px-4 py-4 text-sm border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors text-center">
           <div class="text-2xl mb-1.5">📊</div>

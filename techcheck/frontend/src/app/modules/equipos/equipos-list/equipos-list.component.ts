@@ -743,6 +743,16 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
+  exportarProyectoZip(proyecto: Proyecto) {
+    this.proyectosSvc.exportarProyectoZip(proyecto.id).subscribe({
+      next: blob => {
+        this.descargar(blob, `${proyecto.nombre.replace(/[^a-zA-Z0-9_\-]/g, '_')}_techcheck.zip`);
+        this.mostrarModalExportarProyecto.set(false);
+      },
+      error: () => this.error.set('Error al exportar el proyecto')
+    });
+  }
+
   exportarProyectoCSV(proyecto: Proyecto) {
     this.proyectosSvc.exportarProyecto(proyecto.id).subscribe({
       next: datos => {
@@ -892,28 +902,34 @@ onImportarProyecto(event: Event) {
   this.importandoProyecto.set(true);
   this.exitoImport.set('');
   this.error.set('');
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const datos = JSON.parse(e.target!.result as string);
-      this.proyectosSvc.importarProyecto(datos).subscribe({
-        next: () => {
-          this.importandoProyecto.set(false);
-          this.exitoImport.set('Proyecto importado correctamente');
-          this.cargarProyectos();
-          setTimeout(() => this.exitoImport.set(''), 3000);
-        },
-        error: () => {
-          this.importandoProyecto.set(false);
-          this.error.set('Error al importar el proyecto');
-        }
-      });
-    } catch {
-      this.importandoProyecto.set(false);
-      this.error.set('El archivo no es un JSON valido');
-    }
+
+  const exito = () => {
+    this.importandoProyecto.set(false);
+    this.exitoImport.set('Proyecto importado correctamente');
+    this.cargarProyectos();
+    setTimeout(() => this.exitoImport.set(''), 3000);
   };
-  reader.readAsText(file);
+  const fallo = (msg?: string) => {
+    this.importandoProyecto.set(false);
+    this.error.set(msg || 'Error al importar el proyecto');
+  };
+
+  if (file.name.endsWith('.zip')) {
+    // Importar ZIP directamente
+    this.proyectosSvc.importarProyectoZip(file).subscribe({ next: exito, error: () => fallo() });
+  } else {
+    // Importar JSON (formato anterior)
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const datos = JSON.parse(e.target!.result as string);
+        this.proyectosSvc.importarProyecto(datos).subscribe({ next: exito, error: () => fallo() });
+      } catch {
+        fallo('El archivo no es un JSON válido');
+      }
+    };
+    reader.readAsText(file);
+  }
   input.value = '';
 }
 

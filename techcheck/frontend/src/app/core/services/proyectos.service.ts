@@ -46,7 +46,17 @@ exportarProyecto(proyectoId: string): Observable<any> {
   return this.http.get<any>(`${this.url}/${proyectoId}/exportar`).pipe(map(r => r.data));
 }
 
+exportarProyectoZip(proyectoId: string): Observable<Blob> {
+  return this.http.get(`${this.url}/${proyectoId}/exportar-zip`, { responseType: 'blob' });
+}
+
 importarProyecto(datos: any): Observable<Proyecto> {
   return this.http.post<ApiResponse<Proyecto>>(`${this.url}/importar`, datos).pipe(map(r => r.data!));
+}
+
+importarProyectoZip(archivo: File): Observable<Proyecto> {
+  const form = new FormData();
+  form.append('archivo', archivo);
+  return this.http.post<ApiResponse<Proyecto>>(`${this.url}/importar-zip`, form).pipe(map(r => r.data!));
 }
 }

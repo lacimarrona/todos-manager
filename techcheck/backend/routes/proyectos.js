@@ -1,7 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const multer = require('multer');
+const JSZip = require('jszip');
 const db = require('../db/dataAccess');
+
+const ARCHIVOS_DIR = path.join(__dirname, '../data/archivos');
+const ARCHIVOS_INDEX_PATH = path.join(ARCHIVOS_DIR, 'index.json');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
+
+function readArchivoIndex() {
+  if (!fs.existsSync(ARCHIVOS_INDEX_PATH)) return {};
+  try { return JSON.parse(fs.readFileSync(ARCHIVOS_INDEX_PATH, 'utf-8')); } catch { return {}; }
+}
+function writeArchivoIndex(idx) {
+  if (!fs.existsSync(ARCHIVOS_DIR)) fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
+  fs.writeFileSync(ARCHIVOS_INDEX_PATH, JSON.stringify(idx, null, 2));
+}
 
 router.get('/', (req, res) => {
   try {
@@ -142,6 +160,97 @@ router.post('/importar', (req, res) => {
   try {
     const datos = req.body;
     if (!datos || !datos.proyecto) return res.status(400).json({ success: false, message: 'Datos invalidos' });
+    const nuevo = db.importarProyecto(datos);
+    res.status(201).json({ success: true, data: nuevo });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Exportar proyecto como ZIP (JSON + archivos físicos)
+router.get('/:id/exportar-zip', async (req, res) => {
+  try {
+    const datos = db.exportarProyecto(req.params.id);
+    if (!datos) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+
+    const zip = new JSZip();
+    zip.file('proyecto.json', JSON.stringify(datos, null, 2));
+
+    // Recoger todos los hashes referenciados en el proyecto
+    const hashes = db.collectArchivoHashes({ equipos: datos.equipos, revisiones: datos.revisiones });
+    const archivoIndex = readArchivoIndex();
+    const indexExportado = {};
+
+    for (const hash of hashes) {
+      const filePath = path.join(ARCHIVOS_DIR, hash);
+      if (fs.existsSync(filePath)) {
+        zip.file(`archivos/${hash}`, fs.readFileSync(filePath));
+        if (archivoIndex[hash]) indexExportado[hash] = archivoIndex[hash];
+      }
+    }
+
+    if (Object.keys(indexExportado).length > 0) {
+      zip.file('archivos/index.json', JSON.stringify(indexExportado, null, 2));
+    }
+
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+    const nombre = `${datos.proyecto.nombre.replace(/[^a-zA-Z0-9_\-]/g, '_')}_techcheck.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Importar proyecto desde ZIP
+router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No se recibió ningún archivo' });
+
+    const zip = await JSZip.loadAsync(req.file.buffer);
+
+    // Extraer proyecto.json
+    const proyectoFile = zip.file('proyecto.json');
+    if (!proyectoFile) return res.status(400).json({ success: false, message: 'ZIP inválido: falta proyecto.json' });
+    const datos = JSON.parse(await proyectoFile.async('string'));
+    if (!datos || !datos.proyecto) return res.status(400).json({ success: false, message: 'proyecto.json inválido' });
+
+    // Extraer archivos físicos y actualizar el índice
+    const archivoIndex = readArchivoIndex();
+    let indexActualizado = false;
+
+    // Leer index.json del ZIP si existe
+    const zipIndexFile = zip.file('archivos/index.json');
+    const zipIndex = zipIndexFile ? JSON.parse(await zipIndexFile.async('string')) : {};
+
+    if (!fs.existsSync(ARCHIVOS_DIR)) fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
+
+    const archivosFolder = zip.folder('archivos');
+    const archivosFiles = [];
+    archivosFolder.forEach((relPath, file) => {
+      if (relPath !== 'index.json' && !file.dir) archivosFiles.push({ relPath, file });
+    });
+
+    for (const { relPath, file } of archivosFiles) {
+      const hash = relPath; // el nombre del archivo ES el hash
+      if (!/^[a-f0-9]{64}$/.test(hash)) continue;
+      const destPath = path.join(ARCHIVOS_DIR, hash);
+      if (!fs.existsSync(destPath)) {
+        const buffer = await file.async('nodebuffer');
+        // Verificar integridad
+        const realHash = crypto.createHash('sha256').update(buffer).digest('hex');
+        if (realHash !== hash) continue;
+        fs.writeFileSync(destPath, buffer);
+      }
+      if (!archivoIndex[hash]) {
+        archivoIndex[hash] = zipIndex[hash] || { nombre: hash, tipo: 'application/octet-stream' };
+        indexActualizado = true;
+      }
+    }
+
+    if (indexActualizado) writeArchivoIndex(archivoIndex);
+
     const nuevo = db.importarProyecto(datos);
     res.status(201).json({ success: true, data: nuevo });
   } catch (err) {
