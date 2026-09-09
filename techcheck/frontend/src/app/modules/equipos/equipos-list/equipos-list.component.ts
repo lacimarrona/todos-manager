@@ -105,7 +105,7 @@ export class EquiposListComponent implements OnInit {
     const proyectoId = this.route.snapshot.queryParamMap.get('proyecto');
     if (proyectoId) {
       this.proyectosSvc.getById(proyectoId).subscribe({
-        next: p => { this.proyectoActual.set(p); this.vista.set('equipos'); this.cargarEquipos(p.id); }
+        next: p => { this.proyectoActual.set(p); this.vista.set('equipos'); this.filtroActivo.set('pendiente'); this.cargarEquiposFiltrados('pendiente'); }
       });
     }
   }
