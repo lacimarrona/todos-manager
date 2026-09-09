@@ -1,7 +1,7 @@
 'use strict';
 
 const ExcelJS  = require('exceljs');
-const { Equipo, ItemEquipo, ArchivoGuia, Proyecto, Usuario, Revision, ItemRevision, ProyectoPermiso } = require('../models');
+const { Equipo, ItemEquipo, ArchivoGuia, Proyecto, Usuario, Revision, ItemRevision, ProyectoPermiso, ItemPlantilla } = require('../models');
 const { wsId } = require('../utils/workspace');
 const { csvRow } = require('../utils/csv');
 
@@ -98,10 +98,18 @@ const equipoController = {
         tiempo_limite: tiempo_limite || null,
       });
 
-      // Crear ítems si vienen en el body
-      if (Array.isArray(items) && items.length) {
+      // Crear ítems: prioridad body > plantilla
+      let itemsToCreate = Array.isArray(items) && items.length ? items : null;
+      if (!itemsToCreate && plantilla_id) {
+        const plantillaItems = await ItemPlantilla.findAll({
+          where: { plantilla_id },
+          order: [['orden', 'ASC']],
+        });
+        itemsToCreate = plantillaItems.map(i => ({ label: i.label, observacion_guia: i.observacion_guia || null }));
+      }
+      if (itemsToCreate && itemsToCreate.length) {
         await ItemEquipo.bulkCreate(
-          items.map((item, i) => ({
+          itemsToCreate.map((item, i) => ({
             equipo_id: equipo.id,
             label: item.label,
             observacion_guia: item.observacion_guia || null,

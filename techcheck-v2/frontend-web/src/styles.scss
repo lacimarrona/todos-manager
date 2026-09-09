@@ -24,6 +24,12 @@
   --ion-card-background:        #ffffff;
 }
 
+/* ── Antialiasing global (evita texto dentado en Windows) ──── */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* ── Overrides globales Ionic → estilo v1 (Tailwind clean) ──── */
 
 // Fondo gris claro en todo el contenido (como bg-gray-50 de Tailwind)
@@ -42,7 +48,7 @@ ion-card {
 ion-card-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #1e293b !important;
   line-height: 1.4;
 }
 
@@ -591,10 +597,12 @@ ion-button[fill="clear"] {
 
 /* ── Revisión modal ──────────────────────────────────────────── */
 .revision-modal {
-  --height:        100%;
-  --width:         100%;
-  --max-width:     100%;
-  --border-radius: 0;
+  --height:        92vh;
+  --width:         min(820px, 96vw);
+  --max-width:     96vw;
+  --border-radius: 12px;
+  align-items:     center;
+  justify-content: center;
 }
 
 .progress-bar-wrapper {
@@ -652,9 +660,10 @@ ion-button[fill="clear"] {
   white-space: normal;
   cursor: pointer;
   padding: 4px 0;
+  color: #1e293b !important;
   &.rev-label--done {
     text-decoration: line-through;
-    color: var(--ion-color-medium);
+    color: #94a3b8 !important;
   }
 }
 
@@ -1038,6 +1047,362 @@ ion-button[fill="clear"] {
 .equipo-card.estado-en_proceso { border-left: 4px solid #3b82f6; }
 .equipo-card.estado-terminado  { border-left: 4px solid #22c55e; }
 .equipo-card.estado-archivado  { border-left: 4px solid #94a3b8; }
+
+/* ── Revisión: pills de estado por ítem (v1 style) ──────────── */
+.item-estado-btns {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.estado-pill {
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  line-height: 1.6;
+
+  &:hover { background: #f1f5f9; color: #64748b; }
+
+  &.active-ok   { background: #22c55e; border-color: #22c55e; color: #fff; }
+  &.active-obs  { background: #eab308; border-color: #eab308; color: #fff; }
+  &.active-prob { background: #ef4444; border-color: #ef4444; color: #fff; }
+}
+
+/* Colores de fondo por estado del ítem (v1 style) */
+.rev-item--ok {
+  background: rgba(34, 197, 94, 0.06);
+  border-left: 3px solid #22c55e;
+}
+.rev-item--observacion {
+  background: rgba(234, 179, 8, 0.06);
+  border-left: 3px solid #eab308;
+}
+.rev-item--problema {
+  background: rgba(239, 68, 68, 0.07);
+  border-left: 3px solid #ef4444;
+}
+
+/* ── Equipo card: barra de progreso multicolor (v1 style) ──── */
+.equipo-progress-wrap {
+  margin: 4px 0 6px;
+}
+
+.equipo-progress-bar-multi {
+  display: flex;
+  height: 6px;
+  border-radius: 9999px;
+  overflow: hidden;
+  gap: 1px;
+  background: #f1f5f9;
+}
+
+.equipo-progress-seg {
+  height: 100%;
+  transition: flex 0.3s ease;
+}
+
+.seg-ok      { background: #22c55e; }
+.seg-obs     { background: #eab308; }
+.seg-prob    { background: #ef4444; }
+.seg-pending { background: #e2e8f0; }
+
+.equipo-progress-text {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 3px;
+}
+
+/* ── Sidebar v1-style (ion-split-pane) ──────────────────────── */
+
+ion-split-pane {
+  --side-width:     224px;
+  --side-min-width: 224px;
+  --side-max-width: 224px;
+  --border:         none;
+}
+
+ion-menu {
+  --background: #0f172a;
+}
+
+ion-menu ion-content {
+  --background:   #0f172a;
+  --padding-top:  0;
+  --padding-start: 0;
+  --padding-end:  0;
+}
+
+.sb-brand {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  padding:     20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sb-logo {
+  width:           32px;
+  height:          32px;
+  background:      #2563eb;
+  border-radius:   8px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  color:           #ffffff;
+  font-weight:     700;
+  font-size:       1rem;
+  flex-shrink:     0;
+}
+
+.sb-name {
+  color:       #ffffff;
+  font-weight: 600;
+  font-size:   0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.sb-user {
+  padding:       10px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+}
+
+.sb-user-name {
+  color:       #e2e8f0;
+  font-size:   0.83rem;
+  font-weight: 500;
+}
+
+.sb-user-role {
+  color:      #64748b;
+  font-size:  0.72rem;
+  margin-top: 2px;
+  text-transform: capitalize;
+}
+
+.sb-section {
+  padding:    8px 8px 4px;
+}
+
+.sb-section-label {
+  display:     flex;
+  align-items: center;
+  gap:         5px;
+  font-size:   0.68rem;
+  font-weight: 600;
+  color:       #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding:     4px 8px 6px;
+  margin:      0;
+  ion-icon { font-size: 0.8rem; }
+}
+
+.sb-ws-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  width:           100%;
+  padding:         6px 10px;
+  background:      none;
+  border:          none;
+  border-radius:   6px;
+  color:           #64748b;
+  font-size:       0.8rem;
+  cursor:          pointer;
+  text-align:      left;
+  transition:      background 0.15s, color 0.15s;
+
+  &:hover { background: rgba(255,255,255,0.06); color: #94a3b8; }
+  &.sb-ws-btn--active { color: #93c5fd; }
+}
+
+.sb-ws-check { color: #3b82f6; font-size: 0.95rem; }
+
+.sb-nav {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.sb-item {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  padding:     9px 12px;
+  border-radius: 8px;
+  color:       #94a3b8;
+  text-decoration: none;
+  font-size:   0.875rem;
+  transition:  background 0.15s, color 0.15s;
+}
+
+.sb-item-icon {
+  font-size:   1rem;
+  flex-shrink: 0;
+  color:       inherit;
+}
+
+.sb-item:hover {
+  background: rgba(255,255,255,0.08);
+  color:      #e2e8f0;
+}
+
+.sb-item--active {
+  background: #2563eb !important;
+  color:      #ffffff !important;
+}
+
+.sb-footer {
+  padding:       8px 8px 16px;
+  border-top:    1px solid rgba(255,255,255,0.05);
+  margin-top:    auto;
+}
+
+.sb-footer-btn {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  width:       100%;
+  padding:     7px 12px;
+  background:  none;
+  border:      none;
+  border-radius: 6px;
+  color:       #64748b;
+  font-size:   0.78rem;
+  cursor:      pointer;
+  text-align:  left;
+  transition:  background 0.15s, color 0.15s;
+  font-family: inherit;
+  ion-icon { font-size: 0.9rem; }
+
+  &:hover { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+  &.sb-footer-btn--danger:hover { color: #f87171; }
+}
+
+.sb-version {
+  font-size: 0.68rem;
+  color:     #334155;
+  padding:   8px 12px 0;
+}
+
+/* ── Desktop header: limpio cuando el split-pane está activo ── */
+@media (min-width: 768px) {
+  /* Oculta el hamburger — el sidebar siempre está visible */
+  ion-menu-button { display: none !important; }
+
+  /* Toolbar de página → barra blanca compacta estilo web */
+  ion-header ion-toolbar[color="primary"] {
+    --background:    #ffffff;
+    --color:         #1e293b;
+    --border-color:  #e2e8f0;
+    --border-width:  0 0 1px 0;
+    --min-height:    48px;
+    box-shadow:      none;
+  }
+
+  /* Toolbars secundarias (segmentos, filtros) */
+  ion-header ion-toolbar:not([color]) {
+    --min-height: 44px;
+  }
+
+  /* Título de página: más compacto */
+  ion-title {
+    font-size:   0.95rem;
+    font-weight: 600;
+    color:       #1e293b;
+  }
+
+  /* Iconos en toolbar en desktop */
+  ion-header ion-button { --color: #64748b; }
+
+  /* Contenido principal: padding generoso */
+  ion-content.ion-padding {
+    --padding-top:    24px;
+    --padding-start:  24px;
+    --padding-end:    24px;
+    --padding-bottom: 24px;
+  }
+}
+
+/* ── Filter tabs (v1 style — botones coloreados por estado) ── */
+.filtro-tabs-bar {
+  display: flex;
+  gap: 6px;
+  padding: 7px 12px 9px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.filtro-tab {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  line-height: 1.4;
+
+  &:hover { background: #f1f5f9; color: #334155; }
+}
+
+.filtro-tab--pendiente  { background: #1e293b !important; color: #ffffff !important; border-color: #1e293b !important; }
+.filtro-tab--en_proceso { background: #2563eb !important; color: #ffffff !important; border-color: #2563eb !important; }
+.filtro-tab--terminado  { background: #16a34a !important; color: #ffffff !important; border-color: #16a34a !important; }
+.filtro-tab--archivado  { background: #d97706 !important; color: #ffffff !important; border-color: #d97706 !important; }
+.filtro-tab--perdidas   { background: #dc2626 !important; color: #ffffff !important; border-color: #dc2626 !important; }
+
+/* ── Equipo card: action buttons (v1 style) ─────────────────── */
+.equipo-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.eq-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: #f1f5f9; }
+}
+
+.eq-btn--primary { background: #2563eb; color: #fff; border-color: #2563eb; &:hover { background: #1d4ed8; } }
+.eq-btn--danger  { border-color: #fecaca; color: #dc2626; &:hover { background: #fee2e2; } }
+.eq-btn--warning { border-color: #fde68a; color: #92400e; &:hover { background: #fef3c7; } }
+.eq-btn--success { border-color: #bbf7d0; color: #15803d; &:hover { background: #dcfce7; } }
 
 /* ── Sessions modal ─────────────────────────────────────────── */
 .badge-current {

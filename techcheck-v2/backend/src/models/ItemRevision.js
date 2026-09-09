@@ -12,6 +12,7 @@ const ItemRevision = sequelize.define(
     label: { type: DataTypes.STRING(500), allowNull: false },
     checked: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     nota: { type: DataTypes.TEXT, allowNull: true },
+    estado_calidad: { type: DataTypes.ENUM('ok', 'observacion', 'problema'), allowNull: true },
   },
   { tableName: 'items_revision', underscored: true }
 );

@@ -14,23 +14,13 @@
   </ion-toolbar>
 
   <ion-toolbar>
-    <ion-segment [value]="filtro()" (ionChange)="onFiltroChange($any($event))">
-      <ion-segment-button value="pendiente">
-        <ion-label>Pendiente</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="en_proceso">
-        <ion-label>En Proceso</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="terminado">
-        <ion-label>Terminado</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="archivado">
-        <ion-label>Archivados</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="perdidas">
-        <ion-label>Perdidas</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+    <div class="filtro-tabs-bar">
+      <button class="filtro-tab" [class.filtro-tab--pendiente]="filtro() === 'pendiente'" (click)="setFiltro('pendiente')">Pendiente</button>
+      <button class="filtro-tab" [class.filtro-tab--en_proceso]="filtro() === 'en_proceso'" (click)="setFiltro('en_proceso')">En Proceso</button>
+      <button class="filtro-tab" [class.filtro-tab--terminado]="filtro() === 'terminado'" (click)="setFiltro('terminado')">Terminado</button>
+      <button class="filtro-tab" [class.filtro-tab--archivado]="filtro() === 'archivado'" (click)="setFiltro('archivado')">📦 Archivados</button>
+      <button class="filtro-tab" [class.filtro-tab--perdidas]="filtro() === 'perdidas'" (click)="setFiltro('perdidas')">Perdidas</button>
+    </div>
   </ion-toolbar>
 </ion-header>
 
@@ -161,13 +151,9 @@
               }
             </div>
             @if (isAdmin()) {
-              <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:8px">
-                <ion-button fill="clear" size="small" color="success" (click)="desarchivar(eq, $event)" title="Restaurar a Terminados">
-                  <ion-icon slot="icon-only" name="arrow-undo-outline"></ion-icon>
-                </ion-button>
-                <ion-button fill="clear" size="small" color="medium" (click)="exportar(eq, $event)">
-                  <ion-icon slot="icon-only" name="download-outline"></ion-icon>
-                </ion-button>
+              <div class="equipo-actions" style="justify-content:flex-end">
+                <button class="eq-btn eq-btn--success" (click)="desarchivar(eq, $event)">↩ Restaurar</button>
+                <button class="eq-btn" (click)="exportar(eq, $event)">⬇️</button>
               </div>
             }
           </ion-card-content>
@@ -203,34 +189,45 @@
               }
             </div>
 
+            @if ((eq.item_count ?? 0) > 0) {
+              <div class="equipo-progress-wrap">
+                <div class="equipo-progress-bar-multi">
+                  @if ((eq.ok_count ?? 0) > 0) {
+                    <div class="equipo-progress-seg seg-ok" [style.flex]="eq.ok_count" [title]="(eq.ok_count ?? 0) + ' OK'"></div>
+                  }
+                  @if ((eq.observacion_count ?? 0) > 0) {
+                    <div class="equipo-progress-seg seg-obs" [style.flex]="eq.observacion_count" [title]="(eq.observacion_count ?? 0) + ' observaciones'"></div>
+                  }
+                  @if ((eq.problema_count ?? 0) > 0) {
+                    <div class="equipo-progress-seg seg-prob" [style.flex]="eq.problema_count" [title]="(eq.problema_count ?? 0) + ' problemas'"></div>
+                  }
+                  @if (((eq.item_count ?? 0) - (eq.ok_count ?? 0) - (eq.observacion_count ?? 0) - (eq.problema_count ?? 0)) > 0) {
+                    <div class="equipo-progress-seg seg-pending" [style.flex]="(eq.item_count ?? 0) - (eq.ok_count ?? 0) - (eq.observacion_count ?? 0) - (eq.problema_count ?? 0)"></div>
+                  }
+                </div>
+                <small class="equipo-progress-text">{{ eq.checked_count ?? 0 }}/{{ eq.item_count ?? 0 }} completados
+                  @if ((eq.ok_count ?? 0) > 0) { · <span style="color:#22c55e">{{ eq.ok_count }} ok</span> }
+                  @if ((eq.observacion_count ?? 0) > 0) { · <span style="color:#eab308">{{ eq.observacion_count }} obs</span> }
+                  @if ((eq.problema_count ?? 0) > 0) { · <span style="color:#ef4444">{{ eq.problema_count }} prob</span> }
+                </small>
+              </div>
+            }
+
             @if (abriendo() === eq.id) {
               <div class="equipo-opening">
                 <ion-spinner name="crescent" color="primary"></ion-spinner>
                 <small>Abriendo revisión...</small>
               </div>
             } @else {
-              <div style="display:flex;align-items:center;justify-content:space-between">
-                <div class="equipo-cta">
-                  <ion-icon name="chevron-forward-outline" color="primary"></ion-icon>
-                  <small>Toca para revisar</small>
-                </div>
+              <div class="equipo-actions">
+                <button class="eq-btn eq-btn--primary" (click)="openRevision(eq); $event.stopPropagation()">Revisar</button>
                 @if (isAdmin()) {
-                  <div style="display:flex;gap:4px">
-                    <ion-button fill="clear" size="small" color="medium" (click)="openEdit(eq, $event)">
-                      <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
-                    </ion-button>
-                    <ion-button fill="clear" size="small" color="danger" (click)="confirmDelete(eq, $event)">
-                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                    </ion-button>
-                    @if (!eq.archivado && eq.ultimo_estado === 'terminado') {
-                      <ion-button fill="clear" size="small" color="medium" (click)="archivar(eq, $event)">
-                        <ion-icon slot="icon-only" name="archive-outline"></ion-icon>
-                      </ion-button>
-                    }
-                    <ion-button fill="clear" size="small" color="medium" (click)="exportar(eq, $event)">
-                      <ion-icon slot="icon-only" name="download-outline"></ion-icon>
-                    </ion-button>
-                  </div>
+                  <button class="eq-btn" (click)="openEdit(eq, $event)">✏️ Editar</button>
+                  <button class="eq-btn" (click)="exportar(eq, $event)">⬇️</button>
+                  @if (!eq.archivado && eq.ultimo_estado === 'terminado') {
+                    <button class="eq-btn eq-btn--warning" (click)="archivar(eq, $event)">📦 Archivar</button>
+                  }
+                  <button class="eq-btn eq-btn--danger" (click)="confirmDelete(eq, $event)">Eliminar</button>
                 }
               </div>
             }

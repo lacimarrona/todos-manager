@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     container_name: techcheck-mysql
     restart: unless-stopped
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
     security_opt:
       - no-new-privileges:true
     environment:

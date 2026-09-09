@@ -4,12 +4,12 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
   IonBadge, IonFab, IonFabButton, IonSpinner,
-  ModalController, AlertController, ToastController,
+  ModalController, AlertController, ToastController, NavController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   add, pencilOutline, trashOutline, personAddOutline, businessOutline,
-  peopleOutline, logOutOutline, keyOutline,
+  peopleOutline, logOutOutline, keyOutline, enterOutline,
 } from 'ionicons/icons';
 import { WorkspaceService } from '../../../../core/services/workspace.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -32,6 +32,7 @@ export class WorkspaceListComponent implements OnInit {
   private readonly wsSvc     = inject(WorkspaceService);
   private readonly auth      = inject(AuthService);
   private readonly router    = inject(Router);
+  private readonly navCtrl   = inject(NavController);
   private readonly modalCtrl = inject(ModalController);
   private readonly alertCtrl = inject(AlertController);
   private readonly toastCtrl = inject(ToastController);
@@ -40,7 +41,7 @@ export class WorkspaceListComponent implements OnInit {
   readonly loading    = signal(false);
 
   constructor() {
-    addIcons({ add, pencilOutline, trashOutline, personAddOutline, businessOutline, peopleOutline, logOutOutline, keyOutline });
+    addIcons({ add, pencilOutline, trashOutline, personAddOutline, businessOutline, peopleOutline, logOutOutline, keyOutline, enterOutline });
   }
 
   ngOnInit() { this.load(); }
@@ -110,6 +111,16 @@ export class WorkspaceListComponent implements OnInit {
       ],
     });
     await alert.present();
+  }
+
+  enterWorkspace(ws: Workspace) {
+    this.auth.switchWorkspace(ws.id).subscribe({
+      next: () => this.navCtrl.navigateRoot('/workspace/proyectos'),
+      error: async () => {
+        const t = await this.toastCtrl.create({ message: 'Error al entrar al workspace', duration: 2500, color: 'danger' });
+        await t.present();
+      },
+    });
   }
 
   goToUsers() { this.router.navigate(['/superadmin/usuarios']); }

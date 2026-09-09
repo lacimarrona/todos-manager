@@ -14,6 +14,11 @@ const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días en ms
 // no el rol global. Para superadmin devuelve el rol global directamente.
 async function buildPayload(usuario, wsId) {
   if (usuario.rol === 'superadmin') {
+    const workspaceId = wsId ?? usuario.workspace_id;
+    // Superadmin with a workspace context gets 'admin' role in JWT so the workspace UI works normally
+    if (workspaceId) {
+      return { sub: usuario.id, rol: 'admin', workspace_id: workspaceId, is_superadmin: true };
+    }
     return { sub: usuario.id, rol: 'superadmin', workspace_id: null };
   }
   const workspaceId = wsId ?? usuario.workspace_id;
@@ -278,15 +283,23 @@ const authController = {
       const { workspace_id } = req.body;
       if (!workspace_id) return res.status(400).json({ error: 'workspace_id es requerido' });
 
-      const membership = await UsuarioWorkspace.findOne({
-        where: { usuario_id: req.user.sub, workspace_id },
-      });
-      if (!membership) return res.status(403).json({ error: 'No perteneces a ese workspace' });
+      const usuario = await Usuario.findByPk(req.user.sub);
+      // Superadmin can enter any workspace without membership
+      if (usuario.rol !== 'superadmin') {
+        const membership = await UsuarioWorkspace.findOne({
+          where: { usuario_id: req.user.sub, workspace_id },
+        });
+        if (!membership) return res.status(403).json({ error: 'No perteneces a ese workspace' });
+      } else {
+        // Verify workspace exists
+        const ws = await Workspace.findByPk(workspace_id);
+        if (!ws) return res.status(404).json({ error: 'Workspace no encontrado' });
+      }
 
       // Persistir workspace activo en BD para que /me y el refresh devuelvan el nuevo workspace
       await Usuario.update({ workspace_id }, { where: { id: req.user.sub } });
+      await usuario.reload();
 
-      const usuario = await Usuario.findByPk(req.user.sub);
       const accessToken = generateAccessToken(await buildPayload(usuario, workspace_id));
 
       return res.json({ access_token: accessToken, token_type: 'Bearer' });

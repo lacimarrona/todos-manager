@@ -183,27 +183,52 @@ const proyectoController = {
         return res.json({ data: [], total: count, page, limit, pages: Math.ceil(count / limit) });
       }
 
-      // 2. Última revisión por equipo en una sola query
+      // 2. Última revisión + stats de ítems por equipo en una sola query
       const equipoIds = equipos.map(e => e.id);
       const ultimasRevisiones = await sequelize.query(
-        `SELECT r.equipo_id, r.estado
+        `SELECT r.equipo_id, r.estado,
+                COUNT(ir.id) AS item_count,
+                SUM(ir.checked) AS checked_count,
+                SUM(CASE WHEN ir.estado_calidad = 'ok' OR (ir.checked = 1 AND ir.estado_calidad IS NULL) THEN 1 ELSE 0 END) AS ok_count,
+                SUM(CASE WHEN ir.estado_calidad = 'observacion' THEN 1 ELSE 0 END) AS observacion_count,
+                SUM(CASE WHEN ir.estado_calidad = 'problema' THEN 1 ELSE 0 END) AS problema_count
          FROM revisiones r
          INNER JOIN (
            SELECT equipo_id, MAX(id) AS max_id
            FROM revisiones
            WHERE equipo_id IN (:ids)
            GROUP BY equipo_id
-         ) t ON r.equipo_id = t.equipo_id AND r.id = t.max_id`,
+         ) t ON r.equipo_id = t.equipo_id AND r.id = t.max_id
+         LEFT JOIN items_revision ir ON ir.revision_id = r.id
+         GROUP BY r.equipo_id, r.estado`,
         { replacements: { ids: equipoIds }, type: QueryTypes.SELECT }
       );
 
       const revMap = Object.fromEntries(
-        ultimasRevisiones.map(r => [r.equipo_id, r.estado])
+        ultimasRevisiones.map(r => [r.equipo_id, {
+          estado:           r.estado,
+          item_count:       parseInt(r.item_count)        || 0,
+          checked_count:    parseInt(r.checked_count)     || 0,
+          ok_count:         parseInt(r.ok_count)          || 0,
+          observacion_count:parseInt(r.observacion_count) || 0,
+          problema_count:   parseInt(r.problema_count)    || 0,
+        }])
       );
 
       // 3. Combinar y filtrar
       const result = equipos
-        .map(e => ({ ...e.toJSON(), ultimo_estado: revMap[e.id] || 'pendiente' }))
+        .map(e => {
+          const rev = revMap[e.id] || {};
+          return {
+            ...e.toJSON(),
+            ultimo_estado:     rev.estado            || 'pendiente',
+            item_count:        rev.item_count        ?? 0,
+            checked_count:     rev.checked_count     ?? 0,
+            ok_count:          rev.ok_count          ?? 0,
+            observacion_count: rev.observacion_count ?? 0,
+            problema_count:    rev.problema_count    ?? 0,
+          };
+        })
         .filter(e => !estado || e.ultimo_estado === estado);
 
       return res.json({

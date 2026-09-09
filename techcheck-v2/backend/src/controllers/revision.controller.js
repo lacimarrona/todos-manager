@@ -342,10 +342,6 @@ const revisionController = {
       if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
-      if (revision.estado === 'terminado') {
-        return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
-      }
-
       const item = await ItemRevision.findOne({
         where: { id: req.params.itemRevId, revision_id: revision.id },
         include: [{ model: ArchivoRevision, as: 'archivos', required: false }],
@@ -364,11 +360,16 @@ const revisionController = {
         estado_calidad: estado_calidad !== undefined ? estado_calidad : item.estado_calidad,
       });
 
-      // Avanzar el estado de la revisión: pendiente→en_proceso cuando hay ítems chequeados.
-      // El estado 'terminado' solo se asigna explícitamente desde update() con estado_calidad.
-      if ((checked !== undefined || estado_calidad != null) && revision.estado === 'pendiente') {
-        const anyChecked = (await ItemRevision.findAll({ where: { revision_id: revision.id } })).some(i => i.checked);
-        if (anyChecked) await revision.update({ estado: 'en_proceso' });
+      // Advance revision state: terminado→en_proceso when any item is unchecked; pendiente→en_proceso when any is checked.
+      // 'terminado' is only set explicitly via update().
+      if (checked !== undefined || estado_calidad != null) {
+        const allItems = await ItemRevision.findAll({ where: { revision_id: revision.id } });
+        const anyChecked = allItems.some(i => i.checked);
+        if (revision.estado === 'terminado' && !allItems.every(i => i.checked)) {
+          await revision.update({ estado: 'en_proceso' });
+        } else if (revision.estado === 'pendiente' && anyChecked) {
+          await revision.update({ estado: 'en_proceso' });
+        }
       }
 
       await item.reload({ include: [{ model: ArchivoRevision, as: 'archivos' }] });
@@ -386,10 +387,6 @@ const revisionController = {
       const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
       if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
-
-      if (revision.estado === 'terminado') {
-        return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
-      }
 
       const item = await ItemRevision.findOne({
         where: { id: req.params.itemRevId, revision_id: revision.id },
@@ -476,9 +473,6 @@ const revisionController = {
       const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
       if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
-      if (revision.estado === 'terminado') {
-        return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
-      }
 
       const { url, tipo } = req.body;
       if (!url || !tipo) return res.status(400).json({ error: 'url y tipo son requeridos' });
@@ -506,9 +500,6 @@ const revisionController = {
       const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
       if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
-      if (revision.estado === 'terminado') {
-        return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
-      }
 
       const archivo = await ArchivoObsGeneral.findOne({
         where: { id: req.params.archivoId, revision_id: revision.id },
@@ -528,10 +519,6 @@ const revisionController = {
       const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
       if (revision === FORBIDDEN) return res.status(403).json({ error: 'Solo tienes acceso de lectura a este proyecto' });
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
-
-      if (revision.estado === 'terminado') {
-        return res.status(409).json({ error: 'No se puede modificar una revisión terminada' });
-      }
 
       const item = await ItemRevision.findOne({
         where: { id: req.params.itemRevId, revision_id: revision.id },

@@ -7,7 +7,8 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
-  checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
+  checkmarkCircleOutline, warningOutline, closeCircleOutline,
+  chevronDownOutline, chevronUpOutline,
   attachOutline, closeCircle, documentOutline, closeOutline,
   imagesOutline, checkmarkDoneOutline, clipboardOutline, layersOutline,
 } from 'ionicons/icons';
@@ -74,7 +75,8 @@ export class RevisionModalComponent implements OnInit {
 
   constructor() {
     addIcons({
-      checkmarkCircleOutline, chevronDownOutline, chevronUpOutline,
+      checkmarkCircleOutline, warningOutline, closeCircleOutline,
+      chevronDownOutline, chevronUpOutline,
       attachOutline, closeCircle, documentOutline, closeOutline,
       imagesOutline, checkmarkDoneOutline, clipboardOutline, layersOutline,
     });
@@ -118,15 +120,20 @@ export class RevisionModalComponent implements OnInit {
   }
 
   setItemEstado(item: ItemRevision, estado: CalidadRevision) {
-    if (this.isTerminado() || this.isSaving(item.id)) return;
+    if (this.isSaving(item.id)) return;
     const nuevo = item.estado_calidad === estado ? null : estado;
     this.updateItemInSignal(item.id, { estado_calidad: nuevo, checked: nuevo !== null ? true : item.checked });
+    // Auto-expand to allow adding a note when a status is set
+    if (nuevo !== null && !this.expandedSet().has(item.id)) {
+      this.expandedSet.update(s => new Set([...s, item.id]));
+    }
     this.savingItems.update(s => new Set([...s, item.id]));
     this.revSvc.updateItem(this.revision()!.id, item.id, { estado_calidad: nuevo }).subscribe({
       next: updated => {
         this.savingItems.update(s => { const n = new Set(s); n.delete(item.id); return n; });
         this.updateItemInSignal(item.id, updated);
-        if (nuevo !== null && this.revision()?.estado === 'pendiente') {
+        const revEstado = this.revision()?.estado;
+        if (nuevo !== null && (revEstado === 'pendiente' || revEstado === 'terminado')) {
           this.revision.update(r => r ? { ...r, estado: 'en_proceso' } : r);
         }
       },
@@ -156,7 +163,7 @@ export class RevisionModalComponent implements OnInit {
         const estado = this.revision()?.estado;
         if (allChecked) {
           this.revision.update(r => r ? { ...r, estado: 'terminado' } : r);
-        } else if (anyChecked && estado === 'pendiente') {
+        } else if (anyChecked && (estado === 'pendiente' || estado === 'terminado')) {
           this.revision.update(r => r ? { ...r, estado: 'en_proceso' } : r);
         }
       },
@@ -238,14 +245,12 @@ export class RevisionModalComponent implements OnInit {
   }
 
   onObsDragEnter(event: DragEvent) {
-    if (this.isTerminado()) return;
     event.preventDefault();
     this._dragCounterObs++;
     this.draggingObs.set(true);
   }
 
   onObsDragOver(event: DragEvent) {
-    if (this.isTerminado()) return;
     event.preventDefault();
   }
 
@@ -258,14 +263,12 @@ export class RevisionModalComponent implements OnInit {
     event.preventDefault();
     this._dragCounterObs = 0;
     this.draggingObs.set(false);
-    if (this.isTerminado()) return;
     const files = event.dataTransfer?.files;
     if (!files?.length) return;
     Array.from(files).forEach(f => this.uploadObsFile(f));
   }
 
   onPasteObs(event: ClipboardEvent) {
-    if (this.isTerminado()) return;
     const items = event.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
@@ -317,7 +320,6 @@ export class RevisionModalComponent implements OnInit {
   // ── Drag & Drop ──────────────────────────────────────────────────────────────
 
   onDragEnter(itemId: number, event: DragEvent) {
-    if (this.isTerminado()) return;
     event.preventDefault();
     const count = (this._dragCounters.get(itemId) ?? 0) + 1;
     this._dragCounters.set(itemId, count);
@@ -325,8 +327,7 @@ export class RevisionModalComponent implements OnInit {
   }
 
   onDragOver(itemId: number, event: DragEvent) {
-    if (this.isTerminado()) return;
-    event.preventDefault(); // imprescindible para que funcione el drop
+    event.preventDefault();
   }
 
   onDragLeave(itemId: number) {
@@ -342,7 +343,6 @@ export class RevisionModalComponent implements OnInit {
     event.preventDefault();
     this._dragCounters.delete(itemId);
     this.draggingOverItemId.set(null);
-    if (this.isTerminado()) return;
     const files = event.dataTransfer?.files;
     if (!files?.length) return;
     Array.from(files).forEach(f => this.uploadFile(itemId, f));
@@ -351,7 +351,6 @@ export class RevisionModalComponent implements OnInit {
   // ── Paste desde portapapeles ─────────────────────────────────────────────────
 
   onPasteItem(itemId: number, event: ClipboardEvent) {
-    if (this.isTerminado()) return;
     const items = event.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {

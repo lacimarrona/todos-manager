@@ -2,7 +2,7 @@
 
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
-const { Workspace, Usuario } = require('../models');
+const { Workspace, Usuario, UsuarioWorkspace } = require('../models');
 
 const workspaceController = {
   async list(req, res) {
@@ -155,6 +155,13 @@ const workspaceController = {
         email,
         password_hash: hash,
         rol: 'admin',
+      });
+
+      // Register admin membership so buildPayload finds ws_rol: 'admin'
+      await UsuarioWorkspace.create({
+        usuario_id: admin.id,
+        workspace_id: workspace.id,
+        ws_rol: 'admin',
       });
 
       const { password_hash, ...data } = admin.toJSON();

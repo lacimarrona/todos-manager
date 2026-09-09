@@ -30,5 +30,11 @@ export interface Equipo {
   tecnico_asignado?: Pick<User, 'id' | 'nombre' | 'email'> | null;
   /** Calculado por el servidor: estado de la última revisión */
   ultimo_estado: RevisionEstado;
+  /** Calculados por el servidor al listar (stats de la última revisión) */
+  item_count?: number;
+  checked_count?: number;
+  ok_count?: number;
+  observacion_count?: number;
+  problema_count?: number;
   createdAt: string;
 }

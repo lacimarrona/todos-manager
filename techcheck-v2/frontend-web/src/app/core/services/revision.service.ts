@@ -18,7 +18,7 @@ export class RevisionService {
 
   remove(id: number) { return this.api.delete(`/revisiones/${id}`); }
 
-  updateItem(revisionId: number, itemRevId: number, dto: { checked?: boolean; nota?: string | null }) {
+  updateItem(revisionId: number, itemRevId: number, dto: { checked?: boolean; nota?: string | null; estado_calidad?: CalidadRevision | null }) {
     return this.api.put<ItemRevision>(`/revisiones/${revisionId}/items/${itemRevId}`, dto);
   }
 

@@ -53,14 +53,19 @@
 
     <ion-list class="revision-list">
       @for (item of revision()!.items; track item.id) {
-        <div class="rev-item" [class.rev-item--checked]="item.checked" [class.rev-item--expanded]="isExpanded(item.id)">
+        <div class="rev-item"
+          [class.rev-item--checked]="item.checked"
+          [class.rev-item--ok]="item.estado_calidad === 'ok'"
+          [class.rev-item--observacion]="item.estado_calidad === 'observacion'"
+          [class.rev-item--problema]="item.estado_calidad === 'problema'"
+          [class.rev-item--expanded]="isExpanded(item.id)">
 
           <!-- Fila principal -->
           <ion-item lines="none" class="rev-item-row">
             <ion-checkbox
               slot="start"
               [checked]="item.checked"
-              [disabled]="isTerminado() || isSaving(item.id)"
+              [disabled]="isSaving(item.id)"
               (ionChange)="toggleCheck(item, $event)"
               class="rev-checkbox">
             </ion-checkbox>
@@ -80,32 +85,11 @@
             }
 
             <!-- Botones de estado por ítem -->
-            @if (!isTerminado()) {
-              <div slot="end" class="item-estado-btns">
-                <ion-button fill="clear" size="small" class="estado-btn"
-                  [color]="item.estado_calidad === 'ok' ? 'success' : 'medium'"
-                  (click)="setItemEstado(item, 'ok')"
-                  title="Sin problemas">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
-                </ion-button>
-                <ion-button fill="clear" size="small" class="estado-btn"
-                  [color]="item.estado_calidad === 'observacion' ? 'warning' : 'medium'"
-                  (click)="setItemEstado(item, 'observacion')"
-                  title="Con observación">
-                  <ion-icon name="warning-outline"></ion-icon>
-                </ion-button>
-                <ion-button fill="clear" size="small" class="estado-btn"
-                  [color]="item.estado_calidad === 'problema' ? 'danger' : 'medium'"
-                  (click)="setItemEstado(item, 'problema')"
-                  title="Con problema">
-                  <ion-icon name="close-circle-outline"></ion-icon>
-                </ion-button>
-              </div>
-            } @else if (item.estado_calidad) {
-              <ion-badge slot="end" [color]="calidadColor(item.estado_calidad)" class="item-estado-badge">
-                {{ calidadLabel(item.estado_calidad) }}
-              </ion-badge>
-            }
+            <div slot="end" class="item-estado-btns">
+              <button class="estado-pill" [class.active-ok]="item.estado_calidad === 'ok'" (click)="setItemEstado(item, 'ok')">✓ OK</button>
+              <button class="estado-pill" [class.active-obs]="item.estado_calidad === 'observacion'" (click)="setItemEstado(item, 'observacion')">⚠ Obs</button>
+              <button class="estado-pill" [class.active-prob]="item.estado_calidad === 'problema'" (click)="setItemEstado(item, 'problema')">✗ Prob</button>
+            </div>
 
             <ion-button
               slot="end"
@@ -138,7 +122,6 @@
               <ion-textarea
                 placeholder="Agregar nota u observación... (Ctrl+V para pegar imagen)"
                 [value]="item.nota ?? ''"
-                [disabled]="isTerminado()"
                 (ionInput)="onNoteInput(item.id, $event.detail.value ?? '')"
                 (ionBlur)="onNoteBlur(item.id)"
                 [rows]="2"
@@ -163,47 +146,43 @@
                           <small>Ver</small>
                         </div>
                       }
-                      @if (!isTerminado()) {
-                        <ion-button
-                          fill="clear"
-                          size="small"
-                          color="danger"
-                          class="archivo-del"
-                          (click)="removeArchivo(item.id, arch.id)">
-                          <ion-icon slot="icon-only" name="close-circle"></ion-icon>
-                        </ion-button>
-                      }
+                      <ion-button
+                        fill="clear"
+                        size="small"
+                        color="danger"
+                        class="archivo-del"
+                        (click)="removeArchivo(item.id, arch.id)">
+                        <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+                      </ion-button>
                     </div>
                   }
                 </div>
               }
 
               <!-- Botón subir + hint drag -->
-              @if (!isTerminado()) {
-                <div class="upload-row">
-                  <ion-button
-                    fill="outline"
-                    size="small"
-                    class="upload-btn"
-                    [disabled]="isUploading(item.id)"
-                    (click)="triggerUpload(item.id)">
-                    @if (isUploading(item.id)) {
-                      <ion-spinner name="crescent" slot="start"></ion-spinner>
-                      Subiendo...
-                    } @else {
-                      <ion-icon slot="start" name="attach-outline"></ion-icon>
-                      Adjuntar archivo
-                    }
-                  </ion-button>
-                  <span class="drag-hint">o arrastra / pega (Ctrl+V)</span>
-                </div>
-                <input
-                  type="file"
-                  [id]="'upload-' + item.id"
-                  accept="image/*,.pdf"
-                  style="display:none"
-                  (change)="onFileSelected($event, item.id)">
-              }
+              <div class="upload-row">
+                <ion-button
+                  fill="outline"
+                  size="small"
+                  class="upload-btn"
+                  [disabled]="isUploading(item.id)"
+                  (click)="triggerUpload(item.id)">
+                  @if (isUploading(item.id)) {
+                    <ion-spinner name="crescent" slot="start"></ion-spinner>
+                    Subiendo...
+                  } @else {
+                    <ion-icon slot="start" name="attach-outline"></ion-icon>
+                    Adjuntar archivo
+                  }
+                </ion-button>
+                <span class="drag-hint">o arrastra / pega (Ctrl+V)</span>
+              </div>
+              <input
+                type="file"
+                [id]="'upload-' + item.id"
+                accept="image/*,.pdf"
+                style="display:none"
+                (change)="onFileSelected($event, item.id)">
             </div>
           }
         </div>
@@ -213,7 +192,7 @@
 </ion-content>
 
 <!-- Footer: observación general + completar -->
-@if (!loading() && revision() && !isTerminado()) {
+@if (!loading() && revision()) {
   <ion-footer>
     <ion-toolbar class="footer-toolbar">
       <div class="footer-content">
@@ -294,40 +273,15 @@
           class="completar-btn">
           @if (completando()) {
             <ion-spinner name="crescent" slot="start"></ion-spinner>
-            Completando...
+            Guardando...
+          } @else if (isTerminado()) {
+            <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
+            Guardar cambios
           } @else {
             <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
             Marcar como Terminado
           }
         </ion-button>
-      </div>
-    </ion-toolbar>
-  </ion-footer>
-}
-
-@if (!loading() && revision() && isTerminado()) {
-  <ion-footer>
-    <ion-toolbar>
-      <div class="footer-terminado">
-        <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
-        <span>Revisión completada</span>
-        @if (revision()!.estado_calidad) {
-          <span [class]="'status-pill status-' + revision()!.estado_calidad">
-            {{ calidadLabel(revision()!.estado_calidad) }}
-          </span>
-        }
-        @if (revision()!.observacion_general) {
-          <p class="obs-terminado">{{ revision()!.observacion_general }}</p>
-        }
-        @if ((revision()!.archivos_obs?.length ?? 0) > 0) {
-          <div class="archivos-list" style="margin-top:8px">
-            @for (arch of revision()!.archivos_obs!; track arch.id) {
-              @if (arch.tipo === 'imagen') {
-                <img [src]="arch.url" class="archivo-thumb" (click)="viewImage(arch.url)" alt="Foto">
-              }
-            }
-          </div>
-        }
       </div>
     </ion-toolbar>
   </ion-footer>

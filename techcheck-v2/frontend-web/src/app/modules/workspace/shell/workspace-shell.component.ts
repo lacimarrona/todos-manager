@@ -1,7 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
-  IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
+  IonMenu, IonSplitPane, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
   IonList, IonItem, IonLabel, IonIcon, IonButton,
   IonRouterOutlet,
   MenuController, ModalController, ToastController, NavController,
@@ -29,7 +29,7 @@ interface NavItem {
   standalone: true,
   imports: [
     RouterLink, RouterLinkActive,
-    IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
+    IonMenu, IonSplitPane, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter,
     IonList, IonItem, IonLabel, IonIcon, IonButton,
     IonRouterOutlet,
   ],

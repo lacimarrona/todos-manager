@@ -146,6 +146,12 @@ export class EquipoListComponent implements OnInit {
     this.loadEquipos();
   }
 
+  setFiltro(f: 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'perdidas') {
+    this.filtro.set(f);
+    this.resetFiltrosSecundarios();
+    this.loadEquipos();
+  }
+
   readonly DIAS_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   diasLabel(dias: number[]): string {
     return (dias ?? []).map(d => this.DIAS_LABELS[d]).join(', ');
@@ -165,8 +171,11 @@ export class EquipoListComponent implements OnInit {
 
       if (activa) {
         revisionId = activa.id;
+      } else if (revisiones?.length) {
+        // Last terminated revision — open it directly for editing (same behavior as v1)
+        revisionId = revisiones[0].id;
       } else {
-        // Verificar si el equipo tiene una tarea activa con catálogo
+        // No revisions at all — create a fresh one
         let elementoId: number | null = null;
         const tareas = await firstValueFrom(this.tareaSvc.list(equipo.id));
         const tareaConCatalogo = tareas.find(t => t.activa && t.grupo_elemento?.elementos?.length);
