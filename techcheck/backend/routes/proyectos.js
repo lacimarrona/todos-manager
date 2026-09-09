@@ -258,4 +258,100 @@ router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
   }
 });
 
+// Restaurar backup completo del servidor (ZIP con data/global.json + data/proyectos/ + data/archivos/)
+router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No se recibió ningún archivo' });
+
+    const zip = await JSZip.loadAsync(req.file.buffer);
+
+    const globalFile = zip.file('data/global.json');
+    if (!globalFile) return res.status(400).json({ success: false, message: 'ZIP inválido: falta data/global.json. Asegúrate de que es un backup del servidor.' });
+
+    const globalData = JSON.parse(await globalFile.async('string'));
+    const { proyectos = [], tecnicos = [], plantillas = [] } = globalData;
+
+    // Copiar archivos físicos preservando el hash como nombre
+    if (!fs.existsSync(ARCHIVOS_DIR)) fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
+    const archivoIndex = readArchivoIndex();
+    let archivosImportados = 0;
+
+    const archivosFolder = zip.folder('data/archivos');
+    if (archivosFolder) {
+      const archivosFiles = [];
+      archivosFolder.forEach((relPath, file) => { if (!file.dir) archivosFiles.push({ relPath, file }); });
+      for (const { relPath, file } of archivosFiles) {
+        const hash = relPath;
+        if (!/^[a-f0-9]{64}$/.test(hash)) continue;
+        const destPath = path.join(ARCHIVOS_DIR, hash);
+        if (!fs.existsSync(destPath)) {
+          const buffer = await file.async('nodebuffer');
+          fs.writeFileSync(destPath, buffer);
+          archivosImportados++;
+        }
+        if (!archivoIndex[hash]) {
+          archivoIndex[hash] = { nombre: hash, tipo: 'application/octet-stream' };
+        }
+      }
+      writeArchivoIndex(archivoIndex);
+    }
+
+    // Restaurar tecnicos, plantillas y proyectos preservando IDs originales
+    const g = db.readGlobal();
+
+    // Merge tecnicos por ID (preserva referencias de equipos y revisiones)
+    const tecnicosIdsExistentes = new Set(g.tecnicos.map(t => t.id));
+    for (const tecnico of tecnicos) {
+      if (!tecnicosIdsExistentes.has(tecnico.id)) {
+        g.tecnicos.push(tecnico);
+        tecnicosIdsExistentes.add(tecnico.id);
+      }
+    }
+
+    // Merge plantillas por nombre
+    const plantillasNombresExistentes = new Set(g.plantillas.map(p => p.nombre));
+    for (const plantilla of plantillas) {
+      if (!plantillasNombresExistentes.has(plantilla.nombre)) {
+        g.plantillas.push(plantilla);
+        plantillasNombresExistentes.add(plantilla.nombre);
+      }
+    }
+
+    // Merge proyectos por ID original
+    const proyectosIdsExistentes = new Set(g.proyectos.map(p => p.id));
+    let importados = 0;
+    const proyectosImportados = [];
+
+    for (const proyecto of proyectos) {
+      if (proyectosIdsExistentes.has(proyecto.id)) continue; // ya existe, omitir
+      const proyectoFile = zip.file(`data/proyectos/${proyecto.id}.json`);
+      if (!proyectoFile) continue;
+      let proyectoData;
+      try { proyectoData = JSON.parse(await proyectoFile.async('string')); } catch { continue; }
+      g.proyectos.push(proyecto);
+      proyectosIdsExistentes.add(proyecto.id);
+      db.writeProyectoData(proyecto.id, {
+        equipos: proyectoData.equipos || [],
+        revisiones: proyectoData.revisiones || []
+      });
+      importados++;
+      proyectosImportados.push(proyecto.nombre);
+    }
+
+    db.writeGlobal(g);
+
+    res.json({
+      success: true,
+      data: {
+        importados,
+        archivosImportados,
+        proyectosImportados,
+        mensaje: `${importados} proyecto(s) y ${archivosImportados} archivo(s) importados correctamente`
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

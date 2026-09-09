@@ -327,5 +327,5 @@ module.exports = {
   getTecnicos, getTecnicoById, createTecnico, updateTecnico, deleteTecnico,
   getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,
   exportarProyecto, importarProyecto, collectArchivoHashes,
-  readProyectoData, writeProyectoData,
+  readGlobal, writeGlobal, readProyectoData, writeProyectoData,
 };

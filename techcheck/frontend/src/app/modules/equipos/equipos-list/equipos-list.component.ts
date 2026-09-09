@@ -45,6 +45,7 @@ export class EquiposListComponent implements OnInit {
   cargando = signal(true);
   error = signal('');
   importandoProyecto = signal(false);
+  restaurandoBackup = signal(false);
   exitoImport = signal('');
 
   mostrarModalImportarEquipos = signal(false);
@@ -894,6 +895,28 @@ export class EquiposListComponent implements OnInit {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+onRestaurarBackup(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  this.restaurandoBackup.set(true);
+  this.exitoImport.set('');
+  this.error.set('');
+  this.proyectosSvc.restaurarBackup(file).subscribe({
+    next: (res) => {
+      this.restaurandoBackup.set(false);
+      this.exitoImport.set(res.mensaje || 'Backup restaurado correctamente');
+      this.cargarProyectos();
+      setTimeout(() => this.exitoImport.set(''), 5000);
+    },
+    error: () => {
+      this.restaurandoBackup.set(false);
+      this.error.set('Error al restaurar el backup. Verifica que sea un backup válido del servidor.');
+    }
+  });
+  input.value = '';
+}
 
 onImportarProyecto(event: Event) {
   const input = event.target as HTMLInputElement;

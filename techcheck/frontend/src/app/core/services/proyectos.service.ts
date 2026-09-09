@@ -59,4 +59,10 @@ importarProyectoZip(archivo: File): Observable<Proyecto> {
   form.append('archivo', archivo);
   return this.http.post<ApiResponse<Proyecto>>(`${this.url}/importar-zip`, form).pipe(map(r => r.data!));
 }
+
+restaurarBackup(archivo: File): Observable<{importados: number, archivosImportados: number, proyectosImportados: string[], mensaje: string}> {
+  const form = new FormData();
+  form.append('archivo', archivo);
+  return this.http.post<ApiResponse<any>>(`${this.url}/restaurar-backup`, form).pipe(map(r => r.data!));
+}
 }

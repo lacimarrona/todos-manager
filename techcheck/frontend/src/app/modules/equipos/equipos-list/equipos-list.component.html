@@ -6,6 +6,10 @@
       <p class="text-sm text-gray-400 mt-1">Organiza tus equipos por proyecto</p>
     </div>
     <div class="flex gap-2">
+  <label class="flex items-center gap-2 px-4 py-2 border border-purple-200 text-purple-700 text-sm rounded-lg hover:bg-purple-50 transition-colors cursor-pointer" title="Restaura un backup completo del servidor (ZIP con data/)">
+    🗂 {{ restaurandoBackup() ? 'Restaurando...' : 'Restaurar backup' }}
+    <input type="file" accept=".zip" (change)="onRestaurarBackup($event)" class="hidden">
+  </label>
   <label class="flex items-center gap-2 px-4 py-2 border border-green-200 text-green-700 text-sm rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
     📂 {{ importandoProyecto() ? 'Importando...' : 'Importar proyecto' }}
     <input type="file" accept=".json,.zip" (change)="onImportarProyecto($event)" class="hidden">
