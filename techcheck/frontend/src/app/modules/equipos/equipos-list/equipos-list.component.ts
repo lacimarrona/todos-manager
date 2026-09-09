@@ -93,7 +93,8 @@ export class EquiposListComponent implements OnInit {
     this.equiposMostrados().length > 0 && this.equiposMostrados().every(e => this.seleccionados().has(e.id))
   );
   mostrarModalBulkEdit = signal(false);
-  formBulkEdit = { tecnicoId: '' };
+  formBulkEdit = { tecnicoId: '', nuevoItem: '' };
+  bulkItems: string[] = [];
 
   constructor(
     private proyectosSvc: ProyectosService,
@@ -229,28 +230,38 @@ export class EquiposListComponent implements OnInit {
   }
 
   abrirBulkEdit() {
-    this.formBulkEdit = { tecnicoId: '' };
+    this.formBulkEdit = { tecnicoId: '', nuevoItem: '' };
+    this.bulkItems = [];
     this.mostrarModalBulkEdit.set(true);
+  }
+
+  agregarBulkItem() {
+    const label = this.formBulkEdit.nuevoItem.trim();
+    if (!label) return;
+    this.bulkItems = [...this.bulkItems, label];
+    this.formBulkEdit.nuevoItem = '';
+  }
+
+  quitarBulkItem(i: number) {
+    this.bulkItems = this.bulkItems.filter((_, idx) => idx !== i);
   }
 
   guardarBulkEdit() {
     const ids = [...this.seleccionados()];
-    if (!this.formBulkEdit.tecnicoId) { this.mostrarModalBulkEdit.set(false); return; }
+    const cambiarTecnico = !!this.formBulkEdit.tecnicoId;
+    const nuevosItems = this.bulkItems.map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
+    if (!cambiarTecnico && nuevosItems.length === 0) { this.mostrarModalBulkEdit.set(false); return; }
+
     let pendientes = ids.length;
+    const done = () => { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } };
+
     for (const id of ids) {
       const equipo = this.equipos().find(e => e.id === id);
-      if (!equipo) { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } continue; }
-      const form: EquipoForm = {
-        nombre: equipo.nombre,
-        descripcion: equipo.descripcion,
-        items: equipo.items,
-        plantillaId: equipo.plantillaId ?? '',
-        proyectoIds: equipo.proyectoIds,
-        tecnicoAsignadoId: this.formBulkEdit.tecnicoId,
-      };
-      this.equiposSvc.update(id, form).subscribe({
-        next: () => { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } }
-      });
+      if (!equipo) { done(); continue; }
+      const patch: Partial<EquipoForm> = {};
+      if (cambiarTecnico) patch.tecnicoAsignadoId = this.formBulkEdit.tecnicoId;
+      if (nuevosItems.length > 0) patch.items = [...equipo.items, ...nuevosItems];
+      this.equiposSvc.update(id, patch).subscribe({ next: done, error: done });
     }
   }
 

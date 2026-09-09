@@ -101,8 +101,12 @@ router.put('/:id', (req, res) => {
     const equipo = db.getEquipoById(req.params.id);
     if (!equipo) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
     if (equipo.archivado) return res.status(403).json({ success: false, message: 'No se puede modificar un equipo archivado' });
-    const { nombre, descripcion, items, tecnicoAsignadoId } = req.body;
-    const actualizado = db.updateEquipo(req.params.id, { nombre, descripcion, items, tecnicoAsignadoId });
+    const patch = {};
+    if (req.body.nombre !== undefined) patch.nombre = req.body.nombre;
+    if (req.body.descripcion !== undefined) patch.descripcion = req.body.descripcion;
+    if (req.body.items !== undefined) patch.items = req.body.items;
+    if (req.body.tecnicoAsignadoId !== undefined) patch.tecnicoAsignadoId = req.body.tecnicoAsignadoId;
+    const actualizado = db.updateEquipo(req.params.id, patch);
     res.json({ success: true, data: actualizado });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

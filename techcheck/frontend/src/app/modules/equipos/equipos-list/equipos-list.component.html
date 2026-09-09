@@ -241,19 +241,36 @@
 
 <!-- MODAL BULK EDIT -->
 <div *ngIf="mostrarModalBulkEdit()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" (click)="mostrarModalBulkEdit.set(false)">
-  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl" (click)="$event.stopPropagation()">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 class="text-base font-semibold text-gray-800">Editar {{ seleccionados().size }} equipo(s)</h2>
       <button (click)="mostrarModalBulkEdit.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
     </div>
-    <div class="p-6 space-y-4">
-      <p class="text-xs text-gray-400">Los cambios se aplicarán a todos los equipos seleccionados.</p>
+    <div class="p-6 space-y-5">
+      <p class="text-xs text-gray-400">Solo los campos que completes se aplicarán a todos los equipos seleccionados.</p>
+
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Técnico asignado</label>
         <select [(ngModel)]="formBulkEdit.tecnicoId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">— Sin cambio —</option>
           <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
         </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Agregar ítems a todos los equipos</label>
+        <div *ngIf="bulkItems.length > 0" class="mb-2 space-y-1">
+          <div *ngFor="let item of bulkItems; let i = index" class="flex items-center justify-between px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-700">
+            <span>{{ item }}</span>
+            <button (click)="quitarBulkItem(i)" class="text-gray-300 hover:text-red-500 transition-colors ml-2">✕</button>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" [(ngModel)]="formBulkEdit.nuevoItem" placeholder="Nombre del ítem..." (keydown.enter)="agregarBulkItem()"
+            class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button (click)="agregarBulkItem()" class="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">+ Agregar</button>
+        </div>
+        <p *ngIf="bulkItems.length > 0" class="text-xs text-blue-500 mt-1">{{ bulkItems.length }} ítem(s) se agregarán a cada equipo seleccionado</p>
       </div>
     </div>
     <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
