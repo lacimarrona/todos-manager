@@ -22,9 +22,13 @@ function writeIndex(data) {
 }
 
 // POST /api/archivos — sube archivo con deduplicación por hash SHA-256
+// Body: { nombre, tipo, data, proyectoId? }
+// Si se proporciona proyectoId, almacena en data/archivos/{proyectoId}/{hash}
+// y devuelve url /api/archivos/{proyectoId}/{hash}.
+// Sin proyectoId (plantillas globales) almacena en data/archivos/{hash}.
 router.post('/', (req, res) => {
   try {
-    const { nombre, tipo, data } = req.body;
+    const { nombre, tipo, data, proyectoId } = req.body;
     if (!data) return res.status(400).json({ success: false, message: 'Datos del archivo requeridos' });
 
     const matches = data.match(/^data:([^;]+);base64,(.+)$/s);
@@ -36,6 +40,27 @@ router.post('/', (req, res) => {
 
     const index = readIndex();
 
+    if (proyectoId) {
+      const proyectoDir = path.join(ARCHIVOS_DIR, proyectoId);
+      if (!fs.existsSync(proyectoDir)) fs.mkdirSync(proyectoDir, { recursive: true });
+      const filePath = path.join(proyectoDir, hash);
+      if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, buffer);
+      if (!index[hash]) {
+        index[hash] = { nombre: nombre || 'archivo_adjunto', tipo: mimeType };
+        writeIndex(index);
+      }
+      return res.json({
+        success: true,
+        data: {
+          id: hash,
+          nombre: index[hash].nombre,
+          tipo: index[hash].tipo,
+          url: `/api/archivos/${proyectoId}/${hash}`,
+        }
+      });
+    }
+
+    // Sin proyectoId: almacenamiento global (plantillas)
     if (!index[hash]) {
       fs.writeFileSync(path.join(ARCHIVOS_DIR, hash), buffer);
       index[hash] = { nombre: nombre || 'archivo_adjunto', tipo: mimeType };
@@ -48,7 +73,7 @@ router.post('/', (req, res) => {
         id: hash,
         nombre: index[hash].nombre,
         tipo: index[hash].tipo,
-        url: `/api/archivos/${hash}`
+        url: `/api/archivos/${hash}`,
       }
     });
   } catch (err) {
@@ -56,7 +81,29 @@ router.post('/', (req, res) => {
   }
 });
 
-// GET /api/archivos/:hash — sirve el archivo físico
+// GET /api/archivos/:proyectoId/:hash — sirve archivo de un proyecto específico
+router.get('/:proyectoId/:hash', (req, res) => {
+  try {
+    const { proyectoId, hash } = req.params;
+    if (!/^[a-f0-9]{64}$/.test(hash)) {
+      return res.status(400).json({ success: false, message: 'Hash invalido' });
+    }
+
+    const filePath = path.join(ARCHIVOS_DIR, proyectoId, hash);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ success: false, message: 'Archivo no encontrado' });
+
+    const index = readIndex();
+    const meta = index[hash] || { nombre: hash, tipo: 'application/octet-stream' };
+
+    res.setHeader('Content-Type', meta.tipo);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(meta.nombre)}"`);
+    res.sendFile(filePath);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/archivos/:hash — sirve archivo global (plantillas, datos previos)
 router.get('/:hash', (req, res) => {
   try {
     const { hash } = req.params;

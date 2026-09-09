@@ -325,14 +325,6 @@ export class EquipoListComponent implements OnInit {
     return Math.round((eq.checked_count / eq.item_count) * 100);
   }
 
-  itemStats(eq: Equipo): { ok: number; observacion: number; problema: number; total: number } {
-    const items = (eq as any).ultima_revision_items ?? [];
-    const ok = items.filter((i: any) => i.estado_calidad === 'ok' || (i.checked && !i.estado_calidad)).length;
-    const observacion = items.filter((i: any) => i.estado_calidad === 'observacion').length;
-    const problema = items.filter((i: any) => i.estado_calidad === 'problema').length;
-    return { ok, observacion, problema, total: items.length };
-  }
-
   resetFiltrosSecundarios() {
     this.busquedaEquipo.set('');
     this.filtroEstadoBadge.set('');

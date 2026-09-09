@@ -417,7 +417,7 @@ export class EquiposListComponent implements OnInit {
   private leerArchivoGuiaEquipo(idx: number, file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string, this.proyectoActual()?.id).subscribe({
         next: (ref) => {
           const updated = [...this.formEquipo.items];
           updated[idx] = { ...updated[idx], archivosGuia: [...(updated[idx].archivosGuia || []), ref] };
@@ -465,7 +465,7 @@ export class EquiposListComponent implements OnInit {
   private leerArchivoRevisionItem(idx: number, file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string, this.proyectoActual()?.id).subscribe({
         next: (ref) => {
           const updated = [...this.itemsRevision()];
           updated[idx] = { ...updated[idx], archivos: [...(updated[idx].archivos || []), ref] };
@@ -517,7 +517,7 @@ export class EquiposListComponent implements OnInit {
   private leerFotoRevision(file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      this.archivosSvc.subir(file.name, file.type, e.target!.result as string).subscribe({
+      this.archivosSvc.subir(file.name, file.type, e.target!.result as string, this.proyectoActual()?.id).subscribe({
         next: (ref) => { this.fotosBase64 = [...this.fotosBase64, ref]; }
       });
     };

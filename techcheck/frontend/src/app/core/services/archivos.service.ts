@@ -10,8 +10,8 @@ export class ArchivosService {
   private url = `${environment.apiUrl}/archivos`;
   constructor(private http: HttpClient) {}
 
-  subir(nombre: string, tipo: string, data: string): Observable<ArchivoAdjunto> {
-    return this.http.post<ApiResponse<ArchivoAdjunto>>(this.url, { nombre, tipo, data })
+  subir(nombre: string, tipo: string, data: string, proyectoId?: string): Observable<ArchivoAdjunto> {
+    return this.http.post<ApiResponse<ArchivoAdjunto>>(this.url, { nombre, tipo, data, proyectoId })
       .pipe(map(r => r.data!));
   }
 }

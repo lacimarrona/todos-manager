@@ -321,7 +321,7 @@ const revisionController = {
 
   async remove(req, res) {
     try {
-      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol);
+      const revision = await findRevisionConAcceso(req.params.id, wsId(req), req.user.sub, req.user.rol, true);
       if (!revision) return res.status(404).json({ error: 'Revisión no encontrada' });
 
       await revision.destroy();

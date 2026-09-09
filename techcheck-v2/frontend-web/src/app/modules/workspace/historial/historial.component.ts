@@ -129,7 +129,7 @@ export class HistorialComponent implements OnInit {
   }
 
   buscar() {
-    this.load();
+    // filtroTexto and filtroCalidad are already computed signals — no server call needed
   }
 
   verDetalle(rev: RevisionResumen) {

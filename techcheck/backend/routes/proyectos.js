@@ -155,6 +155,71 @@ router.get('/:id/exportar', (req, res) => {
   }
 });
 
+// Migrar imágenes existentes al almacenamiento por proyecto
+// Mueve URLs /api/archivos/{hash} → /api/archivos/{proyectoId}/{hash} en todos los proyectos.
+// Operación idempotente: si el archivo ya está en la carpeta del proyecto, no lo vuelve a copiar.
+router.post('/migrar-archivos', (req, res) => {
+  try {
+    const g = db.readGlobal();
+    let archivosCopiados = 0;
+    const proyectosMigrados = [];
+
+    function migrateValue(val, proyectoId) {
+      if (Array.isArray(val)) return val.map(item => migrateValue(item, proyectoId));
+      if (val && typeof val === 'object') {
+        const result = {};
+        for (const [k, v] of Object.entries(val)) {
+          if (k === 'url' && typeof v === 'string' && v.startsWith('/api/archivos/')) {
+            const subpath = v.replace('/api/archivos/', '');
+            const segments = subpath.split('/');
+            if (segments.length === 1 && /^[a-f0-9]{64}$/.test(segments[0])) {
+              // URL antigua de un solo segmento → migrar
+              const hash = segments[0];
+              const srcPath = path.join(ARCHIVOS_DIR, hash);
+              const destDir = path.join(ARCHIVOS_DIR, proyectoId);
+              const destPath = path.join(destDir, hash);
+              if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+                if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+                fs.copyFileSync(srcPath, destPath);
+                archivosCopiados++;
+              }
+              result[k] = `/api/archivos/${proyectoId}/${hash}`;
+            } else {
+              result[k] = v; // ya tiene proyectoId o no es hash — no tocar
+            }
+          } else {
+            result[k] = migrateValue(v, proyectoId);
+          }
+        }
+        return result;
+      }
+      return val;
+    }
+
+    for (const proyecto of g.proyectos) {
+      const data = db.readProyectoData(proyecto.id);
+      const updatedData = migrateValue(data, proyecto.id);
+      if (JSON.stringify(data) !== JSON.stringify(updatedData)) {
+        db.writeProyectoData(proyecto.id, updatedData);
+        proyectosMigrados.push(proyecto.nombre);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        archivosCopiados,
+        proyectosMigrados,
+        mensaje: proyectosMigrados.length
+          ? `Migración completada: ${archivosCopiados} archivo(s) copiado(s) en ${proyectosMigrados.length} proyecto(s)`
+          : 'No había archivos que migrar',
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Importar proyecto desde JSON
 router.post('/importar', (req, res) => {
   try {
@@ -176,15 +241,17 @@ router.get('/:id/exportar-zip', async (req, res) => {
     const zip = new JSZip();
     zip.file('proyecto.json', JSON.stringify(datos, null, 2));
 
-    // Recoger todos los hashes referenciados en el proyecto
-    const hashes = db.collectArchivoHashes({ equipos: datos.equipos, revisiones: datos.revisiones });
+    // Recoger todos los subpaths referenciados en el proyecto
+    // subpath puede ser "{hash}" (global) o "{proyectoId}/{hash}" (por proyecto)
+    const subpaths = db.collectArchivoHashes({ equipos: datos.equipos, revisiones: datos.revisiones });
     const archivoIndex = readArchivoIndex();
     const indexExportado = {};
 
-    for (const hash of hashes) {
-      const filePath = path.join(ARCHIVOS_DIR, hash);
+    for (const subpath of subpaths) {
+      const filePath = path.join(ARCHIVOS_DIR, subpath);
       if (fs.existsSync(filePath)) {
-        zip.file(`archivos/${hash}`, fs.readFileSync(filePath));
+        zip.file(`archivos/${subpath}`, fs.readFileSync(filePath));
+        const hash = subpath.split('/').pop();
         if (archivoIndex[hash]) indexExportado[hash] = archivoIndex[hash];
       }
     }
@@ -233,9 +300,12 @@ router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
     });
 
     for (const { relPath, file } of archivosFiles) {
-      const hash = relPath; // el nombre del archivo ES el hash
+      // relPath puede ser "{hash}" (global) o "{proyectoId}/{hash}" (por proyecto)
+      const hash = relPath.split('/').pop();
       if (!/^[a-f0-9]{64}$/.test(hash)) continue;
-      const destPath = path.join(ARCHIVOS_DIR, hash);
+      const destPath = path.join(ARCHIVOS_DIR, relPath);
+      const destDir = path.dirname(destPath);
+      if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
       if (!fs.existsSync(destPath)) {
         const buffer = await file.async('nodebuffer');
         // Verificar integridad
@@ -279,11 +349,14 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
     const archivosFolder = zip.folder('data/archivos');
     if (archivosFolder) {
       const archivosFiles = [];
+      // relPath puede ser "{hash}" (global/antiguo) o "{proyectoId}/{hash}" (por proyecto)
       archivosFolder.forEach((relPath, file) => { if (!file.dir) archivosFiles.push({ relPath, file }); });
       for (const { relPath, file } of archivosFiles) {
-        const hash = relPath;
+        const hash = relPath.split('/').pop();
         if (!/^[a-f0-9]{64}$/.test(hash)) continue;
-        const destPath = path.join(ARCHIVOS_DIR, hash);
+        const destPath = path.join(ARCHIVOS_DIR, relPath);
+        const destDir = path.dirname(destPath);
+        if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         if (!fs.existsSync(destPath)) {
           const buffer = await file.async('nodebuffer');
           fs.writeFileSync(destPath, buffer);
@@ -317,36 +390,62 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
       }
     }
 
-    // Merge proyectos por ID original
-    const proyectosIdsExistentes = new Set(g.proyectos.map(p => p.id));
+    // Merge proyectos por ID — importa nuevos, actualiza existentes si el backup es más reciente
     let importados = 0;
+    let actualizados = 0;
     const proyectosImportados = [];
+    const proyectosActualizados = [];
 
     for (const proyecto of proyectos) {
-      if (proyectosIdsExistentes.has(proyecto.id)) continue; // ya existe, omitir
       const proyectoFile = zip.file(`data/proyectos/${proyecto.id}.json`);
       if (!proyectoFile) continue;
       let proyectoData;
       try { proyectoData = JSON.parse(await proyectoFile.async('string')); } catch { continue; }
-      g.proyectos.push(proyecto);
-      proyectosIdsExistentes.add(proyecto.id);
-      db.writeProyectoData(proyecto.id, {
-        equipos: proyectoData.equipos || [],
-        revisiones: proyectoData.revisiones || []
-      });
-      importados++;
-      proyectosImportados.push(proyecto.nombre);
+
+      const idxExistente = g.proyectos.findIndex(p => p.id === proyecto.id);
+
+      if (idxExistente === -1) {
+        // Proyecto nuevo: agregar
+        g.proyectos.push(proyecto);
+        db.writeProyectoData(proyecto.id, {
+          equipos: proyectoData.equipos || [],
+          revisiones: proyectoData.revisiones || []
+        });
+        importados++;
+        proyectosImportados.push(proyecto.nombre);
+      } else {
+        // Proyecto existente: actualizar solo si el backup es más reciente
+        const fechaExistente = new Date(g.proyectos[idxExistente].actualizadoEn || 0);
+        const fechaBackup    = new Date(proyecto.actualizadoEn || 0);
+        if (fechaBackup > fechaExistente) {
+          g.proyectos[idxExistente] = proyecto;
+          db.writeProyectoData(proyecto.id, {
+            equipos: proyectoData.equipos || [],
+            revisiones: proyectoData.revisiones || []
+          });
+          actualizados++;
+          proyectosActualizados.push(proyecto.nombre);
+        }
+      }
     }
 
     db.writeGlobal(g);
+
+    const partes = [];
+    if (importados)  partes.push(`${importados} proyecto(s) importado(s)`);
+    if (actualizados) partes.push(`${actualizados} proyecto(s) actualizado(s)`);
+    if (archivosImportados) partes.push(`${archivosImportados} archivo(s) copiado(s)`);
+    const mensaje = partes.length ? partes.join(', ') : 'No hubo cambios nuevos que aplicar';
 
     res.json({
       success: true,
       data: {
         importados,
+        actualizados,
         archivosImportados,
         proyectosImportados,
-        mensaje: `${importados} proyecto(s) y ${archivosImportados} archivo(s) importados correctamente`
+        proyectosActualizados,
+        mensaje,
       }
     });
   } catch (err) {

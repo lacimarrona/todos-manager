@@ -25,7 +25,7 @@ export class LoginComponent {
 
   readonly isValid = computed(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(this.email()) && this.password().length >= 6;
+    return emailRegex.test(this.email()) && this.password().length >= 12;
   });
 
   constructor() {

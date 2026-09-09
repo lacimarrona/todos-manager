@@ -270,16 +270,17 @@ function deleteTecnico(id) {
 
 // ─── EXPORTAR / IMPORTAR PROYECTO ───────────────────────────
 
-// Recorre el valor recursivamente y recoge todos los hashes de /api/archivos/{hash}
-function collectArchivoHashes(val, hashes = new Set()) {
-  if (Array.isArray(val)) { val.forEach(item => collectArchivoHashes(item, hashes)); }
+// Recorre el valor recursivamente y recoge los subpaths de /api/archivos/{subpath}
+// El subpath puede ser "{hash}" (global) o "{proyectoId}/{hash}" (por proyecto).
+function collectArchivoHashes(val, subpaths = new Set()) {
+  if (Array.isArray(val)) { val.forEach(item => collectArchivoHashes(item, subpaths)); }
   else if (val && typeof val === 'object') {
     if (typeof val.url === 'string' && val.url.startsWith('/api/archivos/')) {
-      hashes.add(val.url.replace('/api/archivos/', ''));
+      subpaths.add(val.url.replace('/api/archivos/', ''));
     }
-    Object.values(val).forEach(v => collectArchivoHashes(v, hashes));
+    Object.values(val).forEach(v => collectArchivoHashes(v, subpaths));
   }
-  return hashes;
+  return subpaths;
 }
 
 function exportarProyecto(proyectoId) {

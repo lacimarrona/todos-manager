@@ -9,7 +9,7 @@ function omitPassword(usuario) {
   return data;
 }
 
-// Devuelve el workspace_id a aplicar segÃºn el rol del solicitante
+// Devuelve el workspace_id a aplicar según el rol del solicitante
 function resolveWorkspaceFilter(req) {
   if (req.user.rol === 'admin') return req.user.workspace_id;
   return req.query.workspace_id ? parseInt(req.query.workspace_id) : null;
@@ -67,7 +67,7 @@ const usuarioController = {
         return res.status(400).json({ error: 'nombre, email y password son requeridos' });
       }
       if (password.length < 12) {
-        return res.status(400).json({ error: 'La contraseÃ±a debe tener al menos 12 caracteres' });
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
       }
 
       // Admin solo puede crear usuarios en su propio workspace con rol 'usuario'
@@ -79,7 +79,7 @@ const usuarioController = {
       }
 
       const existing = await Usuario.findOne({ where: { email } });
-      if (existing) return res.status(409).json({ error: 'El email ya estÃ¡ registrado' });
+      if (existing) return res.status(409).json({ error: 'El email ya está registrado' });
 
       const hash = await bcrypt.hash(password, 12);
       const nuevo = await Usuario.create({
@@ -90,7 +90,7 @@ const usuarioController = {
         rol: rolFinal,
       });
 
-      // Registrar membresÃ­a en tabla de junction con el rol del workspace
+      // Registrar membresía en tabla de junction con el rol del workspace
       if (workspaceId) {
         const ws_rol_inicial = req.user.rol === 'superadmin' && rolFinal === 'admin' ? 'admin' : 'usuario';
         await UsuarioWorkspace.findOrCreate({
@@ -116,7 +116,7 @@ const usuarioController = {
       const usuario = await Usuario.findOne({ where });
       if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-      // Nadie puede editar al superadmin salvo Ã©l mismo
+      // Nadie puede editar al superadmin salvo él mismo
       if (usuario.rol === 'superadmin' && req.user.sub !== usuario.id) {
         return res.status(403).json({ error: 'No puedes editar al superadmin' });
       }
@@ -127,7 +127,7 @@ const usuarioController = {
       }
 
       if (req.body.password && req.body.password.length < 12) {
-        return res.status(400).json({ error: 'La contraseÃ±a debe tener al menos 12 caracteres' });
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres' });
       }
 
       const updates = {};
@@ -171,7 +171,7 @@ const usuarioController = {
   },
 };
 
-// â”€â”€ GestiÃ³n de membresÃ­as de workspace (solo superadmin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Gestión de membresías de workspace (solo superadmin) ─────────────────────────────
 
 const workspaceMembershipController = {
   // GET /api/usuarios/:id/workspaces
@@ -208,18 +208,18 @@ const workspaceMembershipController = {
         defaults: { ws_rol: wsRolFinal },
       });
 
-      // Si ya existÃ­a la membresÃ­a, actualizar el ws_rol si viene en el body
+      // Si ya existía la membresía, actualizar el ws_rol si viene en el body
       if (!created && ws_rol !== undefined) {
         await membership.update({ ws_rol: wsRolFinal });
       }
 
-      // Si el usuario no tenÃ­a workspace activo, asignarlo
+      // Si el usuario no tenía workspace activo, asignarlo
       if (!usuario.workspace_id) {
         await usuario.update({ workspace_id });
       }
 
       return res.status(created ? 201 : 200).json({
-        message: 'MembresÃ­a registrada',
+        message: 'Membresía registrada',
         workspace: { id: workspace.id, nombre: workspace.nombre },
         ws_rol: membership.ws_rol,
       });
@@ -245,7 +245,7 @@ const workspaceMembershipController = {
         await usuario.update({ workspace_id: otra ? otra.workspace_id : null });
       }
 
-      return res.json({ message: 'MembresÃ­a eliminada' });
+      return res.json({ message: 'Membresía eliminada' });
     } catch (err) {
       console.error('[usuario/removeWorkspace]', err);
       return res.status(500).json({ error: 'Error interno del servidor' });

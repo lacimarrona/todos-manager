@@ -28,7 +28,7 @@ exports.getGrupo = async (req, res) => {
       include: [{ model: ElementoGrupo, as: 'elementos' }],
       order: [[{ model: ElementoGrupo, as: 'elementos' }, 'valor', 'ASC']],
     });
-    if (!grupo) return res.status(404).json({ message: 'Grupo no encontrado' });
+    if (!grupo) return res.status(404).json({ error: 'Grupo no encontrado' });
     res.json(grupo);
   } catch (err) {
     console.error('[grupo-elemento/getGrupo]', err);
@@ -40,7 +40,7 @@ exports.createGrupo = async (req, res) => {
   try {
     const ws = wsId(req);
     const { nombre, descripcion } = req.body;
-    if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido' });
+    if (!nombre?.trim()) return res.status(400).json({ error: 'El nombre es requerido' });
     const grupo = await GrupoElemento.create({ workspace_id: ws, nombre: nombre.trim(), descripcion });
     res.status(201).json(grupo);
   } catch (err) {
@@ -53,9 +53,9 @@ exports.updateGrupo = async (req, res) => {
   try {
     const ws = wsId(req);
     const grupo = await GrupoElemento.findOne({ where: { id: req.params.id, workspace_id: ws } });
-    if (!grupo) return res.status(404).json({ message: 'Grupo no encontrado' });
+    if (!grupo) return res.status(404).json({ error: 'Grupo no encontrado' });
     const { nombre, descripcion, activo } = req.body;
-    if (nombre !== undefined && !nombre.trim()) return res.status(400).json({ message: 'El nombre es requerido' });
+    if (nombre !== undefined && !nombre.trim()) return res.status(400).json({ error: 'El nombre es requerido' });
     await grupo.update({
       ...(nombre      !== undefined && { nombre: nombre.trim() }),
       ...(descripcion !== undefined && { descripcion }),
@@ -72,7 +72,7 @@ exports.deleteGrupo = async (req, res) => {
   try {
     const ws = wsId(req);
     const grupo = await GrupoElemento.findOne({ where: { id: req.params.id, workspace_id: ws } });
-    if (!grupo) return res.status(404).json({ message: 'Grupo no encontrado' });
+    if (!grupo) return res.status(404).json({ error: 'Grupo no encontrado' });
     await grupo.destroy();
     res.status(204).end();
   } catch (err) {
@@ -86,7 +86,7 @@ exports.deleteGrupo = async (req, res) => {
 async function resolveGrupo(req, res) {
   const ws = wsId(req);
   const grupo = await GrupoElemento.findOne({ where: { id: req.params.grupoId, workspace_id: ws } });
-  if (!grupo) { res.status(404).json({ message: 'Grupo no encontrado' }); return null; }
+  if (!grupo) { res.status(404).json({ error: 'Grupo no encontrado' }); return null; }
   return grupo;
 }
 
@@ -110,7 +110,7 @@ exports.createElemento = async (req, res) => {
     const grupo = await resolveGrupo(req, res);
     if (!grupo) return;
     const { valor, descripcion } = req.body;
-    if (!valor?.trim()) return res.status(400).json({ message: 'El valor es requerido' });
+    if (!valor?.trim()) return res.status(400).json({ error: 'El valor es requerido' });
     const elemento = await ElementoGrupo.create({ grupo_id: grupo.id, valor: valor.trim(), descripcion });
     res.status(201).json(elemento);
   } catch (err) {
@@ -124,9 +124,9 @@ exports.updateElemento = async (req, res) => {
     const grupo = await resolveGrupo(req, res);
     if (!grupo) return;
     const elemento = await ElementoGrupo.findOne({ where: { id: req.params.id, grupo_id: grupo.id } });
-    if (!elemento) return res.status(404).json({ message: 'Elemento no encontrado' });
+    if (!elemento) return res.status(404).json({ error: 'Elemento no encontrado' });
     const { valor, descripcion, activo } = req.body;
-    if (valor !== undefined && !valor.trim()) return res.status(400).json({ message: 'El valor es requerido' });
+    if (valor !== undefined && !valor.trim()) return res.status(400).json({ error: 'El valor es requerido' });
     await elemento.update({
       ...(valor       !== undefined && { valor: valor.trim() }),
       ...(descripcion !== undefined && { descripcion }),
@@ -144,7 +144,7 @@ exports.deleteElemento = async (req, res) => {
     const grupo = await resolveGrupo(req, res);
     if (!grupo) return;
     const elemento = await ElementoGrupo.findOne({ where: { id: req.params.id, grupo_id: grupo.id } });
-    if (!elemento) return res.status(404).json({ message: 'Elemento no encontrado' });
+    if (!elemento) return res.status(404).json({ error: 'Elemento no encontrado' });
     await elemento.destroy();
     res.status(204).end();
   } catch (err) {
