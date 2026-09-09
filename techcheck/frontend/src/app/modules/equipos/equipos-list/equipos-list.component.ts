@@ -93,8 +93,9 @@ export class EquiposListComponent implements OnInit {
     this.equiposMostrados().length > 0 && this.equiposMostrados().every(e => this.seleccionados().has(e.id))
   );
   mostrarModalBulkEdit = signal(false);
-  formBulkEdit = { tecnicoId: '', nuevoItem: '' };
-  bulkItems: string[] = [];
+  bulkTecnicoId = signal('');
+  bulkNuevoItem = signal('');
+  bulkItems = signal<string[]>([]);
 
   constructor(
     private proyectosSvc: ProyectosService,
@@ -230,26 +231,27 @@ export class EquiposListComponent implements OnInit {
   }
 
   abrirBulkEdit() {
-    this.formBulkEdit = { tecnicoId: '', nuevoItem: '' };
-    this.bulkItems = [];
+    this.bulkTecnicoId.set('');
+    this.bulkNuevoItem.set('');
+    this.bulkItems.set([]);
     this.mostrarModalBulkEdit.set(true);
   }
 
   agregarBulkItem() {
-    const label = this.formBulkEdit.nuevoItem.trim();
+    const label = this.bulkNuevoItem().trim();
     if (!label) return;
-    this.bulkItems = [...this.bulkItems, label];
-    this.formBulkEdit.nuevoItem = '';
+    this.bulkItems.update(items => [...items, label]);
+    this.bulkNuevoItem.set('');
   }
 
   quitarBulkItem(i: number) {
-    this.bulkItems = this.bulkItems.filter((_, idx) => idx !== i);
+    this.bulkItems.update(items => items.filter((_, idx) => idx !== i));
   }
 
   guardarBulkEdit() {
     const ids = [...this.seleccionados()];
-    const cambiarTecnico = !!this.formBulkEdit.tecnicoId;
-    const nuevosItems = this.bulkItems.map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
+    const cambiarTecnico = !!this.bulkTecnicoId();
+    const nuevosItems = this.bulkItems().map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
     if (!cambiarTecnico && nuevosItems.length === 0) { this.mostrarModalBulkEdit.set(false); return; }
 
     let pendientes = ids.length;
@@ -259,7 +261,7 @@ export class EquiposListComponent implements OnInit {
       const equipo = this.equipos().find(e => e.id === id);
       if (!equipo) { done(); continue; }
       const patch: Partial<EquipoForm> = {};
-      if (cambiarTecnico) patch.tecnicoAsignadoId = this.formBulkEdit.tecnicoId;
+      if (cambiarTecnico) patch.tecnicoAsignadoId = this.bulkTecnicoId();
       if (nuevosItems.length > 0) patch.items = [...equipo.items, ...nuevosItems];
       this.equiposSvc.update(id, patch).subscribe({ next: done, error: done });
     }
@@ -701,7 +703,10 @@ export class EquiposListComponent implements OnInit {
     const ok = items.filter(i => i.estado === 'ok' || (i.checked && !i.estado)).length;
     const observacion = items.filter(i => i.estado === 'observacion').length;
     const problema = items.filter(i => i.estado === 'problema').length;
-    return { ok, observacion, problema, total: items.length };
+    // Usar el total de items del equipo (template actual) como denominador
+    // para que ítems agregados después de la última revisión aparezcan como pendientes
+    const total = Math.max(items.length, equipo.items.length);
+    return { ok, observacion, problema, total };
   }
 
   estadoBadge(equipo: Equipo): string {
