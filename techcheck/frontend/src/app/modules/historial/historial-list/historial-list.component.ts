@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Revision, Proyecto, ArchivoAdjunto } from '../../../core/models/models';
 import { DonePipe } from '../../../shared/done.pipe';
 import { RevisionesService } from '../../../core/services/otros.services';
@@ -108,12 +109,33 @@ export class HistorialListComponent implements OnInit {
     };
   });
 
+  // Si viene con proyectoId en la ruta, indica que se entró desde dentro de un proyecto
+  readonly modoProyecto = signal(false);
+
   constructor(
     private revisionesSvc: RevisionesService,
-    private proyectosSvc: ProyectosService
+    private proyectosSvc: ProyectosService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
-  ngOnInit() { this.cargarProyectos(); }
+  ngOnInit() {
+    const proyectoId = this.route.snapshot.paramMap.get('proyectoId');
+    if (proyectoId) {
+      this.modoProyecto.set(true);
+      this.cargando.set(true);
+      this.proyectosSvc.getById(proyectoId).subscribe({
+        next: p => {
+          this.proyectoActual.set(p);
+          this.vista.set('revisiones');
+          this.cargarRevisionesProyecto(p.id, true);
+        },
+        error: () => { this.error.set('Error al cargar proyecto'); this.cargando.set(false); }
+      });
+    } else {
+      this.cargarProyectos();
+    }
+  }
 
   cargarProyectos() {
     this.cargando.set(true);
@@ -135,6 +157,14 @@ export class HistorialListComponent implements OnInit {
     this.vista.set('informe');
     this.filtroArchivoInforme.set('activos');
     this.cargarRevisionesProyecto(proyecto.id, true);
+  }
+
+  volverAProyecto() {
+    if (this.modoProyecto() && this.proyectoActual()) {
+      this.router.navigate(['/equipos'], { queryParams: { proyecto: this.proyectoActual()!.id } });
+    } else {
+      this.volverAProyectos();
+    }
   }
 
   volverAProyectos() {

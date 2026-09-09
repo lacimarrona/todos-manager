@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
@@ -92,12 +93,27 @@ export class EquiposListComponent implements OnInit {
     private tecnicosSvc: TecnicosService,
     private revisionesSvc: RevisionesService,
     private archivosSvc: ArchivosService,
+    private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
     this.cargarProyectos();
     this.plantillasSvc.getAll().subscribe({ next: d => this.plantillas.set(d) });
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
+    // Si se volvió desde historial con ?proyecto=id, entrar directamente al proyecto
+    const proyectoId = this.route.snapshot.queryParamMap.get('proyecto');
+    if (proyectoId) {
+      this.proyectosSvc.getById(proyectoId).subscribe({
+        next: p => { this.proyectoActual.set(p); this.vista.set('equipos'); this.cargarEquipos(p.id); }
+      });
+    }
+  }
+
+  irAHistorial() {
+    if (this.proyectoActual()) {
+      this.router.navigate(['/historial', this.proyectoActual()!.id]);
+    }
   }
 
   cargarProyectos() {

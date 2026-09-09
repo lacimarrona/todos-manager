@@ -34,16 +34,21 @@
 <!-- VISTA 2: REVISIONES DEL PROYECTO -->
 <div class="p-7 max-w-6xl" *ngIf="vista() === 'revisiones'">
   <div class="flex items-center gap-2 text-sm text-gray-400 mb-5">
-    <button (click)="volverAProyectos()" class="hover:text-blue-600 transition-colors">Historial</button>
-    <span>/</span>
-    <span class="text-gray-700 font-medium">{{ proyectoActual()?.nombre }}</span>
+    <button (click)="volverAProyecto()" class="hover:text-blue-600 transition-colors">
+      {{ modoProyecto() ? proyectoActual()?.nombre : 'Historial' }}
+    </button>
+    <span *ngIf="!modoProyecto()">/</span>
+    <span *ngIf="!modoProyecto()" class="text-gray-700 font-medium">{{ proyectoActual()?.nombre }}</span>
   </div>
   <div class="flex items-start justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold text-gray-800">{{ proyectoActual()?.nombre }}</h1>
+      <h1 class="text-2xl font-semibold text-gray-800">Historial — {{ proyectoActual()?.nombre }}</h1>
       <p class="text-sm text-gray-400 mt-1">Revisiones completadas</p>
     </div>
-    <button (click)="volverAProyectos()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+    <div class="flex gap-2">
+      <button (click)="vista.set('informe'); filtroArchivoInforme.set('activos'); cargarRevisionesProyecto(proyectoActual()!.id, true)" class="flex items-center gap-2 px-4 py-2 border border-blue-200 text-blue-600 text-sm rounded-lg hover:bg-blue-50 transition-colors">📊 Informe</button>
+      <button (click)="volverAProyecto()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+    </div>
   </div>
   <div class="flex gap-3 mb-5">
     <input type="text" [(ngModel)]="filtroTexto" placeholder="Buscar por equipo o tecnico..."
@@ -178,9 +183,11 @@
 <!-- VISTA 3: INFORME DEL PROYECTO -->
 <div class="p-7 max-w-6xl" *ngIf="vista() === 'informe'">
   <div class="flex items-center gap-2 text-sm text-gray-400 mb-5">
-    <button (click)="volverAProyectos()" class="hover:text-blue-600 transition-colors">Historial</button>
+    <button (click)="volverAProyecto()" class="hover:text-blue-600 transition-colors">
+      {{ modoProyecto() ? proyectoActual()?.nombre : 'Historial' }}
+    </button>
     <span>/</span>
-    <span class="text-gray-700 font-medium">{{ proyectoActual()?.nombre }}</span>
+    <button (click)="vista.set('revisiones')" class="hover:text-blue-600 transition-colors text-gray-700 font-medium">Historial</button>
     <span>/</span>
     <span class="text-gray-500">Informe</span>
   </div>
@@ -189,7 +196,10 @@
       <h1 class="text-2xl font-semibold text-gray-800">📊 Informe — {{ proyectoActual()?.nombre }}</h1>
       <p class="text-sm text-gray-400 mt-1">Resumen general de revisiones y estado de equipos</p>
     </div>
-    <button (click)="volverAProyectos()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+    <div class="flex gap-2">
+      <button (click)="vista.set('revisiones')" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">📋 Historial</button>
+      <button (click)="volverAProyecto()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50 transition-colors">← Volver</button>
+    </div>
   </div>
   <div class="flex gap-2 mb-6">
     <button (click)="filtroArchivoInforme.set('activos')" class="px-4 py-2 text-sm rounded-lg border transition-colors" [ngClass]="filtroArchivoInforme() === 'activos' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">En proceso + Terminados</button>

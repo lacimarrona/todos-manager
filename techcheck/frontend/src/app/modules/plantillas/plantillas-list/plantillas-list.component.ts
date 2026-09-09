@@ -21,6 +21,7 @@ export class PlantillasListComponent implements OnInit {
   plantillaEditandoId = '';
   nuevoItem = '';
   importando = signal(false);
+  importandoZip = signal(false);
   form: PlantillaForm = { nombre: '', descripcion: '', items: [] };
 
   constructor(private svc: PlantillasService, private archivosSvc: ArchivosService) {}
@@ -255,6 +256,42 @@ export class PlantillasListComponent implements OnInit {
       }
     };
     reader.readAsArrayBuffer(file);
+    input.value = '';
+  }
+
+  exportarPlantillaZip(p: Plantilla) {
+    this.svc.exportarZip(p.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${p.nombre.replace(/[^a-zA-Z0-9_\-]/g, '_')}_plantilla.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.error.set('Error al exportar la plantilla'),
+    });
+  }
+
+  onImportarZip(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    this.importandoZip.set(true);
+    this.error.set('');
+    this.exito.set('');
+    this.svc.importarZip(file).subscribe({
+      next: (p) => {
+        this.importandoZip.set(false);
+        this.exito.set(`Plantilla "${p.nombre}" importada correctamente`);
+        this.cargar();
+        setTimeout(() => this.exito.set(''), 4000);
+      },
+      error: () => {
+        this.importandoZip.set(false);
+        this.error.set('Error al importar. Verifica que sea un ZIP de plantilla válido.');
+      },
+    });
     input.value = '';
   }
 

@@ -29,4 +29,14 @@ export class PlantillasService {
   delete(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }
+
+  exportarZip(id: string): Observable<Blob> {
+    return this.http.get(`${this.url}/${id}/exportar-zip`, { responseType: 'blob' });
+  }
+
+  importarZip(archivo: File): Observable<Plantilla> {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    return this.http.post<ApiResponse<Plantilla>>(`${this.url}/importar-zip`, form).pipe(map(r => r.data!));
+  }
 }

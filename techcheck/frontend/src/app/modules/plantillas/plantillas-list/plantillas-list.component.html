@@ -10,6 +10,10 @@
         📂 {{ importando() ? 'Importando...' : 'Importar Excel' }}
         <input type="file" accept=".xlsx,.xls" (change)="onImportarExcel($event)" class="hidden">
       </label>
+      <label class="flex items-center gap-2 px-4 py-2 border border-purple-200 text-purple-700 text-sm rounded-lg hover:bg-purple-50 transition-colors cursor-pointer" title="Importa una plantilla exportada como ZIP">
+        📦 {{ importandoZip() ? 'Importando...' : 'Importar ZIP' }}
+        <input type="file" accept=".zip" (change)="onImportarZip($event)" class="hidden">
+      </label>
       <button (click)="abrirModalNueva()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nueva plantilla</button>
     </div>
   </div>
@@ -30,8 +34,9 @@
       <div class="flex items-start justify-between mb-2">
         <h3 class="font-semibold text-gray-800 text-sm">{{ p.nombre }}</h3>
         <div class="flex gap-1">
-          <button (click)="abrirModalEditar(p)" class="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">✏️</button>
-          <button (click)="eliminar(p.id)" class="px-2 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
+          <button (click)="abrirModalEditar(p)" class="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" title="Editar">✏️</button>
+          <button (click)="exportarPlantillaZip(p)" class="px-2 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Exportar como ZIP">⬇️</button>
+          <button (click)="eliminar(p.id)" class="px-2 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar">🗑️</button>
         </div>
       </div>
       <p *ngIf="p.descripcion" class="text-xs text-gray-400 mb-3">{{ p.descripcion }}</p>
