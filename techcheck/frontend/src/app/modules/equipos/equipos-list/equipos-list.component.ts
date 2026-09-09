@@ -86,6 +86,15 @@ export class EquiposListComponent implements OnInit {
   mostrarModalExportarProyecto = signal(false);
   proyectoExportando: Proyecto | null = null;
 
+  // Multi-selección
+  seleccionados = signal<Set<string>>(new Set());
+  readonly algunoSeleccionado = computed(() => this.seleccionados().size > 0);
+  readonly todosSeleccionados = computed(() =>
+    this.equiposMostrados().length > 0 && this.equiposMostrados().every(e => this.seleccionados().has(e.id))
+  );
+  mostrarModalBulkEdit = signal(false);
+  formBulkEdit = { tecnicoId: '' };
+
   constructor(
     private proyectosSvc: ProyectosService,
     private equiposSvc: EquiposService,
@@ -147,12 +156,102 @@ export class EquiposListComponent implements OnInit {
   }
 
   cargarEquiposFiltrados(filtro: FiltroEstado) {
+    this.seleccionados.set(new Set());
     this.cargando.set(true);
     const proyectoId = this.proyectoActual()!.id;
     this.proyectosSvc.getEquiposFiltrados(proyectoId, filtro).subscribe({
       next: d => { this.equipos.set(d); this.cargando.set(false); },
       error: () => { this.error.set('Error al cargar equipos'); this.cargando.set(false); }
     });
+  }
+
+  toggleSeleccion(id: string, event: Event) {
+    event.stopPropagation();
+    const s = new Set(this.seleccionados());
+    if (s.has(id)) s.delete(id); else s.add(id);
+    this.seleccionados.set(s);
+  }
+
+  toggleTodos() {
+    if (this.todosSeleccionados()) {
+      this.seleccionados.set(new Set());
+    } else {
+      this.seleccionados.set(new Set(this.equiposMostrados().map(e => e.id)));
+    }
+  }
+
+  limpiarSeleccion() { this.seleccionados.set(new Set()); }
+
+  eliminarSeleccionados() {
+    const ids = [...this.seleccionados()];
+    if (!confirm(`¿Eliminar ${ids.length} equipo(s) seleccionado(s)?`)) return;
+    let pendientes = ids.length;
+    for (const id of ids) {
+      this.equiposSvc.delete(id).subscribe({ next: () => { if (--pendientes === 0) this.cargarEquiposFiltrados(this.filtroActivo()); } });
+    }
+  }
+
+  archivarSeleccionados() {
+    const ids = [...this.seleccionados()];
+    if (!confirm(`¿Archivar ${ids.length} equipo(s) seleccionado(s)?`)) return;
+    let pendientes = ids.length;
+    for (const id of ids) {
+      this.equiposSvc.archivar(id).subscribe({ next: () => { if (--pendientes === 0) this.cargarEquiposFiltrados(this.filtroActivo()); } });
+    }
+  }
+
+  restaurarSeleccionados() {
+    const ids = [...this.seleccionados()];
+    if (!confirm(`¿Restaurar ${ids.length} equipo(s) seleccionado(s)?`)) return;
+    let pendientes = ids.length;
+    for (const id of ids) {
+      this.equiposSvc.desarchivar(id).subscribe({ next: () => { if (--pendientes === 0) this.cargarEquiposFiltrados(this.filtroActivo()); } });
+    }
+  }
+
+  descargarSeleccionados() {
+    const equipos = this.equiposMostrados().filter(e => this.seleccionados().has(e.id));
+    let idx = 0;
+    const siguiente = () => {
+      if (idx >= equipos.length) return;
+      const equipo = equipos[idx++];
+      this.revisionesSvc.getAll({ equipoId: equipo.id }).subscribe({
+        next: revisiones => {
+          this.descargar(
+            new Blob([JSON.stringify({ equipo, revisiones }, null, 2)], { type: 'application/json' }),
+            `${equipo.nombre.replace(/\s+/g, '_')}.json`
+          );
+          setTimeout(siguiente, 300);
+        }
+      });
+    };
+    siguiente();
+  }
+
+  abrirBulkEdit() {
+    this.formBulkEdit = { tecnicoId: '' };
+    this.mostrarModalBulkEdit.set(true);
+  }
+
+  guardarBulkEdit() {
+    const ids = [...this.seleccionados()];
+    if (!this.formBulkEdit.tecnicoId) { this.mostrarModalBulkEdit.set(false); return; }
+    let pendientes = ids.length;
+    for (const id of ids) {
+      const equipo = this.equipos().find(e => e.id === id);
+      if (!equipo) { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } continue; }
+      const form: EquipoForm = {
+        nombre: equipo.nombre,
+        descripcion: equipo.descripcion,
+        items: equipo.items,
+        plantillaId: equipo.plantillaId ?? '',
+        proyectoIds: equipo.proyectoIds,
+        tecnicoAsignadoId: this.formBulkEdit.tecnicoId,
+      };
+      this.equiposSvc.update(id, form).subscribe({
+        next: () => { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } }
+      });
+    }
   }
 
   abrirModalNuevoProyecto() {

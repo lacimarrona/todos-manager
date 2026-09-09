@@ -83,8 +83,26 @@
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
 
+  <!-- Barra de acciones bulk (aparece cuando hay seleccionados) -->
+  <div *ngIf="algunoSeleccionado()" class="flex items-center gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+    <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos()" class="w-4 h-4 rounded accent-blue-600">
+    <span class="text-sm font-medium text-blue-700">{{ seleccionados().size }} seleccionado(s)</span>
+    <div class="flex gap-2 ml-2">
+      <button *ngIf="filtroActivo() !== 'archivado'" (click)="abrirBulkEdit()" class="px-3 py-1.5 text-xs border border-gray-300 bg-white rounded-lg hover:bg-gray-50 transition-colors">✏️ Editar</button>
+      <button (click)="descargarSeleccionados()" class="px-3 py-1.5 text-xs border border-gray-300 bg-white rounded-lg hover:bg-gray-50 transition-colors">⬇️ Descargar</button>
+      <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarSeleccionados()" class="px-3 py-1.5 text-xs border border-amber-200 text-amber-700 bg-white rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
+      <button *ngIf="filtroActivo() === 'archivado'" (click)="restaurarSeleccionados()" class="px-3 py-1.5 text-xs border border-green-200 text-green-700 bg-white rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
+      <button (click)="eliminarSeleccionados()" class="px-3 py-1.5 text-xs border border-red-200 text-red-600 bg-white rounded-lg hover:bg-red-50 transition-colors">🗑️ Eliminar</button>
+    </div>
+    <button (click)="limpiarSeleccion()" class="ml-auto text-xs text-blue-500 hover:text-blue-700">✕ Limpiar</button>
+  </div>
+
   <!-- Barra de búsqueda y filtros secundarios -->
   <div *ngIf="!cargando() && equipos().length > 0" class="flex flex-wrap items-center gap-2 mb-4">
+    <label class="flex items-center gap-1.5 cursor-pointer" title="Seleccionar todos">
+      <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos()" class="w-4 h-4 rounded accent-blue-600">
+      <span class="text-xs text-gray-400">Todos</span>
+    </label>
     <div class="relative flex-1 min-w-48">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
       <input type="text" [ngModel]="busquedaEquipo()" (ngModelChange)="busquedaEquipo.set($event)" placeholder="Buscar equipo..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
@@ -112,11 +130,14 @@
   </div>
   <!-- Vista Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposMostrados().length > 0">
-    <div *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
+    <div *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow" [class.ring-2]="seleccionados().has(equipo.id)" [class.ring-blue-400]="seleccionados().has(equipo.id)">
       <div class="flex items-start justify-between gap-3 mb-3">
-        <div class="min-w-0">
-          <h3 class="font-semibold text-gray-800 text-sm truncate">{{ equipo.nombre }}</h3>
-          <p *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5 truncate">{{ equipo.descripcion }}</p>
+        <div class="flex items-start gap-2 min-w-0">
+          <input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="mt-0.5 w-4 h-4 rounded accent-blue-600 shrink-0 cursor-pointer">
+          <div class="min-w-0">
+            <h3 class="font-semibold text-gray-800 text-sm truncate">{{ equipo.nombre }}</h3>
+            <p *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5 truncate">{{ equipo.descripcion }}</p>
+          </div>
         </div>
         <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 text-gray-500': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
       </div>
@@ -157,6 +178,7 @@
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
+            <th class="px-4 py-3 w-8"><input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos()" class="w-4 h-4 rounded accent-blue-600 cursor-pointer"></th>
             <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Equipo</th>
             <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Técnico</th>
             <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ítems</th>
@@ -167,7 +189,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+          <tr *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors" [class.bg-blue-50]="seleccionados().has(equipo.id)">
+            <td class="px-4 py-3"><input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="w-4 h-4 rounded accent-blue-600 cursor-pointer"></td>
             <td class="px-4 py-3">
               <div class="font-medium text-gray-800">{{ equipo.nombre }}</div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
@@ -208,10 +231,34 @@
             </td>
           </tr>
           <tr *ngIf="equiposMostrados().length === 0">
-            <td colspan="7" class="px-4 py-10 text-center text-gray-400 text-sm">No hay equipos en este filtro</td>
+            <td colspan="8" class="px-4 py-10 text-center text-gray-400 text-sm">No hay equipos en este filtro</td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BULK EDIT -->
+<div *ngIf="mostrarModalBulkEdit()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" (click)="mostrarModalBulkEdit.set(false)">
+  <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-800">Editar {{ seleccionados().size }} equipo(s)</h2>
+      <button (click)="mostrarModalBulkEdit.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-xs text-gray-400">Los cambios se aplicarán a todos los equipos seleccionados.</p>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Técnico asignado</label>
+        <select [(ngModel)]="formBulkEdit.tecnicoId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">— Sin cambio —</option>
+          <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
+      <button (click)="mostrarModalBulkEdit.set(false)" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+      <button (click)="guardarBulkEdit()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Aplicar a todos</button>
     </div>
   </div>
 </div>
