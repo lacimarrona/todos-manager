@@ -39,4 +39,8 @@ export class PlantillasService {
     form.append('archivo', archivo);
     return this.http.post<ApiResponse<Plantilla>>(`${this.url}/importar-zip`, form).pipe(map(r => r.data!));
   }
+
+  sincronizarEquipos(id: string): Observable<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number }> {
+    return this.http.post<ApiResponse<any>>(`${this.url}/${id}/sincronizar-equipos`, {}).pipe(map(r => r.data!));
+  }
 }

@@ -58,6 +58,61 @@ router.post('/', (req, res) => {
   }
 });
 
+// POST /api/plantillas/:id/sincronizar-equipos
+router.post('/:id/sincronizar-equipos', (req, res) => {
+  try {
+    const plantilla = db.getPlantillaById(req.params.id);
+    if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+
+    const equipos = db.getEquipos().filter(e => e.plantillaId === plantilla.id && !e.archivado);
+    let equiposActualizados = 0;
+    let itemsAgregados = 0;
+    let itemsActualizados = 0;
+
+    for (const equipo of equipos) {
+      const itemsEquipo = [...equipo.items];
+      let modificado = false;
+
+      for (const itemPlantilla of plantilla.items) {
+        const idx = itemsEquipo.findIndex(i => i.label === itemPlantilla.label);
+        if (idx === -1) {
+          // ítem nuevo: agregar
+          itemsEquipo.push({ ...itemPlantilla });
+          itemsAgregados++;
+          modificado = true;
+        } else {
+          // ítem existente: actualizar observacionGuia y archivosGuia si cambiaron
+          const itemExistente = itemsEquipo[idx];
+          const guiaDistinta = itemExistente.observacionGuia !== itemPlantilla.observacionGuia;
+          const archivosDistintos = JSON.stringify(itemExistente.archivosGuia) !== JSON.stringify(itemPlantilla.archivosGuia);
+          if (guiaDistinta || archivosDistintos) {
+            itemsEquipo[idx] = { ...itemExistente, observacionGuia: itemPlantilla.observacionGuia, archivosGuia: itemPlantilla.archivosGuia };
+            itemsActualizados++;
+            modificado = true;
+          }
+        }
+      }
+
+      if (modificado) {
+        db.updateEquipo(equipo.id, { items: itemsEquipo });
+        equiposActualizados++;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalEquipos: equipos.length,
+        equiposActualizados,
+        itemsAgregados,
+        itemsActualizados,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.put('/:id', (req, res) => {
   try {
     const { nombre, descripcion, items } = req.body;

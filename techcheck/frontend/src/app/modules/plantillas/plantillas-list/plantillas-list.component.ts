@@ -22,6 +22,8 @@ export class PlantillasListComponent implements OnInit {
   nuevoItem = '';
   importando = signal(false);
   importandoZip = signal(false);
+  sincronizando = signal<string | null>(null);
+  resultadoSync = signal<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number } | null>(null);
   form: PlantillaForm = { nombre: '', descripcion: '', items: [] };
 
   constructor(private svc: PlantillasService, private archivosSvc: ArchivosService) {}
@@ -293,6 +295,25 @@ export class PlantillasListComponent implements OnInit {
       },
     });
     input.value = '';
+  }
+
+  sincronizarEquipos(p: Plantilla) {
+    this.sincronizando.set(p.id);
+    this.resultadoSync.set(null);
+    this.error.set('');
+    this.svc.sincronizarEquipos(p.id).subscribe({
+      next: (r) => {
+        this.sincronizando.set(null);
+        this.resultadoSync.set(r);
+        if (r.equiposActualizados === 0) {
+          this.exito.set(`Todos los equipos ya están al día con la plantilla "${p.nombre}"`);
+        } else {
+          this.exito.set(`Sincronizado: ${r.equiposActualizados} equipo(s) actualizados — ${r.itemsAgregados} ítems agregados, ${r.itemsActualizados} ítems actualizados`);
+        }
+        setTimeout(() => { this.exito.set(''); this.resultadoSync.set(null); }, 6000);
+      },
+      error: () => { this.sincronizando.set(null); this.error.set('Error al sincronizar equipos'); },
+    });
   }
 
   descargarPlantillaExcel() {
