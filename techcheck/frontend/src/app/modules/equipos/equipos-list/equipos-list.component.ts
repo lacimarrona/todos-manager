@@ -96,6 +96,19 @@ export class EquiposListComponent implements OnInit {
   bulkTecnicoId = signal('');
   bulkNuevoItem = signal('');
   bulkItems = signal<string[]>([]);
+  bulkItemsAEliminar = signal<Set<string>>(new Set());
+
+  readonly bulkLabelsDisponibles = computed(() => {
+    const ids = this.seleccionados();
+    const equiposSeleccionados = this.equipos().filter(e => ids.has(e.id));
+    const conteo = new Map<string, number>();
+    for (const equipo of equiposSeleccionados) {
+      for (const item of equipo.items) {
+        conteo.set(item.label, (conteo.get(item.label) ?? 0) + 1);
+      }
+    }
+    return Array.from(conteo.entries()).map(([label, count]) => ({ label, count })).sort((a, b) => a.label.localeCompare(b.label));
+  });
 
   constructor(
     private proyectosSvc: ProyectosService,
@@ -234,7 +247,14 @@ export class EquiposListComponent implements OnInit {
     this.bulkTecnicoId.set('');
     this.bulkNuevoItem.set('');
     this.bulkItems.set([]);
+    this.bulkItemsAEliminar.set(new Set());
     this.mostrarModalBulkEdit.set(true);
+  }
+
+  toggleBulkEliminar(label: string) {
+    const s = new Set(this.bulkItemsAEliminar());
+    if (s.has(label)) s.delete(label); else s.add(label);
+    this.bulkItemsAEliminar.set(s);
   }
 
   agregarBulkItem() {
@@ -252,7 +272,8 @@ export class EquiposListComponent implements OnInit {
     const ids = [...this.seleccionados()];
     const cambiarTecnico = !!this.bulkTecnicoId();
     const nuevosItems = this.bulkItems().map(label => ({ label, observacionGuia: '', archivosGuia: [] }));
-    if (!cambiarTecnico && nuevosItems.length === 0) { this.mostrarModalBulkEdit.set(false); return; }
+    const aEliminar = this.bulkItemsAEliminar();
+    if (!cambiarTecnico && nuevosItems.length === 0 && aEliminar.size === 0) { this.mostrarModalBulkEdit.set(false); return; }
 
     let pendientes = ids.length;
     const done = () => { if (--pendientes === 0) { this.mostrarModalBulkEdit.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); } };
@@ -262,7 +283,12 @@ export class EquiposListComponent implements OnInit {
       if (!equipo) { done(); continue; }
       const patch: Partial<EquipoForm> = {};
       if (cambiarTecnico) patch.tecnicoAsignadoId = this.bulkTecnicoId();
-      if (nuevosItems.length > 0) patch.items = [...equipo.items, ...nuevosItems];
+      if (nuevosItems.length > 0 || aEliminar.size > 0) {
+        let items = [...equipo.items];
+        if (aEliminar.size > 0) items = items.filter(i => !aEliminar.has(i.label));
+        if (nuevosItems.length > 0) items = [...items, ...nuevosItems];
+        patch.items = items;
+      }
       this.equiposSvc.update(id, patch).subscribe({ next: done, error: done });
     }
   }
