@@ -25,6 +25,7 @@ export class RevisionesFormComponent implements OnInit {
   estado: EstadoRevision = 'ok';
   observacionGeneral = '';
   items = signal<ItemRevision[]>([]);
+  notasTemp: string[][] = [];
   fotosBase64: string[] = [];
 
   constructor(
@@ -43,15 +44,17 @@ export class RevisionesFormComponent implements OnInit {
     this.equipoSeleccionado.set(eq || null);
     if (eq) {
       this.items.set(eq.items.map(i => ({
-  label: typeof i === 'string' ? i : i.label,
-  checked: false,
-  nota: '',
-  archivos: [],
-  observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
-  archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
-})));
+        label: typeof i === 'string' ? i : i.label,
+        checked: false,
+        nota: '',
+        archivos: [],
+        observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
+        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+      })));
+      this.notasTemp = this.items().map(() => ['']);
     } else {
       this.items.set([]);
+      this.notasTemp = [];
     }
     this.exito.set(false);
   }
@@ -67,6 +70,36 @@ export class RevisionesFormComponent implements OnInit {
     updated[idx] = { ...updated[idx], nota };
     this.items.set(updated);
   }
+
+  onNotaKeydown(event: KeyboardEvent, itemIdx: number, lineIdx: number) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.agregarNota(itemIdx, lineIdx);
+    }
+  }
+
+  agregarNota(itemIdx: number, lineIdx: number) {
+    if (!this.notasTemp[itemIdx]) this.notasTemp[itemIdx] = [''];
+    this.notasTemp[itemIdx].splice(lineIdx + 1, 0, '');
+    setTimeout(() => {
+      const el = document.getElementById(`nota-${itemIdx}-${lineIdx + 1}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  eliminarNotaLine(itemIdx: number, lineIdx: number) {
+    if (!this.notasTemp[itemIdx] || this.notasTemp[itemIdx].length <= 1) {
+      if (this.notasTemp[itemIdx]) this.notasTemp[itemIdx][0] = '';
+      return;
+    }
+    this.notasTemp[itemIdx].splice(lineIdx, 1);
+    setTimeout(() => {
+      const el = document.getElementById(`nota-${itemIdx}-${Math.max(0, lineIdx - 1)}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  trackByNotaIdx(index: number) { return index; }
 
   setItemEstado(idx: number, estado: EstadoItem) {
     const updated = [...this.items()];
@@ -98,12 +131,16 @@ export class RevisionesFormComponent implements OnInit {
   guardar() {
     if (!this.equipoSeleccionadoId) { this.error.set('Selecciona un equipo'); return; }
     const tecnico = this.tecnicos().find(t => t.id === this.tecnicoId);
+    const items = this.items().map((item, idx) => ({
+      ...item,
+      nota: (this.notasTemp[idx] || []).filter(n => n.trim()).join('\n') || (item.nota || ''),
+    }));
     const form: RevisionForm = {
       equipoId: this.equipoSeleccionadoId,
       tecnicoId: this.tecnicoId || undefined,
       tecnicoNombre: tecnico?.nombre || '',
       estado: this.estado,
-      items: this.items(),
+      items,
       observacionGeneral: this.observacionGeneral,
       fotos: this.fotosBase64
     };

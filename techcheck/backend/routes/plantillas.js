@@ -58,13 +58,30 @@ router.post('/', (req, res) => {
   }
 });
 
+// GET /api/plantillas/:id/equipos — equipos vinculados a esta plantilla
+router.get('/:id/equipos', (req, res) => {
+  try {
+    const plantilla = db.getPlantillaById(req.params.id);
+    if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    const equipos = db.getEquipos().filter(e => e.plantillaId === plantilla.id && !e.archivado);
+    res.json({ success: true, data: equipos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // POST /api/plantillas/:id/sincronizar-equipos
 router.post('/:id/sincronizar-equipos', (req, res) => {
   try {
     const plantilla = db.getPlantillaById(req.params.id);
     if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
 
-    const equipos = db.getEquipos().filter(e => e.plantillaId === plantilla.id && !e.archivado);
+    const { equipoIds } = req.body;
+    const equipos = db.getEquipos().filter(e =>
+      e.plantillaId === plantilla.id &&
+      !e.archivado &&
+      (!equipoIds || equipoIds.includes(e.id))
+    );
     let equiposActualizados = 0;
     let itemsAgregados = 0;
     let itemsActualizados = 0;

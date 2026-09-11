@@ -98,6 +98,7 @@ export interface ItemRevision {
   label: string;
   checked: boolean;
   nota: string;
+  notas?: string[];
   estado?: EstadoItem | null;
   archivos: (ArchivoAdjunto | string)[];
   observacionGuia?: string;

@@ -40,7 +40,12 @@ export class PlantillasService {
     return this.http.post<ApiResponse<Plantilla>>(`${this.url}/importar-zip`, form).pipe(map(r => r.data!));
   }
 
-  sincronizarEquipos(id: string): Observable<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number }> {
-    return this.http.post<ApiResponse<any>>(`${this.url}/${id}/sincronizar-equipos`, {}).pipe(map(r => r.data!));
+  getEquiposVinculados(id: string): Observable<any[]> {
+    return this.http.get<ApiResponse<any[]>>(`${this.url}/${id}/equipos`).pipe(map(r => r.data || []));
+  }
+
+  sincronizarEquipos(id: string, equipoIds?: string[]): Observable<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number }> {
+    const body = equipoIds ? { equipoIds } : {};
+    return this.http.post<ApiResponse<any>>(`${this.url}/${id}/sincronizar-equipos`, body).pipe(map(r => r.data!));
   }
 }

@@ -80,9 +80,20 @@
               </div>
             </div>
             <div class="pl-9">
-              <input type="text" [value]="item.nota" (input)="updateNota(i, $any($event.target).value)"
-                placeholder="Observación sobre este ítem (opcional)..."
-                class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+              <div *ngFor="let notaLine of (notasTemp[i] || ['']); let ni = index; trackBy: trackByNotaIdx"
+                class="flex items-center gap-1 mb-1">
+                <input type="text"
+                  [id]="'nota-' + i + '-' + ni"
+                  [(ngModel)]="notasTemp[i][ni]"
+                  (keydown)="onNotaKeydown($event, i, ni)"
+                  [placeholder]="ni === 0 ? 'Observación sobre este ítem (opcional)...' : 'Otra observación...'"
+                  class="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+                <button *ngIf="notasTemp[i] && notasTemp[i].length > 1"
+                  type="button"
+                  (click)="eliminarNotaLine(i, ni)"
+                  class="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-xs leading-none px-1"
+                  title="Eliminar observación">✕</button>
+              </div>
             </div>
           </div>
         </div>

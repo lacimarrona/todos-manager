@@ -69,6 +69,7 @@ export class EquiposListComponent implements OnInit {
   equipoEditandoId = '';
   nuevoItem = '';
   formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: '' };
+  guiasEquipoTemp: string[][] = [];
 
   mostrarModalRevision = signal(false);
   equipoRevisando = signal<Equipo | null>(null);
@@ -77,6 +78,7 @@ export class EquiposListComponent implements OnInit {
   estado: EstadoRevision = 'ok';
   observacionGeneral = '';
   itemsRevision = signal<ItemRevision[]>([]);
+  notasTemp: string[][] = [];
   fotosBase64: (ArchivoAdjunto | string)[] = [];
   revisionRetomadaId = '';
 
@@ -329,6 +331,7 @@ export class EquiposListComponent implements OnInit {
 
   abrirModalNuevoEquipo() {
     this.formEquipo = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [this.proyectoActual()!.id], tecnicoAsignadoId: '' };
+    this.guiasEquipoTemp = [];
     this.modoEdicionEquipo.set(false);
     this.equipoEditandoId = '';
     this.nuevoItem = '';
@@ -346,6 +349,10 @@ export class EquiposListComponent implements OnInit {
       proyectoIds: equipo.proyectoIds || [],
       tecnicoAsignadoId: equipo.tecnicoAsignadoId || ''
     };
+    this.guiasEquipoTemp = this.formEquipo.items.map(item => {
+      const g = item.observacionGuia || '';
+      return g ? g.split('\n') : [''];
+    });
     this.equipoEditandoId = equipo.id;
     this.modoEdicionEquipo.set(true);
     this.nuevoItem = '';
@@ -355,23 +362,61 @@ export class EquiposListComponent implements OnInit {
   onPlantillaChange() {
     if (!this.formEquipo.plantillaId) return;
     const p = this.plantillas().find(x => x.id === this.formEquipo.plantillaId);
-    if (p) this.formEquipo.items = p.items.map((i: any) => ({
-      label: typeof i === 'string' ? i : i.label,
-      observacionGuia: typeof i === 'string' ? '' : (i.observacionGuia || ''),
-      archivosGuia: typeof i === 'string' ? [] : [...(i.archivosGuia || [])]
-    }));
+    if (p) {
+      this.formEquipo.items = p.items.map((i: any) => ({
+        label: typeof i === 'string' ? i : i.label,
+        observacionGuia: typeof i === 'string' ? '' : (i.observacionGuia || ''),
+        archivosGuia: typeof i === 'string' ? [] : [...(i.archivosGuia || [])]
+      }));
+      this.guiasEquipoTemp = this.formEquipo.items.map(item => {
+        const g = item.observacionGuia || '';
+        return g ? g.split('\n') : [''];
+      });
+    }
   }
 
   agregarItem() {
     const t = this.nuevoItem.trim();
     if (!t) return;
     this.formEquipo.items = [...this.formEquipo.items, { label: t, observacionGuia: '', archivosGuia: [] }];
+    this.guiasEquipoTemp = [...this.guiasEquipoTemp, ['']];
     this.nuevoItem = '';
   }
 
   quitarItem(idx: number) {
     this.formEquipo.items = this.formEquipo.items.filter((_, i) => i !== idx);
+    this.guiasEquipoTemp = this.guiasEquipoTemp.filter((_, i) => i !== idx);
   }
+
+  onGuiaEquipoKeydown(event: KeyboardEvent, itemIdx: number, lineIdx: number) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.agregarGuiaEquipoLine(itemIdx, lineIdx);
+    }
+  }
+
+  agregarGuiaEquipoLine(itemIdx: number, lineIdx: number) {
+    if (!this.guiasEquipoTemp[itemIdx]) this.guiasEquipoTemp[itemIdx] = [''];
+    this.guiasEquipoTemp[itemIdx].splice(lineIdx + 1, 0, '');
+    setTimeout(() => {
+      const el = document.getElementById(`guia-eq-${itemIdx}-${lineIdx + 1}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  eliminarGuiaEquipoLine(itemIdx: number, lineIdx: number) {
+    if (!this.guiasEquipoTemp[itemIdx] || this.guiasEquipoTemp[itemIdx].length <= 1) {
+      if (this.guiasEquipoTemp[itemIdx]) this.guiasEquipoTemp[itemIdx][0] = '';
+      return;
+    }
+    this.guiasEquipoTemp[itemIdx].splice(lineIdx, 1);
+    setTimeout(() => {
+      const el = document.getElementById(`guia-eq-${itemIdx}-${Math.max(0, lineIdx - 1)}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  trackByGuiaEquipoIdx(index: number) { return index; }
 
   updateObservacionGuia(idx: number, valor: string) {
     const updated = [...this.formEquipo.items];
@@ -393,6 +438,10 @@ export class EquiposListComponent implements OnInit {
 
   guardarEquipo() {
     if (!this.formEquipo.nombre.trim()) return;
+    this.formEquipo.items = this.formEquipo.items.map((item, idx) => ({
+      ...item,
+      observacionGuia: (this.guiasEquipoTemp[idx] || []).filter(g => g.trim()).join('\n') || (item.observacionGuia || ''),
+    }));
     if (this.modoEdicionEquipo()) {
       this.equiposSvc.update(this.equipoEditandoId, this.formEquipo).subscribe({
         next: () => { this.mostrarModalEquipo.set(false); this.cargarEquiposFiltrados(this.filtroActivo()); }
@@ -445,9 +494,10 @@ export class EquiposListComponent implements OnInit {
           const guiaArchivos = typeof equipoItem === 'string' ? [] : (equipoItem.archivosGuia || []);
           const revItem = revisionMap.get(label);
           if (revItem) {
-            return { ...revItem, nota: revItem.nota || '', archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
+            const notaStr = revItem.nota || '';
+            return { ...revItem, nota: notaStr, notas: notaStr ? notaStr.split('\n') : [''], archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
           }
-          return { label, checked: false, nota: '', estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos };
+          return { label, checked: false, nota: '', notas: [''], estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos };
         }));
         this.tecnicoId = ultima.tecnicoId || '';
         this.estado = ultima.estado;
@@ -459,6 +509,7 @@ export class EquiposListComponent implements OnInit {
           label: typeof i === 'string' ? i : i.label,
           checked: false,
           nota: '',
+          notas: [''],
           archivos: [],
           observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
           archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
@@ -470,13 +521,22 @@ export class EquiposListComponent implements OnInit {
         label: typeof i === 'string' ? i : i.label,
         checked: false,
         nota: '',
+        notas: [''],
         archivos: [],
         observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
         archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
       })));
       this.revisionRetomadaId = '';
     }
+    this.initNotasTemp();
     this.mostrarModalRevision.set(true);
+  }
+
+  private initNotasTemp() {
+    this.notasTemp = this.itemsRevision().map(item => {
+      const nota = item.nota || '';
+      return nota ? nota.split('\n') : [''];
+    });
   }
 
   cerrarModalRevision() {
@@ -515,6 +575,37 @@ export class EquiposListComponent implements OnInit {
     updated[idx] = { ...updated[idx], nota };
     this.itemsRevision.set(updated);
   }
+
+  onNotaKeydown(event: KeyboardEvent, itemIdx: number, lineIdx: number) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.agregarNota(itemIdx, lineIdx);
+    }
+  }
+
+  agregarNota(itemIdx: number, lineIdx: number) {
+    if (!this.notasTemp[itemIdx]) this.notasTemp[itemIdx] = [''];
+    this.notasTemp[itemIdx].splice(lineIdx + 1, 0, '');
+    setTimeout(() => {
+      const el = document.getElementById(`nota-${itemIdx}-${lineIdx + 1}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  eliminarNotaLine(itemIdx: number, lineIdx: number) {
+    if (!this.notasTemp[itemIdx] || this.notasTemp[itemIdx].length <= 1) {
+      if (this.notasTemp[itemIdx]) this.notasTemp[itemIdx][0] = '';
+      return;
+    }
+    this.notasTemp[itemIdx].splice(lineIdx, 1);
+    setTimeout(() => {
+      const focusIdx = Math.max(0, lineIdx - 1);
+      const el = document.getElementById(`nota-${itemIdx}-${focusIdx}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  trackByNotaIdx(index: number) { return index; }
 
   onFotoChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -686,12 +777,16 @@ export class EquiposListComponent implements OnInit {
     const equipo = this.equipoRevisando();
     if (!equipo) return;
     const tecnico = this.tecnicos().find(t => t.id === this.tecnicoId);
+    const items = this.itemsRevision().map((item, idx) => ({
+      ...item,
+      nota: (this.notasTemp[idx] || []).filter(n => n.trim()).join('\n') || (item.nota || ''),
+    }));
     const form: RevisionForm = {
       equipoId: equipo.id,
       tecnicoId: this.tecnicoId || undefined,
       tecnicoNombre: tecnico?.nombre || '',
       estado: this.estado,
-      items: this.itemsRevision(),
+      items,
       observacionGeneral: this.observacionGeneral,
       fotos: this.fotosBase64
     };

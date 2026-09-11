@@ -1,7 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto } from '../../../core/models/models';
+import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo } from '../../../core/models/models';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { ArchivosService } from '../../../core/services/archivos.service';
 
@@ -25,6 +25,21 @@ export class PlantillasListComponent implements OnInit {
   sincronizando = signal<string | null>(null);
   resultadoSync = signal<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number } | null>(null);
   form: PlantillaForm = { nombre: '', descripcion: '', items: [] };
+  guiasTemp: string[][] = [];
+
+  // ── Modal de sincronización ──────────────────────────────────────
+  mostrarModalSync = signal(false);
+  plantillaSyncActual: Plantilla | null = null;
+  syncModo: 'todos' | 'seleccion' = 'todos';
+  equiposSyncDisponibles = signal<Equipo[]>([]);
+  equiposSyncSeleccionados = new Set<string>();
+  busquedaSync = '';
+  readonly equiposSyncFiltrados = computed(() => {
+    const b = this.busquedaSync.toLowerCase().trim();
+    return b
+      ? this.equiposSyncDisponibles().filter(e => e.nombre.toLowerCase().includes(b))
+      : this.equiposSyncDisponibles();
+  });
 
   constructor(private svc: PlantillasService, private archivosSvc: ArchivosService) {}
 
@@ -47,6 +62,7 @@ export class PlantillasListComponent implements OnInit {
 
   abrirModalNueva() {
     this.form = { nombre: '', descripcion: '', items: [] };
+    this.guiasTemp = [];
     this.modoEdicion.set(false);
     this.plantillaEditandoId = '';
     this.nuevoItem = '';
@@ -61,6 +77,10 @@ export class PlantillasListComponent implements OnInit {
         ? { label: i, observacionGuia: '', archivosGuia: [] }
         : { ...i, archivosGuia: i.archivosGuia || [] })
     };
+    this.guiasTemp = this.form.items.map(item => {
+      const g = item.observacionGuia || '';
+      return g ? g.split('\n') : [''];
+    });
     this.modoEdicion.set(true);
     this.plantillaEditandoId = p.id;
     this.nuevoItem = '';
@@ -77,10 +97,44 @@ export class PlantillasListComponent implements OnInit {
     const t = this.nuevoItem.trim();
     if (!t) return;
     this.form.items = [...this.form.items, { label: t, observacionGuia: '', archivosGuia: [] }];
+    this.guiasTemp = [...this.guiasTemp, ['']];
     this.nuevoItem = '';
   }
 
-  quitarItem(i: number) { this.form.items = this.form.items.filter((_, idx) => idx !== i); }
+  quitarItem(i: number) {
+    this.form.items = this.form.items.filter((_, idx) => idx !== i);
+    this.guiasTemp = this.guiasTemp.filter((_, idx) => idx !== i);
+  }
+
+  onGuiaKeydown(event: KeyboardEvent, itemIdx: number, lineIdx: number) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.agregarGuiaLine(itemIdx, lineIdx);
+    }
+  }
+
+  agregarGuiaLine(itemIdx: number, lineIdx: number) {
+    if (!this.guiasTemp[itemIdx]) this.guiasTemp[itemIdx] = [''];
+    this.guiasTemp[itemIdx].splice(lineIdx + 1, 0, '');
+    setTimeout(() => {
+      const el = document.getElementById(`guia-${itemIdx}-${lineIdx + 1}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  eliminarGuiaLine(itemIdx: number, lineIdx: number) {
+    if (!this.guiasTemp[itemIdx] || this.guiasTemp[itemIdx].length <= 1) {
+      if (this.guiasTemp[itemIdx]) this.guiasTemp[itemIdx][0] = '';
+      return;
+    }
+    this.guiasTemp[itemIdx].splice(lineIdx, 1);
+    setTimeout(() => {
+      const el = document.getElementById(`guia-${itemIdx}-${Math.max(0, lineIdx - 1)}`);
+      if (el) (el as HTMLInputElement).focus();
+    }, 0);
+  }
+
+  trackByGuiaIdx(index: number) { return index; }
 
   onArchivoPlantillaItemChange(idx: number, event: Event) {
     const input = event.target as HTMLInputElement;
@@ -181,6 +235,10 @@ export class PlantillasListComponent implements OnInit {
 
   guardar() {
     if (!this.form.nombre || !this.form.items.length) return;
+    this.form.items = this.form.items.map((item, idx) => ({
+      ...item,
+      observacionGuia: (this.guiasTemp[idx] || []).filter(g => g.trim()).join('\n') || (item.observacionGuia || ''),
+    }));
     if (this.modoEdicion()) {
       this.svc.update(this.plantillaEditandoId, this.form).subscribe({
         next: () => { this.mostrarModal.set(false); this.cargar(); }
@@ -297,11 +355,43 @@ export class PlantillasListComponent implements OnInit {
     input.value = '';
   }
 
-  sincronizarEquipos(p: Plantilla) {
+  abrirModalSync(p: Plantilla) {
+    this.plantillaSyncActual = p;
+    this.syncModo = 'todos';
+    this.busquedaSync = '';
+    this.equiposSyncSeleccionados = new Set();
+    this.equiposSyncDisponibles.set([]);
+    this.mostrarModalSync.set(true);
+    this.svc.getEquiposVinculados(p.id).subscribe({
+      next: equipos => this.equiposSyncDisponibles.set(equipos)
+    });
+  }
+
+  cerrarModalSync() {
+    this.mostrarModalSync.set(false);
+    this.plantillaSyncActual = null;
+  }
+
+  toggleSyncEquipo(id: string) {
+    if (this.equiposSyncSeleccionados.has(id)) {
+      this.equiposSyncSeleccionados.delete(id);
+    } else {
+      this.equiposSyncSeleccionados.add(id);
+    }
+  }
+
+  confirmarSync() {
+    const p = this.plantillaSyncActual;
+    if (!p) return;
+    const ids = this.syncModo === 'seleccion'
+      ? [...this.equiposSyncSeleccionados]
+      : undefined;
+    if (this.syncModo === 'seleccion' && (!ids || ids.length === 0)) return;
+    this.mostrarModalSync.set(false);
     this.sincronizando.set(p.id);
     this.resultadoSync.set(null);
     this.error.set('');
-    this.svc.sincronizarEquipos(p.id).subscribe({
+    this.svc.sincronizarEquipos(p.id, ids).subscribe({
       next: (r) => {
         this.sincronizando.set(null);
         this.resultadoSync.set(r);

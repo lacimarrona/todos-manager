@@ -35,7 +35,7 @@
         <h3 class="font-semibold text-gray-800 text-sm">{{ p.nombre }}</h3>
         <div class="flex gap-1">
           <button (click)="abrirModalEditar(p)" class="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" title="Editar">✏️</button>
-          <button (click)="sincronizarEquipos(p)" [disabled]="sincronizando() === p.id" class="px-2 py-1 text-xs border border-green-200 text-green-600 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50" title="Sincronizar ítems con equipos vinculados">{{ sincronizando() === p.id ? '⏳' : '🔄' }}</button>
+          <button (click)="abrirModalSync(p)" [disabled]="sincronizando() === p.id" class="px-2 py-1 text-xs border border-green-200 text-green-600 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50" title="Sincronizar ítems con equipos vinculados">{{ sincronizando() === p.id ? '⏳' : '🔄' }}</button>
           <button (click)="exportarPlantillaZip(p)" class="px-2 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Exportar como ZIP">⬇️</button>
           <button (click)="eliminar(p.id)" class="px-2 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar">🗑️</button>
         </div>
@@ -89,10 +89,21 @@
               (dragleave)="onDragLeavePlantillaItem($event)"
               (drop)="onDropPlantillaItem(i, $event)"
             >
-              <input type="text" [(ngModel)]="form.items[i].observacionGuia"
-                (paste)="onPastePlantillaItem(i, $event)"
-                placeholder="Observacion guia — escribe, pega imagen (Ctrl+V) o arrastra..."
-                class="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+              <div *ngFor="let guiaLine of (guiasTemp[i] || ['']); let gi = index; trackBy: trackByGuiaIdx"
+                class="flex items-center gap-1 mb-1">
+                <input type="text"
+                  [id]="'guia-' + i + '-' + gi"
+                  [(ngModel)]="guiasTemp[i][gi]"
+                  (keydown)="onGuiaKeydown($event, i, gi)"
+                  (paste)="onPastePlantillaItem(i, $event)"
+                  [placeholder]="gi === 0 ? 'Observacion guia — escribe, pega imagen (Ctrl+V) o arrastra...' : 'Otra línea de guía...'"
+                  class="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+                <button *ngIf="guiasTemp[i] && guiasTemp[i].length > 1"
+                  type="button"
+                  (click)="eliminarGuiaLine(i, gi)"
+                  class="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-xs leading-none px-1"
+                  title="Eliminar línea">✕</button>
+              </div>
               <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
                 (change)="onArchivoPlantillaItemChange(i, $event)"
                 class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
@@ -124,5 +135,101 @@
         {{ modoEdicion() ? 'Guardar cambios' : 'Crear plantilla' }}
       </button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL SINCRONIZAR -->
+<div *ngIf="mostrarModalSync()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh]">
+
+    <!-- Cabecera -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+      <div>
+        <h2 class="text-base font-semibold text-gray-800">Sincronizar plantilla</h2>
+        <p class="text-xs text-gray-400 mt-0.5">{{ plantillaSyncActual?.nombre }}</p>
+      </div>
+      <button (click)="cerrarModalSync()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+
+    <!-- Opciones modo -->
+    <div class="px-6 pt-5 pb-3 shrink-0">
+      <p class="text-sm text-gray-600 mb-3">¿A cuáles equipos quieres sincronizar?</p>
+      <div class="flex gap-2">
+        <button (click)="syncModo = 'todos'"
+          class="flex-1 py-2.5 text-sm rounded-xl border-2 transition-all font-medium"
+          [ngClass]="syncModo === 'todos' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'">
+          Todos los equipos
+        </button>
+        <button (click)="syncModo = 'seleccion'"
+          class="flex-1 py-2.5 text-sm rounded-xl border-2 transition-all font-medium"
+          [ngClass]="syncModo === 'seleccion' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'">
+          Seleccionar equipos
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel de selección (solo visible en modo selección) -->
+    <ng-container *ngIf="syncModo === 'seleccion'">
+
+      <!-- Buscador -->
+      <div class="px-6 pb-2 shrink-0">
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input type="text" [(ngModel)]="busquedaSync"
+            placeholder="Buscar equipo por nombre..."
+            class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <!-- Lista de equipos -->
+      <div class="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
+        <div *ngIf="equiposSyncDisponibles().length === 0" class="text-center py-6 text-gray-400 text-sm">
+          Cargando equipos...
+        </div>
+        <div *ngIf="equiposSyncFiltrados().length === 0 && equiposSyncDisponibles().length > 0"
+          class="text-center py-6 text-gray-400 text-sm">
+          No hay equipos que coincidan con la búsqueda
+        </div>
+        <label *ngFor="let eq of equiposSyncFiltrados()"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-transparent"
+          [ngClass]="equiposSyncSeleccionados.has(eq.id) ? 'bg-blue-50 border-blue-200' : ''">
+          <input type="checkbox"
+            [checked]="equiposSyncSeleccionados.has(eq.id)"
+            (change)="toggleSyncEquipo(eq.id)"
+            class="w-4 h-4 accent-blue-600 shrink-0">
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-gray-800 truncate">{{ eq.nombre }}</p>
+            <p *ngIf="eq.descripcion" class="text-xs text-gray-400 truncate">{{ eq.descripcion }}</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Contador seleccionados -->
+      <div class="px-6 py-2 border-t border-gray-100 shrink-0">
+        <p class="text-xs text-gray-500">
+          {{ equiposSyncSeleccionados.size }} de {{ equiposSyncDisponibles().length }} equipo(s) seleccionado(s)
+        </p>
+      </div>
+    </ng-container>
+
+    <!-- Info modo todos -->
+    <div *ngIf="syncModo === 'todos'" class="px-6 pb-4 shrink-0">
+      <p class="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
+        Se sincronizarán los <strong>{{ equiposSyncDisponibles().length }}</strong> equipo(s) vinculados a esta plantilla.
+      </p>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100 shrink-0">
+      <button (click)="cerrarModalSync()" class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      <button (click)="confirmarSync()"
+        [disabled]="syncModo === 'seleccion' && equiposSyncSeleccionados.size === 0"
+        class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+        🔄 Sincronizar
+      </button>
+    </div>
+
   </div>
 </div>
