@@ -77,6 +77,14 @@ db.exec(`
     FOREIGN KEY (equipo_id) REFERENCES equipos(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS proyecto_permisos (
+    proyecto_id TEXT NOT NULL,
+    tecnico_id  TEXT NOT NULL,
+    nivel       TEXT NOT NULL DEFAULT 'ver',
+    PRIMARY KEY (proyecto_id, tecnico_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS grupos_elemento (
     id          TEXT PRIMARY KEY,
     nombre      TEXT NOT NULL,
@@ -95,5 +103,8 @@ db.exec(`
     FOREIGN KEY (grupo_id) REFERENCES grupos_elemento(id) ON DELETE CASCADE
   );
 `);
+
+// Agregar columna restringido a proyectos si no existe (migración incremental)
+try { db.exec('ALTER TABLE proyectos ADD COLUMN restringido INTEGER NOT NULL DEFAULT 0'); } catch {}
 
 module.exports = db;

@@ -2,7 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Proyecto, ProyectoForm, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
@@ -87,6 +87,13 @@ export class EquiposListComponent implements OnInit {
 
   mostrarModalExportarProyecto = signal(false);
   proyectoExportando: Proyecto | null = null;
+
+  // Modal permisos
+  mostrarModalPermisos = signal(false);
+  proyectoPermisos: Proyecto | null = null;
+  permisosRestringido = signal(false);
+  permisosLista = signal<ProyectoPermiso[]>([]);
+  guardandoPermisos = signal(false);
 
   // Multi-selección
   seleccionados = signal<Set<string>>(new Set());
@@ -976,6 +983,45 @@ export class EquiposListComponent implements OnInit {
       win.document.write(`<img src="${archivo}" style="max-width:100%;display:block">`);
       win.document.close();
     }
+  }
+
+  abrirModalPermisos(proyecto: Proyecto, event: Event) {
+    event.stopPropagation();
+    this.proyectoPermisos = proyecto;
+    this.permisosRestringido.set(proyecto.restringido ?? false);
+    this.permisosLista.set([]);
+    this.guardandoPermisos.set(false);
+    this.proyectosSvc.getPermisos(proyecto.id).subscribe({
+      next: data => { this.permisosRestringido.set(data.restringido); this.permisosLista.set(data.permisos); }
+    });
+    this.mostrarModalPermisos.set(true);
+  }
+
+  getPermisoNivel(tecnicoId: string): 'ver' | 'editar' | '' {
+    return this.permisosLista().find(p => p.tecnicoId === tecnicoId)?.nivel ?? '';
+  }
+
+  setPermisoNivel(tecnicoId: string, nivel: 'ver' | 'editar' | '') {
+    const lista = this.permisosLista().filter(p => p.tecnicoId !== tecnicoId);
+    if (nivel) lista.push({ tecnicoId, nivel: nivel as 'ver' | 'editar' });
+    this.permisosLista.set(lista);
+  }
+
+  guardarPermisos() {
+    const p = this.proyectoPermisos;
+    if (!p) return;
+    this.guardandoPermisos.set(true);
+    this.proyectosSvc.setPermisos(p.id, {
+      restringido: this.permisosRestringido(),
+      permisos: this.permisosLista(),
+    }).subscribe({
+      next: () => {
+        this.guardandoPermisos.set(false);
+        this.mostrarModalPermisos.set(false);
+        this.cargarProyectos();
+      },
+      error: () => this.guardandoPermisos.set(false),
+    });
   }
 
   abrirModalExportarProyecto(proyecto: Proyecto, event: Event) {

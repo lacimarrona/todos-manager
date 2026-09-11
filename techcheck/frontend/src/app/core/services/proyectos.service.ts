@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Proyecto, ProyectoForm, Equipo } from '../models/models';
+import { ApiResponse, Proyecto, ProyectoForm, ProyectoPermiso, Equipo } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ProyectosService {
@@ -64,5 +64,13 @@ restaurarBackup(archivo: File): Observable<{importados: number, actualizados: nu
   const form = new FormData();
   form.append('archivo', archivo);
   return this.http.post<ApiResponse<any>>(`${this.url}/restaurar-backup`, form).pipe(map(r => r.data!));
+}
+
+getPermisos(id: string): Observable<{ restringido: boolean; permisos: ProyectoPermiso[] }> {
+  return this.http.get<ApiResponse<any>>(`${this.url}/${id}/permisos`).pipe(map(r => r.data!));
+}
+
+setPermisos(id: string, data: { restringido: boolean; permisos: ProyectoPermiso[] }): Observable<void> {
+  return this.http.put<ApiResponse<void>>(`${this.url}/${id}/permisos`, data).pipe(map(() => void 0));
 }
 }

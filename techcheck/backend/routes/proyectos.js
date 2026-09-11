@@ -144,6 +144,31 @@ router.delete('/:id', (req, res) => {
   }
 });
 
+// GET /api/proyectos/:id/permisos
+router.get('/:id/permisos', (req, res) => {
+  try {
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    const permisos = db.getPermisosProyecto(req.params.id);
+    res.json({ success: true, data: { restringido: proyecto.restringido, permisos } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/proyectos/:id/permisos
+router.put('/:id/permisos', (req, res) => {
+  try {
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    const { restringido, permisos } = req.body;
+    db.setPermisosProyecto(req.params.id, !!restringido, permisos || []);
+    res.json({ success: true, data: { restringido: !!restringido, permisos: permisos || [] } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Exportar proyecto como JSON
 router.get('/:id/exportar', (req, res) => {
   try {

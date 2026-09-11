@@ -8,7 +8,7 @@ const P  = (v) => { try { return JSON.parse(v); } catch { return v; } };
 
 function rowToProyecto(r) {
   if (!r) return null;
-  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
+  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, restringido: r.restringido === 1, creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
 }
 
 function rowToTecnico(r) {
@@ -401,6 +401,22 @@ function deleteTarea(id) {
   return true;
 }
 
+// ── Permisos de proyecto ──────────────────────────────────────
+function getPermisosProyecto(proyectoId) {
+  return db.prepare('SELECT tecnico_id, nivel FROM proyecto_permisos WHERE proyecto_id = ?').all(proyectoId)
+    .map(r => ({ tecnicoId: r.tecnico_id, nivel: r.nivel }));
+}
+
+function setPermisosProyecto(proyectoId, restringido, permisos) {
+  db.prepare('UPDATE proyectos SET restringido = ? WHERE id = ?').run(restringido ? 1 : 0, proyectoId);
+  db.prepare('DELETE FROM proyecto_permisos WHERE proyecto_id = ?').run(proyectoId);
+  const insert = db.prepare('INSERT INTO proyecto_permisos (proyecto_id, tecnico_id, nivel) VALUES (?,?,?)');
+  for (const p of (permisos || [])) {
+    insert.run(proyectoId, p.tecnicoId, p.nivel);
+  }
+  return { restringido, permisos };
+}
+
 module.exports = {
   getProyectos, getProyectoById, createProyecto, updateProyecto, deleteProyecto,
   getEquipos, getEquipoById, getEquiposByProyecto, createEquipo, updateEquipo, deleteEquipo,
@@ -410,4 +426,5 @@ module.exports = {
   exportarProyecto, importarProyecto, collectArchivoHashes,
   readGlobal, writeGlobal, readProyectoData, writeProyectoData,
   getTareas, getTareaById, getTareasActivas, createTarea, updateTarea, deleteTarea,
+  getPermisosProyecto, setPermisosProyecto,
 };

@@ -32,7 +32,10 @@
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-200 transition-colors">📁</div>
           <div class="min-w-0">
-            <h3 class="font-semibold text-gray-800 truncate">{{ p.nombre }}</h3>
+            <h3 class="font-semibold text-gray-800 truncate flex items-center gap-1.5">
+              {{ p.nombre }}
+              <span *ngIf="p.restringido" class="text-sm" title="Proyecto restringido">🔒</span>
+            </h3>
             <p *ngIf="p.descripcion" class="text-xs text-gray-400 mt-0.5 truncate">{{ p.descripcion }}</p>
           </div>
         </div>
@@ -41,6 +44,7 @@
         <span class="text-xs text-gray-400">💻 {{ p.totalEquipos || 0 }} equipos</span>
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button (click)="abrirModalEditarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">✏️</button>
+          <button (click)="abrirModalPermisos(p, $event)" class="px-2.5 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" title="Permisos">🔒</button>
           <button (click)="abrirModalExportarProyecto(p, $event)" class="px-2.5 py-1 text-xs border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">⬇️</button>
           <button (click)="eliminarProyecto(p.id, $event)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
         </div>
@@ -507,6 +511,66 @@
           <div class="text-xs text-blue-400 mt-0.5">Compatible con Excel</div>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERMISOS -->
+<div *ngIf="mostrarModalPermisos()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" (click)="mostrarModalPermisos.set(false)">
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-800">Permisos — {{ proyectoPermisos?.nombre }}</h2>
+      <button (click)="mostrarModalPermisos.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+    </div>
+    <div class="px-6 py-5 space-y-5">
+      <!-- Toggle restringido -->
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-700">Proyecto restringido</p>
+          <p class="text-xs text-gray-400 mt-0.5">Solo técnicos con acceso explícito pueden verlo</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only peer"
+                 [checked]="permisosRestringido()"
+                 (change)="permisosRestringido.set($any($event.target).checked)">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+          <div class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+        </label>
+      </div>
+
+      <!-- Lista de técnicos -->
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-3">Acceso de técnicos</p>
+        @if (tecnicos().length === 0) {
+          <p class="text-xs text-gray-400">No hay técnicos registrados.</p>
+        }
+        <div class="space-y-2">
+          @for (t of tecnicos(); track t.id) {
+            <div class="flex items-center justify-between">
+              <div class="min-w-0 flex-1 mr-3">
+                <span class="text-sm text-gray-700 font-medium">{{ t.nombre }}</span>
+                <span *ngIf="t.email" class="ml-1.5 text-xs text-gray-400">{{ t.email }}</span>
+              </div>
+              <select [value]="getPermisoNivel(t.id)"
+                      (change)="setPermisoNivel(t.id, $any($event.target).value)"
+                      class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shrink-0">
+                <option value="">Sin acceso</option>
+                <option value="ver">Solo ver</option>
+                <option value="editar">Ver y editar</option>
+              </select>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+      <button (click)="mostrarModalPermisos.set(false)" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200">
+        Cancelar
+      </button>
+      <button (click)="guardarPermisos()" [disabled]="guardandoPermisos()"
+              class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+        {{ guardandoPermisos() ? 'Guardando...' : 'Guardar permisos' }}
+      </button>
     </div>
   </div>
 </div>

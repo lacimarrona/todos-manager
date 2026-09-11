@@ -3,9 +3,15 @@ export interface Proyecto {
   id: string;
   nombre: string;
   descripcion: string;
+  restringido?: boolean;
   creadoEn: string;
   actualizadoEn: string;
   totalEquipos?: number;
+}
+
+export interface ProyectoPermiso {
+  tecnicoId: string;
+  nivel: 'ver' | 'editar';
 }
 
 export interface ProyectoForm {
