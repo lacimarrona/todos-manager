@@ -1,10 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TareaProgramada, TareaForm, Equipo, Tecnico } from '../../core/models/models';
+import { TareaProgramada, TareaForm, Equipo, Tecnico, Proyecto } from '../../core/models/models';
 import { TareasService } from '../../core/services/otros.services';
 import { EquiposService } from '../../core/services/equipos.service';
 import { TecnicosService } from '../../core/services/otros.services';
+import { ProyectosService } from '../../core/services/proyectos.service';
 
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
@@ -17,6 +18,7 @@ const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 export class TareasComponent implements OnInit {
   tareas = signal<TareaProgramada[]>([]);
   equipos = signal<Equipo[]>([]);
+  proyectos = signal<Proyecto[]>([]);
   tecnicos = signal<Tecnico[]>([]);
   cargando = signal(true);
   error = signal('');
@@ -31,16 +33,30 @@ export class TareasComponent implements OnInit {
 
   readonly DIAS = DIAS;
 
+  // Equipos agrupados por proyecto para el selector
+  readonly gruposEquipos = computed(() => {
+    const todos = this.equipos();
+    const proyectos = this.proyectos();
+    return proyectos
+      .map(p => ({
+        proyecto: p,
+        equipos: todos.filter(e => e.proyectoIds && e.proyectoIds.includes(p.id))
+      }))
+      .filter(g => g.equipos.length > 0);
+  });
+
   constructor(
     private tareasSvc: TareasService,
     private equiposSvc: EquiposService,
     private tecnicosSvc: TecnicosService,
+    private proyectosSvc: ProyectosService,
   ) {}
 
   ngOnInit() {
     this.cargar();
-    this.equiposSvc.getAll().subscribe({ next: d => this.equipos.set(d.filter(e => !e.archivado)) });
+    this.equiposSvc.getAll().subscribe({ next: d => this.equipos.set(d) });
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
+    this.proyectosSvc.getAll().subscribe({ next: d => this.proyectos.set(d) });
   }
 
   cargar() {
@@ -125,4 +141,5 @@ export class TareasComponent implements OnInit {
   }
 
   trackById(_: number, t: any) { return t.id; }
+  trackByProyectoId(_: number, g: any) { return g.proyecto.id; }
 }
