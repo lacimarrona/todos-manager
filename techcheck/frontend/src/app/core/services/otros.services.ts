@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm, TareaProgramada, TareaForm, DashboardStats } from '../models/models';
+import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm, TareaProgramada, TareaForm, DashboardStats, GrupoElemento, ElementoGrupo } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class TecnicosService {
@@ -126,5 +126,39 @@ export class ExportarService {
       reader.onerror = () => obs.error(new Error('Error leyendo el archivo'));
       reader.readAsText(file);
     });
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class CatalogosService {
+  private url = `${environment.apiUrl}/catalogos`;
+  constructor(private http: HttpClient) {}
+
+  getAll(): Observable<GrupoElemento[]> {
+    return this.http.get<ApiResponse<GrupoElemento[]>>(this.url).pipe(map(r => r.data || []));
+  }
+
+  createGrupo(data: { nombre: string; descripcion?: string }): Observable<GrupoElemento> {
+    return this.http.post<ApiResponse<GrupoElemento>>(this.url, data).pipe(map(r => r.data!));
+  }
+
+  updateGrupo(id: string, data: Partial<{ nombre: string; descripcion: string; activo: boolean }>): Observable<GrupoElemento> {
+    return this.http.put<ApiResponse<GrupoElemento>>(`${this.url}/${id}`, data).pipe(map(r => r.data!));
+  }
+
+  deleteGrupo(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
+  }
+
+  createElemento(grupoId: string, data: { valor: string; descripcion?: string }): Observable<ElementoGrupo> {
+    return this.http.post<ApiResponse<ElementoGrupo>>(`${this.url}/${grupoId}/elementos`, data).pipe(map(r => r.data!));
+  }
+
+  updateElemento(grupoId: string, id: string, data: Partial<{ valor: string; descripcion: string; activo: boolean }>): Observable<ElementoGrupo> {
+    return this.http.put<ApiResponse<ElementoGrupo>>(`${this.url}/${grupoId}/elementos/${id}`, data).pipe(map(r => r.data!));
+  }
+
+  deleteElemento(grupoId: string, id: string): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.url}/${grupoId}/elementos/${id}`).pipe(map(() => void 0));
   }
 }

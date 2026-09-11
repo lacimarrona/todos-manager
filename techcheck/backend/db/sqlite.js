@@ -76,6 +76,24 @@ db.exec(`
     creado_en   TEXT NOT NULL,
     FOREIGN KEY (equipo_id) REFERENCES equipos(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS grupos_elemento (
+    id          TEXT PRIMARY KEY,
+    nombre      TEXT NOT NULL,
+    descripcion TEXT NOT NULL DEFAULT '',
+    activo      INTEGER NOT NULL DEFAULT 1,
+    creado_en   TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS elementos_grupo (
+    id          TEXT PRIMARY KEY,
+    grupo_id    TEXT NOT NULL,
+    valor       TEXT NOT NULL,
+    descripcion TEXT NOT NULL DEFAULT '',
+    activo      INTEGER NOT NULL DEFAULT 1,
+    creado_en   TEXT NOT NULL,
+    FOREIGN KEY (grupo_id) REFERENCES grupos_elemento(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;

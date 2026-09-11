@@ -180,6 +180,25 @@ export interface DashboardStats {
   }[];
 }
 
+// ─── CATÁLOGOS ───────────────────────────────────────────────
+export interface ElementoGrupo {
+  id: string;
+  grupoId: string;
+  valor: string;
+  descripcion: string;
+  activo: boolean;
+  creadoEn: string;
+}
+
+export interface GrupoElemento {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+  creadoEn: string;
+  elementos: ElementoGrupo[];
+}
+
 // ─── API RESPONSE ────────────────────────────────────────────
 export interface ApiResponse<T> {
   success: boolean;

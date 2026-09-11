@@ -30,5 +30,9 @@ export const routes: Routes = [
     path: 'exportar',
     loadComponent: () => import('./modules/exportar/exportar.component').then(m => m.ExportarComponent)
   },
+  {
+    path: 'catalogos',
+    loadComponent: () => import('./modules/catalogos/catalogos.component').then(m => m.CatalogosComponent)
+  },
   { path: '**', redirectTo: 'equipos' }
 ];

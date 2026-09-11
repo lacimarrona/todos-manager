@@ -31,6 +31,7 @@ app.use('/api/archivos',   require('./routes/archivos'));
 app.use('/api/tareas',     require('./routes/tareas'));
 app.use('/api/dashboard',  require('./routes/dashboard'));
 app.use('/api/exportar',   require('./routes/exportar'));
+app.use('/api/catalogos',  require('./routes/catalogos'));
 
 app.get('/api/health', (req, res) => {
   res.json({
