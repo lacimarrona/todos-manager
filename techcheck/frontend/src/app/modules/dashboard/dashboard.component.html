@@ -1,0 +1,189 @@
+<div class="p-6">
+  <!-- Encabezado -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Resumen general del sistema</p>
+  </div>
+
+  <!-- Estado de carga -->
+  @if (cargando()) {
+    <div class="flex items-center justify-center h-64 text-gray-400">
+      <span class="text-sm">Cargando estadísticas...</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+      {{ error() }}
+    </div>
+  }
+
+  @if (stats(); as s) {
+    <!-- Tiles de totales -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="text-xs text-gray-400 mb-1">Proyectos</div>
+        <div class="text-2xl font-bold text-gray-900 tabular-nums">{{ s.totales.proyectos }}</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="text-xs text-gray-400 mb-1">Equipos activos</div>
+        <div class="text-2xl font-bold text-gray-900 tabular-nums">{{ s.totales.equiposActivos }}</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="text-xs text-gray-400 mb-1">Archivados</div>
+        <div class="text-2xl font-bold text-gray-400 tabular-nums">{{ s.totales.equiposArchivados }}</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="text-xs text-gray-400 mb-1">Revisiones</div>
+        <div class="text-2xl font-bold text-gray-900 tabular-nums">{{ s.totales.revisiones }}</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div class="text-xs text-gray-400 mb-1">Técnicos</div>
+        <div class="text-2xl font-bold text-gray-900 tabular-nums">{{ s.totales.tecnicos }}</div>
+      </div>
+      <div class="bg-blue-50 rounded-xl border border-blue-100 shadow-sm p-4">
+        <div class="text-xs text-blue-400 mb-1">Esta semana</div>
+        <div class="text-2xl font-bold text-blue-600 tabular-nums">{{ s.totales.revisionesEstaSemana }}</div>
+      </div>
+    </div>
+
+    <!-- Fila media: estado de equipos + gráfico de revisiones por día -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <!-- Estado de equipos -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Estado de equipos activos</h2>
+
+        <div class="space-y-3">
+          <!-- OK -->
+          <div class="flex items-center gap-3">
+            <span class="w-16 text-xs text-gray-500 shrink-0">OK</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-green-500 h-full rounded-full transition-all"
+                   [style.width.%]="pctEstado(s.equiposPorEstado.ok)"></div>
+            </div>
+            <span class="w-12 text-right text-xs font-medium text-gray-700 tabular-nums">
+              {{ s.equiposPorEstado.ok }} ({{ pctEstado(s.equiposPorEstado.ok) }}%)
+            </span>
+          </div>
+          <!-- Observación -->
+          <div class="flex items-center gap-3">
+            <span class="w-16 text-xs text-gray-500 shrink-0">Obs.</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-yellow-400 h-full rounded-full transition-all"
+                   [style.width.%]="pctEstado(s.equiposPorEstado.observacion)"></div>
+            </div>
+            <span class="w-12 text-right text-xs font-medium text-gray-700 tabular-nums">
+              {{ s.equiposPorEstado.observacion }} ({{ pctEstado(s.equiposPorEstado.observacion) }}%)
+            </span>
+          </div>
+          <!-- Problema -->
+          <div class="flex items-center gap-3">
+            <span class="w-16 text-xs text-gray-500 shrink-0">Problema</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-red-500 h-full rounded-full transition-all"
+                   [style.width.%]="pctEstado(s.equiposPorEstado.problema)"></div>
+            </div>
+            <span class="w-12 text-right text-xs font-medium text-gray-700 tabular-nums">
+              {{ s.equiposPorEstado.problema }} ({{ pctEstado(s.equiposPorEstado.problema) }}%)
+            </span>
+          </div>
+          <!-- Sin revisión -->
+          <div class="flex items-center gap-3">
+            <span class="w-16 text-xs text-gray-500 shrink-0">Sin rev.</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-gray-400 h-full rounded-full transition-all"
+                   [style.width.%]="pctEstado(s.equiposPorEstado.sinRevision)"></div>
+            </div>
+            <span class="w-12 text-right text-xs font-medium text-gray-700 tabular-nums">
+              {{ s.equiposPorEstado.sinRevision }} ({{ pctEstado(s.equiposPorEstado.sinRevision) }}%)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revisiones por día (últimos 7 días) -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Revisiones por día (7 días)</h2>
+        <div class="flex items-end gap-2 h-28">
+          @for (dia of alturaBarras(); track dia.fecha) {
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <span class="text-xs text-gray-500 tabular-nums">{{ dia.total }}</span>
+              <div class="w-full rounded-t-sm bg-blue-100 relative overflow-hidden" [style.height.%]="100">
+                <div class="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm transition-all"
+                     [style.height.%]="dia.pct || 2"></div>
+              </div>
+              <span class="text-xs text-gray-400">{{ diaCorto(dia.fecha) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Fila inferior: top técnicos + top equipos + últimas revisiones -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Top técnicos -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Top técnicos</h2>
+        @if (anchoTopTecnicos().length === 0) {
+          <p class="text-xs text-gray-400">Sin datos aún</p>
+        }
+        <div class="space-y-2.5">
+          @for (t of anchoTopTecnicos(); track t.nombre) {
+            <div>
+              <div class="flex justify-between text-xs text-gray-600 mb-1">
+                <span class="truncate mr-2">{{ t.nombre }}</span>
+                <span class="font-medium tabular-nums shrink-0">{{ t.total }}</span>
+              </div>
+              <div class="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-blue-500 h-full rounded-full" [style.width.%]="t.pct"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Top equipos -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Top equipos</h2>
+        @if (anchoTopEquipos().length === 0) {
+          <p class="text-xs text-gray-400">Sin datos aún</p>
+        }
+        <div class="space-y-2.5">
+          @for (t of anchoTopEquipos(); track t.nombre) {
+            <div>
+              <div class="flex justify-between text-xs text-gray-600 mb-1">
+                <span class="truncate mr-2">{{ t.nombre }}</span>
+                <span class="font-medium tabular-nums shrink-0">{{ t.total }}</span>
+              </div>
+              <div class="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-indigo-500 h-full rounded-full" [style.width.%]="t.pct"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Últimas revisiones -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Últimas revisiones</h2>
+        @if (s.ultimasRevisiones.length === 0) {
+          <p class="text-xs text-gray-400">Sin revisiones aún</p>
+        }
+        <div class="space-y-2">
+          @for (r of s.ultimasRevisiones; track r.id) {
+            <div class="flex items-start gap-2">
+              <span class="mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0"
+                    [class]="estadoClass(r.estado)">
+                {{ estadoLabel(r.estado) }}
+              </span>
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-gray-700 truncate">{{ r.equipoNombre }}</div>
+                <div class="text-[10px] text-gray-400">{{ r.tecnicoNombre || 'Sin técnico' }} · {{ r.creadoEn | date:'dd/MM/yy HH:mm' }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

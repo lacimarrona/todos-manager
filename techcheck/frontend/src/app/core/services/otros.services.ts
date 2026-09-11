@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm, TareaProgramada, TareaForm } from '../models/models';
+import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm, TareaProgramada, TareaForm, DashboardStats } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class TecnicosService {
@@ -80,5 +80,15 @@ export class TareasService {
 
   deleteTarea(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class DashboardService {
+  private url = `${environment.apiUrl}/dashboard`;
+  constructor(private http: HttpClient) {}
+
+  getStats(): Observable<DashboardStats> {
+    return this.http.get<ApiResponse<DashboardStats>>(this.url).pipe(map(r => r.data!));
   }
 }

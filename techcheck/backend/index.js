@@ -29,6 +29,7 @@ app.use('/api/tecnicos',   require('./routes/tecnicos'));
 app.use('/api/revisiones', require('./routes/revisiones'));
 app.use('/api/archivos',   require('./routes/archivos'));
 app.use('/api/tareas',     require('./routes/tareas'));
+app.use('/api/dashboard',  require('./routes/dashboard'));
 
 app.get('/api/health', (req, res) => {
   res.json({

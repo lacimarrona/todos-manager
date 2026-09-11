@@ -26,5 +26,9 @@ export const routes: Routes = [
     path: 'tareas',
     loadComponent: () => import('./modules/tareas/tareas.component').then(m => m.TareasComponent)
   },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./modules/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  },
   { path: '**', redirectTo: 'equipos' }
 ];

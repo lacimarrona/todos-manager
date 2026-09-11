@@ -152,6 +152,34 @@ export interface TareaForm {
   fechaFin?: string;
 }
 
+// ─── DASHBOARD ───────────────────────────────────────────────
+export interface DashboardStats {
+  totales: {
+    proyectos: number;
+    equiposActivos: number;
+    equiposArchivados: number;
+    revisiones: number;
+    tecnicos: number;
+    revisionesEstaSemana: number;
+  };
+  equiposPorEstado: {
+    ok: number;
+    observacion: number;
+    problema: number;
+    sinRevision: number;
+  };
+  revisionesPorDia: { fecha: string; total: number }[];
+  topTecnicos: { nombre: string; total: number }[];
+  topEquipos: { nombre: string; total: number }[];
+  ultimasRevisiones: {
+    id: string;
+    estado: string;
+    creadoEn: string;
+    tecnicoNombre: string;
+    equipoNombre: string;
+  }[];
+}
+
 // ─── API RESPONSE ────────────────────────────────────────────
 export interface ApiResponse<T> {
   success: boolean;

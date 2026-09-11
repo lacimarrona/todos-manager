@@ -37,6 +37,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
               <span>⏰</span> Tareas
             </a>
           </li>
+          <li>
+            <a routerLink="/dashboard" routerLinkActive="bg-blue-600 !text-white"
+               class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all text-sm">
+              <span>📊</span> Dashboard
+            </a>
+          </li>
         </ul>
         <div class="px-4 py-3 text-xs text-slate-600 border-t border-white/5">v1.0.0</div>
       </nav>
