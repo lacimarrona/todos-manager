@@ -1,277 +1,276 @@
-const fs = require('fs');
-const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const db = require('./sqlite');
 
-const GLOBAL_PATH = path.join(__dirname, '../data/global.json');
-const PROYECTOS_DIR = path.join(__dirname, '../data/proyectos');
+// ─── helpers ────────────────────────────────────────────────────────────────
+const now = () => new Date().toISOString();
+const J  = (v) => JSON.stringify(v ?? []);
+const P  = (v) => { try { return JSON.parse(v); } catch { return v; } };
 
-// Crear directorio si no existe
-if (!fs.existsSync(PROYECTOS_DIR)) fs.mkdirSync(PROYECTOS_DIR, { recursive: true });
-
-// ─── GLOBAL (proyectos, tecnicos, plantillas) ────────────────
-function readGlobal() {
-  if (!fs.existsSync(GLOBAL_PATH)) {
-    const empty = { proyectos: [], tecnicos: [], plantillas: [] };
-    fs.writeFileSync(GLOBAL_PATH, JSON.stringify(empty, null, 2));
-    return empty;
-  }
-  return JSON.parse(fs.readFileSync(GLOBAL_PATH, 'utf-8'));
+function rowToProyecto(r) {
+  if (!r) return null;
+  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
 }
 
-function writeGlobal(data) {
-  fs.writeFileSync(GLOBAL_PATH, JSON.stringify(data, null, 2));
+function rowToTecnico(r) {
+  if (!r) return null;
+  return { id: r.id, nombre: r.nombre, email: r.email, creadoEn: r.creado_en };
 }
 
-// ─── PROYECTO DATA (equipos + revisiones por proyecto) ───────
-function getProyectoPath(proyectoId) {
-  return path.join(PROYECTOS_DIR, `${proyectoId}.json`);
+function rowToPlantilla(r) {
+  if (!r) return null;
+  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, items: P(r.items), creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
 }
 
-function readProyectoData(proyectoId) {
-  const p = getProyectoPath(proyectoId);
-  if (!fs.existsSync(p)) return { equipos: [], revisiones: [] };
-  return JSON.parse(fs.readFileSync(p, 'utf-8'));
+function rowToEquipo(r) {
+  if (!r) return null;
+  return {
+    id: r.id, nombre: r.nombre, descripcion: r.descripcion,
+    items: P(r.items),
+    proyectoIds: [r.proyecto_id],
+    plantillaId: r.plantilla_id || null,
+    tecnicoAsignadoId: r.tecnico_asignado_id || null,
+    archivado: r.archivado === 1,
+    creadoEn: r.creado_en, actualizadoEn: r.actualizado_en,
+  };
 }
 
-function writeProyectoData(proyectoId, data) {
-  fs.writeFileSync(getProyectoPath(proyectoId), JSON.stringify(data, null, 2));
+function rowToRevision(r) {
+  if (!r) return null;
+  return {
+    id: r.id, equipoId: r.equipo_id,
+    tecnicoId: r.tecnico_id || null,
+    tecnicoNombre: r.tecnico_nombre || '',
+    estado: r.estado,
+    items: P(r.items),
+    observacionGeneral: r.observacion_general || '',
+    fotos: P(r.fotos),
+    creadoEn: r.creado_en, actualizadoEn: r.actualizado_en,
+  };
 }
 
-// ─── PROYECTOS ───────────────────────────────────────────────
-function getProyectos() { return readGlobal().proyectos; }
+// ─── PROYECTOS ───────────────────────────────────────────────────────────────
+function getProyectos() {
+  return db.prepare('SELECT * FROM proyectos ORDER BY creado_en ASC').all().map(rowToProyecto);
+}
 
 function getProyectoById(id) {
-  return readGlobal().proyectos.find(p => p.id === id) || null;
+  return rowToProyecto(db.prepare('SELECT * FROM proyectos WHERE id = ?').get(id));
 }
 
 function createProyecto(proyecto) {
-  const g = readGlobal();
-  g.proyectos.push(proyecto);
-  writeGlobal(g);
-  writeProyectoData(proyecto.id, { equipos: [], revisiones: [] });
-  return proyecto;
+  db.prepare(
+    'INSERT INTO proyectos (id, nombre, descripcion, creado_en, actualizado_en) VALUES (?,?,?,?,?)'
+  ).run(proyecto.id, proyecto.nombre, proyecto.descripcion || '', proyecto.creadoEn || now(), proyecto.actualizadoEn || now());
+  return getProyectoById(proyecto.id);
 }
 
 function updateProyecto(id, datos) {
-  const g = readGlobal();
-  const idx = g.proyectos.findIndex(p => p.id === id);
-  if (idx === -1) return null;
-  g.proyectos[idx] = { ...g.proyectos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeGlobal(g);
-  return g.proyectos[idx];
+  const p = getProyectoById(id);
+  if (!p) return null;
+  const nombre = datos.nombre ?? p.nombre;
+  const descripcion = datos.descripcion ?? p.descripcion;
+  db.prepare('UPDATE proyectos SET nombre=?, descripcion=?, actualizado_en=? WHERE id=?')
+    .run(nombre, descripcion, now(), id);
+  return getProyectoById(id);
 }
 
 function deleteProyecto(id) {
-  const g = readGlobal();
-  const idx = g.proyectos.findIndex(p => p.id === id);
-  if (idx === -1) return false;
-  g.proyectos.splice(idx, 1);
-  writeGlobal(g);
-  const p = getProyectoPath(id);
-  if (fs.existsSync(p)) fs.unlinkSync(p);
-  return true;
+  // ON DELETE CASCADE borra equipos; revisiones quedan huérfanas: las eliminamos manualmente
+  const equipos = db.prepare('SELECT id FROM equipos WHERE proyecto_id = ?').all(id);
+  const equipoIds = equipos.map(e => e.id);
+  if (equipoIds.length) {
+    const ph = equipoIds.map(() => '?').join(',');
+    db.prepare(`DELETE FROM revisiones WHERE equipo_id IN (${ph})`).run(...equipoIds);
+  }
+  const info = db.prepare('DELETE FROM proyectos WHERE id = ?').run(id);
+  return info.changes > 0;
 }
 
-// ─── EQUIPOS ────────────────────────────────────────────────
+// ─── EQUIPOS ─────────────────────────────────────────────────────────────────
 function getEquipos() {
-  const proyectos = getProyectos();
-  let todos = [];
-  proyectos.forEach(p => {
-    const data = readProyectoData(p.id);
-    todos = todos.concat(data.equipos);
-  });
-  return todos;
+  return db.prepare('SELECT * FROM equipos ORDER BY creado_en ASC').all().map(rowToEquipo);
 }
 
 function getEquipoById(id) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const equipo = data.equipos.find(e => e.id === id);
-    if (equipo) return equipo;
-  }
-  return null;
+  return rowToEquipo(db.prepare('SELECT * FROM equipos WHERE id = ?').get(id));
 }
 
 function getEquiposByProyecto(proyectoId) {
-  return readProyectoData(proyectoId).equipos;
+  return db.prepare('SELECT * FROM equipos WHERE proyecto_id = ? ORDER BY creado_en ASC').all(proyectoId).map(rowToEquipo);
 }
 
 function createEquipo(equipo) {
-  const proyectoId = equipo.proyectoIds && equipo.proyectoIds[0];
-  if (!proyectoId) return equipo;
-  const data = readProyectoData(proyectoId);
-  data.equipos.push(equipo);
-  writeProyectoData(proyectoId, data);
-  return equipo;
+  const proyectoId = Array.isArray(equipo.proyectoIds) ? equipo.proyectoIds[0] : equipo.proyectoId;
+  db.prepare(
+    `INSERT INTO equipos (id, nombre, descripcion, items, proyecto_id, plantilla_id, tecnico_asignado_id, archivado, creado_en, actualizado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`
+  ).run(
+    equipo.id, equipo.nombre, equipo.descripcion || '',
+    J(equipo.items), proyectoId,
+    equipo.plantillaId || null,
+    equipo.tecnicoAsignadoId || null,
+    equipo.archivado ? 1 : 0,
+    equipo.creadoEn || now(), equipo.actualizadoEn || now()
+  );
+  return getEquipoById(equipo.id);
 }
 
 function updateEquipo(id, datos) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const idx = data.equipos.findIndex(e => e.id === id);
-    if (idx !== -1) {
-      data.equipos[idx] = { ...data.equipos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-      writeProyectoData(p.id, data);
-      return data.equipos[idx];
-    }
-  }
-  return null;
+  const e = getEquipoById(id);
+  if (!e) return null;
+  const fields = [];
+  const vals = [];
+
+  if (datos.nombre !== undefined)             { fields.push('nombre=?');                vals.push(datos.nombre); }
+  if (datos.descripcion !== undefined)        { fields.push('descripcion=?');           vals.push(datos.descripcion); }
+  if (datos.items !== undefined)              { fields.push('items=?');                 vals.push(J(datos.items)); }
+  if (datos.plantillaId !== undefined)        { fields.push('plantilla_id=?');          vals.push(datos.plantillaId); }
+  if (datos.tecnicoAsignadoId !== undefined)  { fields.push('tecnico_asignado_id=?');   vals.push(datos.tecnicoAsignadoId); }
+  if (datos.archivado !== undefined)          { fields.push('archivado=?');             vals.push(datos.archivado ? 1 : 0); }
+
+  if (fields.length === 0) return e;
+  fields.push('actualizado_en=?');
+  vals.push(now(), id);
+  db.prepare(`UPDATE equipos SET ${fields.join(', ')} WHERE id=?`).run(...vals);
+  return getEquipoById(id);
 }
 
 function deleteEquipo(id) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const idx = data.equipos.findIndex(e => e.id === id);
-    if (idx !== -1) {
-      data.equipos.splice(idx, 1);
-      writeProyectoData(p.id, data);
-      return true;
-    }
-  }
-  return false;
+  db.prepare('DELETE FROM revisiones WHERE equipo_id = ?').run(id);
+  const info = db.prepare('DELETE FROM equipos WHERE id = ?').run(id);
+  return info.changes > 0;
 }
 
-// ─── REVISIONES ─────────────────────────────────────────────
+// ─── REVISIONES ──────────────────────────────────────────────────────────────
 function getRevisiones(filtros = {}) {
-  const proyectos = getProyectos();
-  let todas = [];
-  proyectos.forEach(p => {
-    const data = readProyectoData(p.id);
-    todas = todas.concat(data.revisiones);
-  });
-  if (filtros.equipoId) todas = todas.filter(r => r.equipoId === filtros.equipoId);
-  if (filtros.tecnicoId) todas = todas.filter(r => r.tecnicoId === filtros.tecnicoId);
-  if (filtros.estado) todas = todas.filter(r => r.estado === filtros.estado);
-  return todas.sort((a, b) => new Date(b.creadoEn) - new Date(a.creadoEn));
+  let sql = 'SELECT * FROM revisiones WHERE 1=1';
+  const vals = [];
+  if (filtros.equipoId) { sql += ' AND equipo_id = ?'; vals.push(filtros.equipoId); }
+  if (filtros.tecnicoId) { sql += ' AND tecnico_id = ?'; vals.push(filtros.tecnicoId); }
+  if (filtros.estado) { sql += ' AND estado = ?'; vals.push(filtros.estado); }
+  sql += ' ORDER BY creado_en DESC';
+  return db.prepare(sql).all(...vals).map(rowToRevision);
 }
 
 function getRevisionesByProyecto(proyectoId) {
-  return readProyectoData(proyectoId).revisiones;
+  const equipoIds = db.prepare('SELECT id FROM equipos WHERE proyecto_id = ?').all(proyectoId).map(e => e.id);
+  if (!equipoIds.length) return [];
+  const ph = equipoIds.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM revisiones WHERE equipo_id IN (${ph}) ORDER BY creado_en DESC`).all(...equipoIds).map(rowToRevision);
 }
 
 function getRevisionById(id) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const revision = data.revisiones.find(r => r.id === id);
-    if (revision) return revision;
-  }
-  return null;
+  return rowToRevision(db.prepare('SELECT * FROM revisiones WHERE id = ?').get(id));
 }
 
 function createRevision(revision) {
-  // Encontrar el proyecto del equipo
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const equipo = data.equipos.find(e => e.id === revision.equipoId);
-    if (equipo) {
-      data.revisiones.push(revision);
-      writeProyectoData(p.id, data);
-      return revision;
-    }
-  }
-  return revision;
+  db.prepare(
+    `INSERT INTO revisiones (id, equipo_id, tecnico_id, tecnico_nombre, estado, items, observacion_general, fotos, creado_en, actualizado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`
+  ).run(
+    revision.id, revision.equipoId,
+    revision.tecnicoId || null,
+    revision.tecnicoNombre || '',
+    revision.estado,
+    J(revision.items),
+    revision.observacionGeneral || '',
+    J(revision.fotos),
+    revision.creadoEn || now(), revision.actualizadoEn || now()
+  );
+  return getRevisionById(revision.id);
 }
 
 function updateRevision(id, datos) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const idx = data.revisiones.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      data.revisiones[idx] = { ...data.revisiones[idx], ...datos, actualizadoEn: new Date().toISOString() };
-      writeProyectoData(p.id, data);
-      return data.revisiones[idx];
-    }
-  }
-  return null;
+  const r = getRevisionById(id);
+  if (!r) return null;
+  const fields = [];
+  const vals = [];
+
+  if (datos.estado !== undefined)              { fields.push('estado=?');               vals.push(datos.estado); }
+  if (datos.items !== undefined)               { fields.push('items=?');                vals.push(J(datos.items)); }
+  if (datos.observacionGeneral !== undefined)  { fields.push('observacion_general=?');  vals.push(datos.observacionGeneral); }
+  if (datos.fotos !== undefined)               { fields.push('fotos=?');                vals.push(J(datos.fotos)); }
+  if (datos.tecnicoId !== undefined)           { fields.push('tecnico_id=?');           vals.push(datos.tecnicoId); }
+  if (datos.tecnicoNombre !== undefined)       { fields.push('tecnico_nombre=?');       vals.push(datos.tecnicoNombre); }
+
+  if (fields.length === 0) return r;
+  fields.push('actualizado_en=?');
+  vals.push(now(), id);
+  db.prepare(`UPDATE revisiones SET ${fields.join(', ')} WHERE id=?`).run(...vals);
+  return getRevisionById(id);
 }
 
 function deleteRevision(id) {
-  const proyectos = getProyectos();
-  for (const p of proyectos) {
-    const data = readProyectoData(p.id);
-    const idx = data.revisiones.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      data.revisiones.splice(idx, 1);
-      writeProyectoData(p.id, data);
-      return true;
-    }
-  }
-  return false;
+  const info = db.prepare('DELETE FROM revisiones WHERE id = ?').run(id);
+  return info.changes > 0;
 }
 
-// ─── PLANTILLAS ─────────────────────────────────────────────
-function getPlantillas() { return readGlobal().plantillas; }
+// ─── PLANTILLAS ──────────────────────────────────────────────────────────────
+function getPlantillas() {
+  return db.prepare('SELECT * FROM plantillas ORDER BY creado_en ASC').all().map(rowToPlantilla);
+}
 
 function getPlantillaById(id) {
-  return readGlobal().plantillas.find(p => p.id === id) || null;
+  return rowToPlantilla(db.prepare('SELECT * FROM plantillas WHERE id = ?').get(id));
 }
 
 function createPlantilla(plantilla) {
-  const g = readGlobal();
-  g.plantillas.push(plantilla);
-  writeGlobal(g);
-  return plantilla;
+  db.prepare(
+    'INSERT INTO plantillas (id, nombre, descripcion, items, creado_en, actualizado_en) VALUES (?,?,?,?,?,?)'
+  ).run(plantilla.id, plantilla.nombre, plantilla.descripcion || '', J(plantilla.items), plantilla.creadoEn || now(), plantilla.actualizadoEn || now());
+  return getPlantillaById(plantilla.id);
 }
 
 function updatePlantilla(id, datos) {
-  const g = readGlobal();
-  const idx = g.plantillas.findIndex(p => p.id === id);
-  if (idx === -1) return null;
-  g.plantillas[idx] = { ...g.plantillas[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeGlobal(g);
-  return g.plantillas[idx];
+  const p = getPlantillaById(id);
+  if (!p) return null;
+  const fields = [];
+  const vals = [];
+  if (datos.nombre !== undefined)      { fields.push('nombre=?');      vals.push(datos.nombre); }
+  if (datos.descripcion !== undefined) { fields.push('descripcion=?'); vals.push(datos.descripcion); }
+  if (datos.items !== undefined)       { fields.push('items=?');       vals.push(J(datos.items)); }
+  if (fields.length === 0) return p;
+  fields.push('actualizado_en=?');
+  vals.push(now(), id);
+  db.prepare(`UPDATE plantillas SET ${fields.join(', ')} WHERE id=?`).run(...vals);
+  return getPlantillaById(id);
 }
 
 function deletePlantilla(id) {
-  const g = readGlobal();
-  const idx = g.plantillas.findIndex(p => p.id === id);
-  if (idx === -1) return false;
-  g.plantillas.splice(idx, 1);
-  writeGlobal(g);
-  return true;
+  const info = db.prepare('DELETE FROM plantillas WHERE id = ?').run(id);
+  return info.changes > 0;
 }
 
-// ─── TECNICOS ───────────────────────────────────────────────
-function getTecnicos() { return readGlobal().tecnicos; }
+// ─── TÉCNICOS ────────────────────────────────────────────────────────────────
+function getTecnicos() {
+  return db.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all().map(rowToTecnico);
+}
 
 function getTecnicoById(id) {
-  return readGlobal().tecnicos.find(t => t.id === id) || null;
+  return rowToTecnico(db.prepare('SELECT * FROM tecnicos WHERE id = ?').get(id));
 }
 
 function createTecnico(tecnico) {
-  const g = readGlobal();
-  g.tecnicos.push(tecnico);
-  writeGlobal(g);
-  return tecnico;
+  db.prepare('INSERT INTO tecnicos (id, nombre, email, creado_en) VALUES (?,?,?,?)')
+    .run(tecnico.id, tecnico.nombre, tecnico.email || '', tecnico.creadoEn || now());
+  return getTecnicoById(tecnico.id);
 }
 
 function updateTecnico(id, datos) {
-  const g = readGlobal();
-  const idx = g.tecnicos.findIndex(t => t.id === id);
-  if (idx === -1) return null;
-  g.tecnicos[idx] = { ...g.tecnicos[idx], ...datos, actualizadoEn: new Date().toISOString() };
-  writeGlobal(g);
-  return g.tecnicos[idx];
+  const t = getTecnicoById(id);
+  if (!t) return null;
+  const nombre = datos.nombre ?? t.nombre;
+  const email  = datos.email  ?? t.email;
+  db.prepare('UPDATE tecnicos SET nombre=?, email=? WHERE id=?').run(nombre, email, id);
+  return getTecnicoById(id);
 }
 
 function deleteTecnico(id) {
-  const g = readGlobal();
-  const idx = g.tecnicos.findIndex(t => t.id === id);
-  if (idx === -1) return false;
-  g.tecnicos.splice(idx, 1);
-  writeGlobal(g);
-  return true;
+  const info = db.prepare('DELETE FROM tecnicos WHERE id = ?').run(id);
+  return info.changes > 0;
 }
 
-// ─── EXPORTAR / IMPORTAR PROYECTO ───────────────────────────
-
-// Recorre el valor recursivamente y recoge los subpaths de /api/archivos/{subpath}
-// El subpath puede ser "{hash}" (global) o "{proyectoId}/{hash}" (por proyecto).
+// ─── EXPORTAR / IMPORTAR PROYECTO ────────────────────────────────────────────
 function collectArchivoHashes(val, subpaths = new Set()) {
   if (Array.isArray(val)) { val.forEach(item => collectArchivoHashes(item, subpaths)); }
   else if (val && typeof val === 'object') {
@@ -286,40 +285,55 @@ function collectArchivoHashes(val, subpaths = new Set()) {
 function exportarProyecto(proyectoId) {
   const proyecto = getProyectoById(proyectoId);
   if (!proyecto) return null;
-  const data = readProyectoData(proyectoId);
+  const equipos = getEquiposByProyecto(proyectoId);
+  const revisiones = getRevisionesByProyecto(proyectoId);
   const tecnicos = getTecnicos();
-  return { proyecto, equipos: data.equipos, revisiones: data.revisiones, tecnicos };
+  return { proyecto, equipos, revisiones, tecnicos };
 }
 
 function importarProyecto(datos) {
-  const { v4: uuidv4 } = require('uuid');
   const { proyecto, equipos, revisiones, tecnicos } = datos;
-
-  const nuevoProyectoId = uuidv4();
-  const nuevoProyecto = {
-    ...proyecto,
-    id: nuevoProyectoId,
-    creadoEn: new Date().toISOString(),
-    actualizadoEn: new Date().toISOString()
+  const nuevoId = uuidv4();
+  const nuevo = {
+    id: nuevoId, nombre: proyecto.nombre, descripcion: proyecto.descripcion || '',
+    creadoEn: now(), actualizadoEn: now(),
   };
-  const g = readGlobal();
-  g.proyectos.push(nuevoProyecto);
+  createProyecto(nuevo);
 
-  const tecnicosExistentes = g.tecnicos.map(t => t.email);
-  (tecnicos || []).forEach(t => {
+  const tecnicosExistentes = getTecnicos().map(t => t.email);
+  for (const t of (tecnicos || [])) {
     if (!tecnicosExistentes.includes(t.email)) {
-      g.tecnicos.push({ ...t, id: uuidv4(), creadoEn: new Date().toISOString() });
+      createTecnico({ ...t, id: uuidv4(), creadoEn: now() });
+      tecnicosExistentes.push(t.email);
     }
-  });
-  writeGlobal(g);
+  }
 
-  writeProyectoData(nuevoProyectoId, {
-    equipos: (equipos || []).map(e => ({ ...e, proyectoIds: [nuevoProyectoId] })),
-    revisiones: revisiones || []
-  });
+  for (const e of (equipos || [])) {
+    createEquipo({ ...e, id: uuidv4(), proyectoIds: [nuevoId], creadoEn: now(), actualizadoEn: now() });
+  }
 
-  return nuevoProyecto;
+  return nuevo;
 }
+
+// ─── Compatibilidad legado: acceso directo (usado en pocas rutas) ─────────────
+function readGlobal() {
+  return {
+    proyectos: getProyectos(),
+    tecnicos: getTecnicos(),
+    plantillas: getPlantillas(),
+  };
+}
+
+function writeGlobal() { /* no-op — datos en SQLite */ }
+
+function readProyectoData(proyectoId) {
+  return {
+    equipos: getEquiposByProyecto(proyectoId),
+    revisiones: getRevisionesByProyecto(proyectoId),
+  };
+}
+
+function writeProyectoData() { /* no-op */ }
 
 module.exports = {
   getProyectos, getProyectoById, createProyecto, updateProyecto, deleteProyecto,

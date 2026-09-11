@@ -1,48 +1,39 @@
 # ── Etapa 1: Compilar el frontend ────────────────────────────
-FROM node:20-alpine AS build-frontend
+FROM node:22-alpine AS build-frontend
 
 WORKDIR /app/frontend
 
-# Copiar dependencias e instalar
 COPY frontend/package*.json ./
 RUN npm ci
 
-# Copiar fuentes y compilar
 COPY frontend/ ./
 RUN npx ng build --configuration=production
 
 # ── Etapa 2: Servidor de producción ──────────────────────────
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app/backend
 
-# Copiar dependencias del backend e instalar
+# Sin dependencias nativas: node:sqlite viene integrado en Node 22+
 COPY backend/package*.json ./
 RUN npm ci --omit=dev
 
-# Copiar código del backend
 COPY backend/ ./
 
-# Copiar frontend compilado desde etapa 1
 COPY --from=build-frontend /app/frontend/dist/frontend/browser ./public
 
-# Actualizar index.js para servir desde /public en vez de ../frontend/dist
 RUN sed -i "s|../frontend/dist/frontend/browser|./public|g" index.js
 
-# Crear directorio de datos
 RUN mkdir -p ./data/proyectos
 
-# Exponer puerto (valor por defecto; el real se define por .env / docker-compose)
 EXPOSE 3010
 
-# Variables de entorno por defecto
 ENV PORT=3010
 ENV NODE_ENV=production
-ENV DATA_SOURCE=json
+ENV DATA_SOURCE=sqlite
 ENV APP_NAME=TechCheck
 ENV APP_VERSION=1.0.0
 
-# Iniciar
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 

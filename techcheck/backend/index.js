@@ -3,6 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+// Migrar datos JSON → SQLite si la DB está vacía
+const { migrar } = require('./db/migrate');
+migrar();
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
