@@ -1,0 +1,93 @@
+<div class="p-6 max-w-2xl">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Exportar / Importar</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Descarga datos en CSV o JSON, o restaura desde un backup</p>
+  </div>
+
+  <!-- Exportar CSV -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
+    <h2 class="text-sm font-semibold text-gray-700 mb-1">Exportar revisiones a CSV</h2>
+    <p class="text-xs text-gray-400 mb-4">Genera un archivo CSV con todas las revisiones e ítems. Compatible con Excel.</p>
+
+    <div class="flex gap-3 flex-wrap">
+      <div class="flex-1 min-w-48">
+        <select [(ngModel)]="proyectoSeleccionado"
+                [ngModel]="proyectoSeleccionado()"
+                (ngModelChange)="proyectoSeleccionado.set($event)"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <option value="">Todos los proyectos</option>
+          @for (p of proyectos(); track p.id) {
+            <option [value]="p.id">{{ p.nombre }}</option>
+          }
+        </select>
+      </div>
+      <button (click)="exportarCSV()"
+              class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap">
+        ⬇ Descargar CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Exportar JSON -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
+    <h2 class="text-sm font-semibold text-gray-700 mb-1">Exportar backup completo (JSON)</h2>
+    <p class="text-xs text-gray-400 mb-4">Descarga todos los datos del sistema: proyectos, equipos, plantillas, técnicos, revisiones y tareas programadas.</p>
+    <button (click)="exportarJSON()"
+            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+      ⬇ Descargar JSON
+    </button>
+  </div>
+
+  <!-- Importar JSON -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+    <h2 class="text-sm font-semibold text-gray-700 mb-1">Importar backup (JSON)</h2>
+    <p class="text-xs text-gray-400 mb-4">
+      Carga un JSON exportado previamente. Solo inserta registros nuevos — no sobreescribe los existentes.
+    </p>
+
+    <label class="flex items-center gap-3 cursor-pointer">
+      <span class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+        {{ importando() ? 'Importando...' : '⬆ Seleccionar archivo JSON' }}
+      </span>
+      <input type="file" accept=".json" class="hidden" [disabled]="importando()" (change)="onFileChange($event)">
+    </label>
+
+    @if (importError()) {
+      <div class="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+        {{ importError() }}
+      </div>
+    }
+
+    @if (importResult(); as r) {
+      <div class="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+        <p class="text-sm font-medium text-green-700 mb-2">Importación completada</p>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.proyectos }}</div>
+            <div class="text-xs text-green-600">proyectos</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.equipos }}</div>
+            <div class="text-xs text-green-600">equipos</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.plantillas }}</div>
+            <div class="text-xs text-green-600">plantillas</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.tecnicos }}</div>
+            <div class="text-xs text-green-600">técnicos</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.revisiones }}</div>
+            <div class="text-xs text-green-600">revisiones</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.tareas }}</div>
+            <div class="text-xs text-green-600">tareas</div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
