@@ -7,6 +7,10 @@ const path = require('path');
 const { migrar } = require('./db/migrate');
 migrar();
 
+// Iniciar cron de tareas programadas
+const { iniciarCron } = require('./jobs/tareas-cron');
+iniciarCron();
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -24,6 +28,7 @@ app.use('/api/plantillas', require('./routes/plantillas'));
 app.use('/api/tecnicos',   require('./routes/tecnicos'));
 app.use('/api/revisiones', require('./routes/revisiones'));
 app.use('/api/archivos',   require('./routes/archivos'));
+app.use('/api/tareas',     require('./routes/tareas'));
 
 app.get('/api/health', (req, res) => {
   res.json({

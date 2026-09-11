@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm } from '../models/models';
+import { ApiResponse, Tecnico, TecnicoForm, Revision, RevisionForm, TareaProgramada, TareaForm } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class TecnicosService {
@@ -53,6 +53,32 @@ export class RevisionesService {
   }
 
   delete(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class TareasService {
+  private url = `${environment.apiUrl}/tareas`;
+  constructor(private http: HttpClient) {}
+
+  getAll(): Observable<TareaProgramada[]> {
+    return this.http.get<ApiResponse<TareaProgramada[]>>(this.url).pipe(map(r => r.data || []));
+  }
+
+  create(form: TareaForm): Observable<TareaProgramada> {
+    return this.http.post<ApiResponse<TareaProgramada>>(this.url, form).pipe(map(r => r.data!));
+  }
+
+  update(id: string, form: Partial<TareaForm>): Observable<TareaProgramada> {
+    return this.http.put<ApiResponse<TareaProgramada>>(`${this.url}/${id}`, form).pipe(map(r => r.data!));
+  }
+
+  toggle(id: string): Observable<TareaProgramada> {
+    return this.http.put<ApiResponse<TareaProgramada>>(`${this.url}/${id}/toggle`, {}).pipe(map(r => r.data!));
+  }
+
+  deleteTarea(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${id}`).pipe(map(() => void 0));
   }
 }

@@ -64,6 +64,18 @@ db.exec(`
     actualizado_en      TEXT NOT NULL,
     FOREIGN KEY (equipo_id) REFERENCES equipos(id)
   );
+
+  CREATE TABLE IF NOT EXISTS tareas_programadas (
+    id          TEXT PRIMARY KEY,
+    equipo_id   TEXT NOT NULL,
+    tecnico_id  TEXT,
+    hora        TEXT NOT NULL,
+    dias_semana TEXT NOT NULL DEFAULT '[]',
+    activa      INTEGER NOT NULL DEFAULT 1,
+    fecha_fin   TEXT,
+    creado_en   TEXT NOT NULL,
+    FOREIGN KEY (equipo_id) REFERENCES equipos(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;

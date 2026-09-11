@@ -129,6 +129,29 @@ export interface RevisionForm {
   fotos: (ArchivoAdjunto | string)[];
 }
 
+// ─── TAREAS PROGRAMADAS ──────────────────────────────────────
+export interface TareaProgramada {
+  id: string;
+  equipoId: string;
+  equipoNombre: string;
+  tecnicoId: string | null;
+  tecnicoNombre: string;
+  hora: string;        // HH:MM
+  diasSemana: number[]; // 0=domingo … 6=sábado
+  activa: boolean;
+  fechaFin: string | null;
+  creadoEn: string;
+}
+
+export interface TareaForm {
+  equipoId: string;
+  tecnicoId?: string;
+  hora: string;
+  diasSemana: number[];
+  activa?: boolean;
+  fechaFin?: string;
+}
+
 // ─── API RESPONSE ────────────────────────────────────────────
 export interface ApiResponse<T> {
   success: boolean;

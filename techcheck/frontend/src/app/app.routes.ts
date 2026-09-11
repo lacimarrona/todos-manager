@@ -22,5 +22,9 @@ export const routes: Routes = [
     path: 'tecnicos',
     loadChildren: () => import('./modules/tecnicos/tecnicos.routes').then(m => m.TECNICOS_ROUTES)
   },
+  {
+    path: 'tareas',
+    loadComponent: () => import('./modules/tareas/tareas.component').then(m => m.TareasComponent)
+  },
   { path: '**', redirectTo: 'equipos' }
 ];
