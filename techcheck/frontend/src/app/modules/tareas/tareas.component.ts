@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TareaProgramada, TareaForm, Equipo, Tecnico, Proyecto } from '../../core/models/models';
@@ -31,9 +31,12 @@ export class TareasComponent implements OnInit {
   form: TareaForm = this.formVacio();
   diasSeleccionados = signal<Set<number>>(new Set());
 
+  // Dropdown personalizado de equipo
+  dropdownAbierto = signal(false);
+  gruposColapsados = signal<Set<string>>(new Set());
+
   readonly DIAS = DIAS;
 
-  // Equipos agrupados por proyecto para el selector
   readonly gruposEquipos = computed(() => {
     const todos = this.equipos();
     const proyectos = this.proyectos();
@@ -43,6 +46,12 @@ export class TareasComponent implements OnInit {
         equipos: todos.filter(e => e.proyectoIds && e.proyectoIds.includes(p.id))
       }))
       .filter(g => g.equipos.length > 0);
+  });
+
+  readonly equipoSeleccionadoNombre = computed(() => {
+    if (!this.form.equipoId) return '';
+    const e = this.equipos().find(eq => eq.id === this.form.equipoId);
+    return e?.nombre || '';
   });
 
   constructor(
@@ -57,6 +66,29 @@ export class TareasComponent implements OnInit {
     this.equiposSvc.getAll().subscribe({ next: d => this.equipos.set(d) });
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
     this.proyectosSvc.getAll().subscribe({ next: d => this.proyectos.set(d) });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(e: Event) {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.equipo-dropdown')) {
+      this.dropdownAbierto.set(false);
+    }
+  }
+
+  toggleDropdown() {
+    this.dropdownAbierto.update(v => !v);
+  }
+
+  toggleGrupo(proyectoId: string) {
+    const s = new Set(this.gruposColapsados());
+    if (s.has(proyectoId)) s.delete(proyectoId); else s.add(proyectoId);
+    this.gruposColapsados.set(s);
+  }
+
+  seleccionarEquipo(equipoId: string) {
+    this.form.equipoId = equipoId;
+    this.dropdownAbierto.set(false);
   }
 
   cargar() {
@@ -74,6 +106,8 @@ export class TareasComponent implements OnInit {
   abrirModalNueva() {
     this.form = this.formVacio();
     this.diasSeleccionados.set(new Set());
+    this.gruposColapsados.set(new Set());
+    this.dropdownAbierto.set(false);
     this.modoEdicion.set(false);
     this.editandoId = '';
     this.error.set('');
@@ -90,6 +124,8 @@ export class TareasComponent implements OnInit {
       fechaFin: t.fechaFin || '',
     };
     this.diasSeleccionados.set(new Set(t.diasSemana));
+    this.gruposColapsados.set(new Set());
+    this.dropdownAbierto.set(false);
     this.editandoId = t.id;
     this.modoEdicion.set(true);
     this.error.set('');

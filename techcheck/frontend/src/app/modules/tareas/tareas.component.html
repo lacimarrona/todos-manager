@@ -77,16 +77,51 @@
     <div class="p-6 space-y-4">
       <div *ngIf="error()" class="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">{{ error() }}</div>
 
-      <div>
+      <div class="equipo-dropdown relative">
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Equipo *</label>
-        <select [(ngModel)]="form.equipoId" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">— Selecciona un equipo —</option>
-          <ng-container *ngFor="let grupo of gruposEquipos(); trackBy: trackByProyectoId">
-            <optgroup [label]="'📁 ' + grupo.proyecto.nombre">
-              <option *ngFor="let e of grupo.equipos" [value]="e.id">{{ e.nombre }}</option>
-            </optgroup>
-          </ng-container>
-        </select>
+        <!-- Trigger -->
+        <button type="button" (click)="toggleDropdown()"
+          class="w-full flex items-center justify-between px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-left transition-colors"
+          [ngClass]="dropdownAbierto() ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200'">
+          <span [ngClass]="form.equipoId ? 'text-gray-800' : 'text-gray-400'">
+            {{ equipoSeleccionadoNombre() || '— Selecciona un equipo —' }}
+          </span>
+          <span class="text-gray-400 text-xs ml-2">{{ dropdownAbierto() ? '▲' : '▼' }}</span>
+        </button>
+
+        <!-- Panel desplegable -->
+        <div *ngIf="dropdownAbierto()"
+          class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+          <!-- Sin selección -->
+          <button type="button" (click)="seleccionarEquipo('')"
+            class="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100">
+            — Sin selección —
+          </button>
+
+          <!-- Grupos colapsables -->
+          <div *ngFor="let grupo of gruposEquipos(); trackBy: trackByProyectoId">
+            <!-- Cabecera del proyecto -->
+            <button type="button" (click)="toggleGrupo(grupo.proyecto.id)"
+              class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 border-b border-gray-100 transition-colors uppercase tracking-wide">
+              <span class="flex items-center gap-1.5">
+                <span>{{ gruposColapsados().has(grupo.proyecto.id) ? '▶' : '▼' }}</span>
+                <span>📁 {{ grupo.proyecto.nombre }}</span>
+                <span class="text-gray-400 font-normal normal-case tracking-normal">({{ grupo.equipos.length }})</span>
+              </span>
+            </button>
+            <!-- Equipos del proyecto -->
+            <ng-container *ngIf="!gruposColapsados().has(grupo.proyecto.id)">
+              <button type="button" *ngFor="let e of grupo.equipos" (click)="seleccionarEquipo(e.id)"
+                class="w-full text-left px-4 py-2 text-sm transition-colors border-b border-gray-50 last:border-0"
+                [ngClass]="form.equipoId === e.id
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'">
+                {{ e.nombre }}
+                <span *ngIf="e.descripcion" class="text-xs text-gray-400 ml-1">— {{ e.descripcion }}</span>
+              </button>
+            </ng-container>
+          </div>
+        </div>
       </div>
 
       <div>
