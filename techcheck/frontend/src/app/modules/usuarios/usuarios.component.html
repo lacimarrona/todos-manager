@@ -1,0 +1,594 @@
+<div class="p-6 max-w-5xl mx-auto">
+  <!-- Cabecera -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Usuarios</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gestión de acceso al sistema</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="abrirCambiarPwd()"
+        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      >
+        🔑 Mi contraseña
+      </button>
+      <button
+        (click)="abrirNuevo()"
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+      >
+        + {{ auth.isAdmin() ? 'Nuevo usuario' : 'Nuevo técnico' }}
+      </button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+      {{ error() }}
+    </div>
+  }
+
+  @if (cargando()) {
+    <div class="text-center py-12 text-gray-400">Cargando...</div>
+  } @else {
+    <!-- Tabla de usuarios -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-700/50">
+          <tr>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Nombre</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Usuario</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Rol</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Estado</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          @for (u of usuarios(); track u.id) {
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                {{ u.nombre }}
+                @if (u.id === auth.user()?.id) {
+                  <span class="ml-2 text-xs text-blue-500">(tú)</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ u.username }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                  [class]="u.rol === 'admin'
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                    : u.rol === 'project_admin'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'">
+                  {{ u.rol === 'admin' ? 'Administrador' : u.rol === 'project_admin' ? 'Admin Proyectos' : 'Técnico' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <button
+                  (click)="toggleActivo(u)"
+                  [title]="u.activo ? 'Clic para desactivar' : 'Clic para activar'"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors"
+                  [class]="u.activo
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 hover:bg-red-100 hover:text-red-700'
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-green-100 hover:text-green-700'"
+                >
+                  {{ u.activo ? 'Activo' : 'Inactivo' }}
+                </button>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <!-- Solo admin: gestionar proyectos de un project_admin -->
+                  @if (auth.isAdmin() && u.rol === 'project_admin') {
+                    <button (click)="abrirAsignaciones(u)"
+                      class="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Gestionar proyectos asignados">📁</button>
+                  }
+                  <!-- Admin + project_admin: horario de técnicos -->
+                  @if (auth.canManage() && u.rol === 'tecnico') {
+                    <button (click)="abrirHorario(u)"
+                      class="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Gestionar horario semanal de tareas">📅</button>
+                  }
+                  <!-- Solo admin: gestionar supervisores de un técnico -->
+                  @if (auth.isAdmin() && u.rol === 'tecnico') {
+                    <button (click)="abrirSupervisores(u)"
+                      class="p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Gestionar a qué administradores pertenece">👥</button>
+                  }
+                  <!-- Admin y project_admin: gestionar permisos especiales de técnicos -->
+                  @if (auth.canManage() && u.rol === 'tecnico') {
+                    <button (click)="abrirPermisosEspeciales(u)"
+                      class="p-1.5 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Gestionar permisos especiales">🔑</button>
+                  }
+                  <!-- Editar: admin puede editar cualquiera; project_admin solo sus técnicos -->
+                  @if (auth.isAdmin() || (auth.isProjectAdmin() && u.rol === 'tecnico')) {
+                    <button (click)="abrirEditar(u)"
+                      class="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Editar">✏️</button>
+                  }
+                  <!-- Solo admin: eliminar (no a sí mismo) -->
+                  @if (auth.isAdmin() && u.id !== auth.user()?.id) {
+                    <button (click)="eliminar(u)"
+                      class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Eliminar">🗑️</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No hay usuarios registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal crear/editar usuario -->
+@if (mostrarModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          {{ usuarioEditar ? 'Editar usuario' : 'Nuevo usuario' }}
+        </h2>
+        <button (click)="cerrarModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+          <input type="text" [(ngModel)]="form.nombre" placeholder="Nombre completo"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de usuario</label>
+          <input type="text" [(ngModel)]="form.username" placeholder="usuario123"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ usuarioEditar ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña' }}
+          </label>
+          <input type="password" [(ngModel)]="form.password" placeholder="Mínimo 8 caracteres"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol</label>
+          <select [(ngModel)]="form.rol" (change)="onRolChange()"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            @for (r of rolesDisponibles(); track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+
+        @if (usuarioEditar) {
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="activo" [(ngModel)]="form.activo"
+              class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+            <label for="activo" class="text-sm text-gray-700 dark:text-gray-300">Usuario activo</label>
+          </div>
+        }
+
+        <!-- Sección de proyectos (solo para técnicos) -->
+        @if (form.rol === 'tecnico') {
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Proyectos asignados</label>
+              <span class="text-xs text-gray-400">{{ permisosForm().size }} seleccionado(s)</span>
+            </div>
+
+            @if (cargandoProyectosForm()) {
+              <div class="text-xs text-gray-400 py-2">Cargando proyectos...</div>
+            } @else if (proyectosForm().length === 0) {
+              <div class="text-xs text-gray-400 py-2 italic">No hay proyectos creados aún.</div>
+            } @else {
+              <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                @for (p of proyectosForm(); track p.id) {
+                  <div class="rounded-lg border transition-colors"
+                    [class]="permisosForm().has(p.id)
+                      ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-600'">
+                    <label class="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <input type="checkbox"
+                        [checked]="permisosForm().has(p.id)"
+                        (change)="toggleProyectoForm(p.id)"
+                        class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0" />
+                      <span class="text-sm font-medium text-gray-900 dark:text-white flex-1">{{ p.nombre }}</span>
+                    </label>
+                    @if (permisosForm().has(p.id)) {
+                      <div class="px-3 pb-2 pl-10">
+                        <select
+                          [value]="permisosForm().get(p.id)"
+                          (change)="setNivelForm(p.id, $any($event.target).value)"
+                          class="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                          <option value="ver">Todas las tareas del proyecto</option>
+                          <option value="asignados">Solo las tareas asignadas a él</option>
+                        </select>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (formError()) {
+          <p class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+            {{ formError() }}
+          </p>
+        }
+      </div>
+
+      <div class="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="cerrarModal()"
+          class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button (click)="guardar()" [disabled]="guardando()"
+          class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors">
+          {{ guardando() ? 'Guardando...' : (usuarioEditar ? 'Guardar cambios' : 'Crear usuario') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal asignar proyectos a project_admin -->
+@if (mostrarAsignaciones()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Proyectos asignados</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ usuarioAsignaciones?.nombre }}</p>
+        </div>
+        <button (click)="mostrarAsignaciones.set(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5">
+        @if (cargandoAsignaciones()) {
+          <div class="text-center py-8 text-gray-400">Cargando proyectos...</div>
+        } @else if (todosProyectos().length === 0) {
+          <div class="text-center py-8 text-gray-400">No hay proyectos creados</div>
+        } @else {
+          <ul class="space-y-2">
+            @for (p of todosProyectos(); track p.id) {
+              <li>
+                <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                  [class]="proyectosAsignados().has(p.id)
+                    ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30'">
+                  <input type="checkbox"
+                    [checked]="proyectosAsignados().has(p.id)"
+                    (change)="toggleProyecto(p.id)"
+                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ p.nombre }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="p-5 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="mostrarAsignaciones.set(false)"
+          class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+          Listo
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal horario semanal del técnico -->
+@if (mostrarHorario()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[88vh] flex flex-col">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Horario semanal</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ usuarioHorario?.nombre }}</p>
+        </div>
+        <button (click)="mostrarHorario.set(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <!-- Day tabs -->
+      <div class="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-x-auto">
+        @for (d of DIAS; track d.num) {
+          <button
+            (click)="diaActivo.set(d.num); mostrarFormTarea.set(false)"
+            class="flex-1 min-w-[64px] py-3 text-sm font-medium transition-colors relative"
+            [class]="diaActivo() === d.num
+              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'">
+            {{ d.label }}
+            @if (tareasCount(d.num) > 0) {
+              <span class="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs rounded-full"
+                [class]="diaActivo() === d.num ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
+                {{ tareasCount(d.num) }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 overflow-y-auto p-5">
+        @if (cargandoHorario()) {
+          <div class="text-center py-10 text-gray-400">Cargando horario...</div>
+        } @else {
+          <!-- Task list for selected day -->
+          <div class="space-y-2 mb-4">
+            @for (t of tareasDeDia(diaActivo()); track t.id) {
+              <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ t.equipoNombre }}</span>
+                    @if (t.hora) {
+                      <span class="text-sm font-mono text-blue-600 dark:text-blue-400 flex-shrink-0">{{ t.hora }}</span>
+                    }
+                  </div>
+                  <!-- Days coverage -->
+                  <div class="flex gap-1 mt-1.5 flex-wrap">
+                    @for (d of DIAS; track d.num) {
+                      <span class="text-xs px-1.5 py-0.5 rounded font-medium"
+                        [class]="t.diasSemana.includes(d.num)
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                          : 'bg-gray-100 text-gray-300 dark:bg-gray-700 dark:text-gray-600'">
+                        {{ d.label }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <button (click)="desasignarTarea(t)"
+                  class="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title="Quitar esta tarea">
+                  🗑️
+                </button>
+              </div>
+            } @empty {
+              <div class="text-center py-6 text-gray-400 text-sm">
+                No hay tareas para el {{ DIAS[diaActivo()].full.toLowerCase() }}
+              </div>
+            }
+          </div>
+
+          <!-- Add task form -->
+          @if (!mostrarFormTarea()) {
+            @if (equiposDisponibles().length > 0) {
+              <button
+                (click)="abrirFormTarea()"
+                class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full justify-center">
+                + Agregar tarea para el {{ DIAS[diaActivo()].full.toLowerCase() }}
+              </button>
+            } @else {
+              <div class="text-center py-4 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 px-4">
+                Primero asigna proyectos a este técnico para poder agregar tareas.
+              </div>
+            }
+          } @else {
+            <!-- Inline form -->
+            <div class="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/10 space-y-3">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Nueva tarea</p>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Equipo</label>
+                <select [(ngModel)]="ntEquipoId"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Selecciona un equipo...</option>
+                  @for (e of equiposDisponibles(); track e.id) {
+                    <option [value]="e.id">{{ e.proyectoNombre }} → {{ e.nombre }}</option>
+                  }
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Hora <span class="font-normal text-gray-400">(opcional)</span>
+                </label>
+                <input type="time" [(ngModel)]="ntHora"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">También aplica en</label>
+                <div class="flex gap-2 flex-wrap">
+                  @for (d of DIAS; track d.num) {
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox"
+                        [checked]="ntDias().has(d.num)"
+                        (change)="toggleDiaNT(d.num)"
+                        class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span class="text-xs font-medium"
+                        [class]="ntDias().has(d.num) ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'">
+                        {{ d.label }}
+                      </span>
+                    </label>
+                  }
+                </div>
+              </div>
+
+              @if (errorTarea()) {
+                <p class="text-xs text-red-600 dark:text-red-400">{{ errorTarea() }}</p>
+              }
+
+              <div class="flex gap-2 pt-1">
+                <button (click)="mostrarFormTarea.set(false)"
+                  class="flex-1 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                  Cancelar
+                </button>
+                <button (click)="agregarTarea()" [disabled]="guardandoTarea()"
+                  class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors">
+                  {{ guardandoTarea() ? 'Agregando...' : 'Agregar' }}
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- Modal gestionar supervisores de un técnico (admin) -->
+@if (mostrarSupervisores()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Administradores asignados</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Técnico: <span class="font-medium text-gray-700 dark:text-gray-300">{{ usuarioSupervisores?.nombre }}</span>
+          </p>
+        </div>
+        <button (click)="mostrarSupervisores.set(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5">
+        @if (cargandoSupervisores()) {
+          <div class="text-center py-8 text-gray-400">Cargando...</div>
+        } @else if (todosProjectAdmins().length === 0) {
+          <div class="text-center py-8 text-gray-400 text-sm">
+            No hay administradores de proyectos creados.<br>
+            Crea uno primero desde esta misma pantalla.
+          </div>
+        } @else {
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            Selecciona a qué administradores de proyectos pertenece este técnico. Solo esos administradores podrán verlo y asignarlo.
+          </p>
+          <ul class="space-y-2">
+            @for (pa of todosProjectAdmins(); track pa.id) {
+              <li>
+                <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                  [class]="supervisoresAsignados().has(pa.id)
+                    ? 'border-purple-300 bg-purple-50 dark:border-purple-700 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30'">
+                  <input type="checkbox"
+                    [checked]="supervisoresAsignados().has(pa.id)"
+                    (change)="toggleSupervisor(pa.id)"
+                    class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500" />
+                  <div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ pa.nombre }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ pa.username }}</div>
+                  </div>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="p-5 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="mostrarSupervisores.set(false)"
+          class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+          Listo
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal permisos especiales de técnico -->
+@if (mostrarPermisosEspeciales()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Permisos especiales</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Técnico: <span class="font-medium text-gray-700 dark:text-gray-300">{{ usuarioPermisos?.nombre }}</span>
+          </p>
+        </div>
+        <button (click)="mostrarPermisosEspeciales.set(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <div class="p-5 space-y-3">
+        @for (p of PERMISOS_ESPECIALES; track p.id) {
+          <label class="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all"
+            [class]="permisosEspecialesActuales().has(p.id)
+              ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600'
+              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30'">
+            <input type="checkbox"
+              [checked]="permisosEspecialesActuales().has(p.id)"
+              (change)="togglePermisoEspecial(p.id)"
+              class="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500 mt-0.5" />
+            <div>
+              <div class="text-sm font-medium text-gray-900 dark:text-white">{{ p.label }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ p.desc }}</div>
+            </div>
+          </label>
+        }
+      </div>
+
+      <div class="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="mostrarPermisosEspeciales.set(false)"
+          class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button (click)="guardarPermisosEspeciales()" [disabled]="guardandoPermisos()"
+          class="flex-1 px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-lg transition-colors">
+          {{ guardandoPermisos() ? 'Guardando...' : 'Guardar permisos' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal cambiar contraseña propia -->
+@if (mostrarCambiarPwd()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Cambiar mi contraseña</h2>
+        <button (click)="mostrarCambiarPwd.set(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña actual</label>
+          <input type="password" [(ngModel)]="pwdActual"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nueva contraseña</label>
+          <input type="password" [(ngModel)]="pwdNuevo" placeholder="Mínimo 8 caracteres"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar nueva contraseña</label>
+          <input type="password" [(ngModel)]="pwdConfirm"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        @if (pwdError()) {
+          <p class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{{ pwdError() }}</p>
+        }
+        @if (pwdOk()) {
+          <p class="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">{{ pwdOk() }}</p>
+        }
+      </div>
+
+      <div class="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+        <button (click)="mostrarCambiarPwd.set(false)"
+          class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button (click)="guardarPwd()" [disabled]="guardandoPwd()"
+          class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors">
+          {{ guardandoPwd() ? 'Guardando...' : 'Cambiar contraseña' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

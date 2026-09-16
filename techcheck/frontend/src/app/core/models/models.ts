@@ -11,7 +11,7 @@ export interface Proyecto {
 
 export interface ProyectoPermiso {
   tecnicoId: string;
-  nivel: 'ver' | 'editar';
+  nivel: 'ver' | 'asignados' | 'editar';
 }
 
 export interface ProyectoForm {
@@ -73,6 +73,8 @@ export interface Plantilla {
   nombre: string;
   descripcion: string;
   items: ItemPlantilla[];
+  creadoPor?: string | null;
+  proyectoIds?: string[];
   creadoEn: string;
   actualizadoEn: string;
 }
@@ -81,6 +83,7 @@ export interface PlantillaForm {
   nombre: string;
   descripcion: string;
   items: ItemPlantilla[];
+  proyectoIds?: string[];
 }
 
 // ─── TÉCNICO ────────────────────────────────────────────────
@@ -203,6 +206,44 @@ export interface GrupoElemento {
   activo: boolean;
   creadoEn: string;
   elementos: ElementoGrupo[];
+}
+
+// ─── USUARIO ─────────────────────────────────────────────────
+export type UserRol = 'admin' | 'project_admin' | 'tecnico';
+
+export interface Usuario {
+  id: string;
+  nombre: string;
+  username: string;
+  rol: UserRol;
+  activo: boolean;
+  creadoEn: string;
+}
+
+export interface UsuarioForm {
+  nombre: string;
+  username: string;
+  password?: string;
+  rol: UserRol;
+  activo?: boolean;
+}
+
+export interface ProyectoAsignacion {
+  id: string;
+  nombre: string;
+  username: string;
+  rol: UserRol;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: { id: string; nombre: string; username: string; rol: UserRol };
 }
 
 // ─── API RESPONSE ────────────────────────────────────────────

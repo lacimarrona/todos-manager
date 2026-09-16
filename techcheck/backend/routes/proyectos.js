@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const JSZip = require('jszip');
 const db = require('../db/dataAccess');
+const { soloAdmin, adminOProjectAdmin, verificarAccesoProyecto, inyectarProyectosVisibles } = require('../middleware/proyectoAccess');
 
 const ARCHIVOS_DIR = path.join(__dirname, '../data/archivos');
 const ARCHIVOS_INDEX_PATH = path.join(ARCHIVOS_DIR, 'index.json');
@@ -21,9 +22,13 @@ function writeArchivoIndex(idx) {
   fs.writeFileSync(ARCHIVOS_INDEX_PATH, JSON.stringify(idx, null, 2));
 }
 
-router.get('/', (req, res) => {
+// GET / — admin ve todos, project_admin solo los asignados, tecnico ve todos (solo lectura)
+router.get('/', inyectarProyectosVisibles, (req, res) => {
   try {
-    const proyectos = db.getProyectos();
+    let proyectos = db.getProyectos();
+    if (req.proyectosIds !== null) {
+      proyectos = proyectos.filter(p => req.proyectosIds.includes(p.id));
+    }
     const equipos = db.getEquipos();
     const enriquecidos = proyectos.map(p => ({
       ...p,
@@ -40,7 +45,16 @@ router.get('/:id/equipos', (req, res) => {
   try {
     const proyecto = db.getProyectoById(req.params.id);
     if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
-    const equipos = db.getEquipos().filter(e => e.proyectoIds && e.proyectoIds.includes(req.params.id));
+    let equipos = db.getEquipos().filter(e => e.proyectoIds && e.proyectoIds.includes(req.params.id));
+
+    // Técnico con nivel 'asignados': solo ve los equipos que le fueron asignados
+    if (req.user.rol === 'tecnico') {
+      const permisos = db.getPermisosDelTecnico(req.user.sub);
+      const permiso = permisos.find(p => p.proyectoId === req.params.id);
+      if (permiso && permiso.nivel === 'asignados') {
+        equipos = equipos.filter(e => e.tecnicoAsignadoId === req.user.sub);
+      }
+    }
     const revisiones = db.getRevisiones();
     const enriquecidos = equipos.map(e => {
       const revsEquipo = revisiones.filter(r => r.equipoId === e.id);
@@ -106,7 +120,8 @@ router.get('/:id', (req, res) => {
   }
 });
 
-router.post('/', (req, res) => {
+// POST / — solo admin crea proyectos
+router.post('/', soloAdmin, (req, res) => {
   try {
     const { nombre, descripcion } = req.body;
     if (!nombre) return res.status(400).json({ success: false, message: 'El nombre es requerido' });
@@ -123,7 +138,8 @@ router.post('/', (req, res) => {
   }
 });
 
-router.put('/:id', (req, res) => {
+// PUT /:id — admin o project_admin asignado a ese proyecto
+router.put('/:id', verificarAccesoProyecto, adminOProjectAdmin, (req, res) => {
   try {
     const { nombre, descripcion } = req.body;
     const actualizado = db.updateProyecto(req.params.id, { nombre, descripcion });
@@ -134,11 +150,57 @@ router.put('/:id', (req, res) => {
   }
 });
 
-router.delete('/:id', (req, res) => {
+// DELETE /:id — solo admin
+router.delete('/:id', soloAdmin, (req, res) => {
   try {
     const eliminado = db.deleteProyecto(req.params.id);
     if (!eliminado) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
     res.json({ success: true, message: 'Proyecto eliminado' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── ASIGNACIONES DE PROJECT_ADMIN A PROYECTOS (solo admin) ─────────────────
+
+// GET /:id/asignaciones — lista de usuarios (project_admin) asignados al proyecto
+router.get('/:id/asignaciones', soloAdmin, (req, res) => {
+  try {
+    const proyecto = db.getProyectoById(req.params.id);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    const usuarioIds = db.getUsuariosDeProyecto(req.params.id);
+    const usuarios = usuarioIds
+      .map(uid => db.getUsuarioById(uid))
+      .filter(Boolean)
+      .map(u => ({ id: u.id, nombre: u.nombre, username: u.username, rol: u.rol }));
+    res.json({ success: true, data: usuarios });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /:id/asignaciones — asignar un usuario (project_admin) al proyecto
+router.post('/:id/asignaciones', soloAdmin, (req, res) => {
+  try {
+    const { usuarioId } = req.body;
+    if (!usuarioId) return res.status(400).json({ success: false, message: 'usuarioId es requerido' });
+    const usuario = db.getUsuarioById(usuarioId);
+    if (!usuario) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    if (usuario.rol !== 'project_admin') {
+      return res.status(400).json({ success: false, message: 'Solo se pueden asignar usuarios con rol administrador de proyectos' });
+    }
+    db.asignarProyecto(req.params.id, usuarioId);
+    res.json({ success: true, message: 'Usuario asignado al proyecto' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /:id/asignaciones/:usuarioId — desasignar
+router.delete('/:id/asignaciones/:usuarioId', soloAdmin, (req, res) => {
+  try {
+    db.desasignarProyecto(req.params.id, req.params.usuarioId);
+    res.json({ success: true, message: 'Usuario desasignado del proyecto' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

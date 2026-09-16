@@ -132,13 +132,18 @@ export class EquiposListComponent implements OnInit {
 
   ngOnInit() {
     this.cargarProyectos();
-    this.plantillasSvc.getAll().subscribe({ next: d => this.plantillas.set(d) });
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
     // Si se volvió desde historial con ?proyecto=id, entrar directamente al proyecto
     const proyectoId = this.route.snapshot.queryParamMap.get('proyecto');
     if (proyectoId) {
       this.proyectosSvc.getById(proyectoId).subscribe({
-        next: p => { this.proyectoActual.set(p); this.vista.set('equipos'); this.filtroActivo.set('pendiente'); this.cargarEquiposFiltrados('pendiente'); }
+        next: p => {
+          this.proyectoActual.set(p);
+          this.vista.set('equipos');
+          this.filtroActivo.set('pendiente');
+          this.cargarEquiposFiltrados('pendiente');
+          this.plantillasSvc.getByProyecto(p.id).subscribe({ next: d => this.plantillas.set(d) });
+        }
       });
     }
   }
@@ -162,12 +167,14 @@ export class EquiposListComponent implements OnInit {
     this.vista.set('equipos');
     this.filtroActivo.set('pendiente');
     this.cargarEquiposFiltrados('pendiente');
+    this.plantillasSvc.getByProyecto(proyecto.id).subscribe({ next: d => this.plantillas.set(d) });
   }
 
   volverAProyectos() {
     this.vista.set('proyectos');
     this.proyectoActual.set(null);
     this.equipos.set([]);
+    this.plantillas.set([]);
     this.cargarProyectos();
   }
 
@@ -997,13 +1004,13 @@ export class EquiposListComponent implements OnInit {
     this.mostrarModalPermisos.set(true);
   }
 
-  getPermisoNivel(tecnicoId: string): 'ver' | 'editar' | '' {
+  getPermisoNivel(tecnicoId: string): 'ver' | 'asignados' | 'editar' | '' {
     return this.permisosLista().find(p => p.tecnicoId === tecnicoId)?.nivel ?? '';
   }
 
-  setPermisoNivel(tecnicoId: string, nivel: 'ver' | 'editar' | '') {
+  setPermisoNivel(tecnicoId: string, nivel: 'ver' | 'asignados' | 'editar' | '') {
     const lista = this.permisosLista().filter(p => p.tecnicoId !== tecnicoId);
-    if (nivel) lista.push({ tecnicoId, nivel: nivel as 'ver' | 'editar' });
+    if (nivel) lista.push({ tecnicoId, nivel: nivel as 'ver' | 'asignados' | 'editar' });
     this.permisosLista.set(lista);
   }
 

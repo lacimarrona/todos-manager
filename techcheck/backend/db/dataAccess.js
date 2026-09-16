@@ -13,12 +13,23 @@ function rowToProyecto(r) {
 
 function rowToTecnico(r) {
   if (!r) return null;
-  return { id: r.id, nombre: r.nombre, email: r.email, creadoEn: r.creado_en };
+  return { id: r.id, nombre: r.nombre, email: r.email || '', creadoEn: r.creado_en };
+}
+
+function rowToUsuario(r) {
+  if (!r) return null;
+  return {
+    id: r.id, nombre: r.nombre, email: r.email,
+    username: r.username || r.email || '',
+    passwordHash: r.password_hash,
+    rol: r.rol, activo: r.activo === 1,
+    creadoEn: r.creado_en,
+  };
 }
 
 function rowToPlantilla(r) {
   if (!r) return null;
-  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, items: P(r.items), creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
+  return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, items: P(r.items), creadoPor: r.creado_por || null, creadoEn: r.creado_en, actualizadoEn: r.actualizado_en };
 }
 
 function rowToEquipo(r) {
@@ -216,8 +227,8 @@ function getPlantillaById(id) {
 
 function createPlantilla(plantilla) {
   db.prepare(
-    'INSERT INTO plantillas (id, nombre, descripcion, items, creado_en, actualizado_en) VALUES (?,?,?,?,?,?)'
-  ).run(plantilla.id, plantilla.nombre, plantilla.descripcion || '', J(plantilla.items), plantilla.creadoEn || now(), plantilla.actualizadoEn || now());
+    'INSERT INTO plantillas (id, nombre, descripcion, items, creado_por, creado_en, actualizado_en) VALUES (?,?,?,?,?,?,?)'
+  ).run(plantilla.id, plantilla.nombre, plantilla.descripcion || '', J(plantilla.items), plantilla.creadoPor || null, plantilla.creadoEn || now(), plantilla.actualizadoEn || now());
   return getPlantillaById(plantilla.id);
 }
 
@@ -241,18 +252,18 @@ function deletePlantilla(id) {
   return info.changes > 0;
 }
 
-// ─── TÉCNICOS ────────────────────────────────────────────────────────────────
+// ─── TÉCNICOS (alias de usuarios con rol='tecnico') ──────────────────────────
 function getTecnicos() {
-  return db.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all().map(rowToTecnico);
+  return db.prepare("SELECT * FROM usuarios WHERE rol = 'tecnico' ORDER BY creado_en ASC").all().map(rowToTecnico);
 }
 
 function getTecnicoById(id) {
-  return rowToTecnico(db.prepare('SELECT * FROM tecnicos WHERE id = ?').get(id));
+  return rowToTecnico(db.prepare("SELECT * FROM usuarios WHERE id = ? AND rol = 'tecnico'").get(id));
 }
 
 function createTecnico(tecnico) {
-  db.prepare('INSERT INTO tecnicos (id, nombre, email, creado_en) VALUES (?,?,?,?)')
-    .run(tecnico.id, tecnico.nombre, tecnico.email || '', tecnico.creadoEn || now());
+  db.prepare('INSERT INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)')
+    .run(tecnico.id, tecnico.nombre, tecnico.email || '', tecnico.email || '', '', 'tecnico', 1, tecnico.creadoEn || now());
   return getTecnicoById(tecnico.id);
 }
 
@@ -261,13 +272,86 @@ function updateTecnico(id, datos) {
   if (!t) return null;
   const nombre = datos.nombre ?? t.nombre;
   const email  = datos.email  ?? t.email;
-  db.prepare('UPDATE tecnicos SET nombre=?, email=? WHERE id=?').run(nombre, email, id);
+  db.prepare('UPDATE usuarios SET nombre=?, email=? WHERE id=?').run(nombre, email, id);
   return getTecnicoById(id);
 }
 
 function deleteTecnico(id) {
-  const info = db.prepare('DELETE FROM tecnicos WHERE id = ?').run(id);
+  const info = db.prepare("DELETE FROM usuarios WHERE id = ? AND rol = 'tecnico'").run(id);
   return info.changes > 0;
+}
+
+// ─── USUARIOS ─────────────────────────────────────────────────────────────────
+function getUsuarios() {
+  return db.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all().map(rowToUsuario);
+}
+
+function getUsuarioById(id) {
+  return rowToUsuario(db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id));
+}
+
+function getUsuarioByEmail(email) {
+  return rowToUsuario(db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email));
+}
+
+function getUsuarioByUsername(username) {
+  return rowToUsuario(db.prepare('SELECT * FROM usuarios WHERE username = ?').get(username));
+}
+
+function createUsuario(u) {
+  db.prepare('INSERT INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)')
+    .run(u.id, u.nombre, u.email || '', u.username || u.email || '', u.passwordHash, u.rol, u.activo ? 1 : 0, u.creadoEn || now());
+  return getUsuarioById(u.id);
+}
+
+function updateUsuario(id, patch) {
+  const u = getUsuarioById(id);
+  if (!u) return null;
+  const fields = [];
+  const vals = [];
+  if (patch.nombre !== undefined)      { fields.push('nombre=?');        vals.push(patch.nombre); }
+  if (patch.email !== undefined)       { fields.push('email=?');         vals.push(patch.email); }
+  if (patch.username !== undefined)    { fields.push('username=?');      vals.push(patch.username); }
+  if (patch.rol !== undefined)         { fields.push('rol=?');           vals.push(patch.rol); }
+  if (patch.activo !== undefined)      { fields.push('activo=?');        vals.push(patch.activo ? 1 : 0); }
+  if (patch.passwordHash !== undefined){ fields.push('password_hash=?'); vals.push(patch.passwordHash); }
+  if (!fields.length) return u;
+  vals.push(id);
+  db.prepare(`UPDATE usuarios SET ${fields.join(', ')} WHERE id=?`).run(...vals);
+  return getUsuarioById(id);
+}
+
+function updateUsuarioPassword(id, passwordHash) {
+  db.prepare('UPDATE usuarios SET password_hash=? WHERE id=?').run(passwordHash, id);
+}
+
+function deleteUsuario(id) {
+  const info = db.prepare('DELETE FROM usuarios WHERE id = ?').run(id);
+  return info.changes > 0;
+}
+
+// ─── REFRESH TOKENS ───────────────────────────────────────────────────────────
+function createRefreshToken(data) {
+  db.prepare('INSERT INTO refresh_tokens (id, usuario_id, token_hash, expires_at, creado_en) VALUES (?,?,?,?,?)')
+    .run(data.id, data.usuarioId, data.tokenHash, data.expiresAt, now());
+}
+
+function getRefreshToken(tokenHash) {
+  const r = db.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ?').get(tokenHash);
+  if (!r) return null;
+  return { id: r.id, usuarioId: r.usuario_id, tokenHash: r.token_hash, expiresAt: r.expires_at };
+}
+
+function rotateRefreshToken(oldHash, newHash, newExpires) {
+  db.prepare('UPDATE refresh_tokens SET token_hash=?, expires_at=? WHERE token_hash=?').run(newHash, newExpires, oldHash);
+}
+
+function deleteRefreshToken(tokenHash) {
+  db.prepare('DELETE FROM refresh_tokens WHERE token_hash = ?').run(tokenHash);
+}
+
+function deleteRefreshTokensByUsuario(usuarioId) {
+  db.prepare('DELETE FROM refresh_tokens WHERE usuario_id = ?').run(usuarioId);
 }
 
 // ─── EXPORTAR / IMPORTAR PROYECTO ────────────────────────────────────────────
@@ -302,7 +386,7 @@ function importarProyecto(datos) {
 
   const tecnicosExistentes = getTecnicos().map(t => t.email);
   for (const t of (tecnicos || [])) {
-    if (!tecnicosExistentes.includes(t.email)) {
+    if (t.email && !tecnicosExistentes.includes(t.email)) {
       createTecnico({ ...t, id: uuidv4(), creadoEn: now() });
       tecnicosExistentes.push(t.email);
     }
@@ -403,7 +487,8 @@ function deleteTarea(id) {
 
 // ── Permisos de proyecto ──────────────────────────────────────
 function getPermisosProyecto(proyectoId) {
-  return db.prepare('SELECT tecnico_id, nivel FROM proyecto_permisos WHERE proyecto_id = ?').all(proyectoId)
+  return db.prepare('SELECT tecnico_id, nivel FROM proyecto_permisos WHERE proyecto_id = ?')
+    .all(proyectoId)
     .map(r => ({ tecnicoId: r.tecnico_id, nivel: r.nivel }));
 }
 
@@ -417,14 +502,200 @@ function setPermisosProyecto(proyectoId, restringido, permisos) {
   return { restringido, permisos };
 }
 
+// ─── TAREAS Y EQUIPOS POR TÉCNICO ────────────────────────────────────────────
+function getTareasDeTecnico(tecnicoId) {
+  return db.prepare('SELECT * FROM tareas_programadas WHERE tecnico_id = ? ORDER BY hora ASC')
+    .all(tecnicoId).map(rowToTarea);
+}
+
+// Todas las tareas de los equipos de un proyecto
+function getTareasDeProyecto(proyectoId) {
+  const equipoIds = db.prepare('SELECT id FROM equipos WHERE proyecto_id = ? AND archivado = 0')
+    .all(proyectoId).map(r => r.id);
+  if (!equipoIds.length) return [];
+  const ph = equipoIds.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM tareas_programadas WHERE equipo_id IN (${ph}) ORDER BY hora ASC`)
+    .all(...equipoIds).map(rowToTarea);
+}
+
+// Tareas asignadas a un técnico específicamente dentro de un proyecto
+function getTareasDeTecnicoEnProyecto(tecnicoId, proyectoId) {
+  const equipoIds = db.prepare('SELECT id FROM equipos WHERE proyecto_id = ? AND archivado = 0')
+    .all(proyectoId).map(r => r.id);
+  if (!equipoIds.length) return [];
+  const ph = equipoIds.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM tareas_programadas WHERE tecnico_id = ? AND equipo_id IN (${ph}) ORDER BY hora ASC`)
+    .all(tecnicoId, ...equipoIds).map(rowToTarea);
+}
+
+function getEquiposDelTecnico(tecnicoId) {
+  const proyectoIds = db.prepare('SELECT proyecto_id FROM proyecto_permisos WHERE tecnico_id = ?')
+    .all(tecnicoId).map(r => r.proyecto_id);
+  if (!proyectoIds.length) return [];
+  const ph = proyectoIds.map(() => '?').join(',');
+  const equipos = db.prepare(`SELECT e.*, p.nombre as proyecto_nombre FROM equipos e JOIN proyectos p ON p.id = e.proyecto_id WHERE e.proyecto_id IN (${ph}) AND e.archivado = 0 ORDER BY p.nombre, e.nombre`).all(...proyectoIds);
+  return equipos.map(r => ({ ...rowToEquipo(r), proyectoNombre: r.proyecto_nombre }));
+}
+
+// ─── PERMISOS DEL TÉCNICO (desde la perspectiva del técnico) ─────────────────
+function getPermisosDelTecnico(tecnicoId) {
+  return db.prepare('SELECT proyecto_id, nivel FROM proyecto_permisos WHERE tecnico_id = ?')
+    .all(tecnicoId)
+    .map(r => ({ proyectoId: r.proyecto_id, nivel: r.nivel }));
+}
+
+// nivel: 'ver' = todas las tareas del proyecto, 'asignados' = solo las asignadas explícitamente
+// proyectosScope: si se pasa, solo modifica los permisos de esos proyectos (no toca otros proyectos del técnico)
+function setPermisosDelTecnico(tecnicoId, permisos, proyectosScope = null) {
+  if (proyectosScope !== null) {
+    if (!proyectosScope.length) return;
+    const ph = proyectosScope.map(() => '?').join(',');
+    db.prepare(`DELETE FROM proyecto_permisos WHERE tecnico_id = ? AND proyecto_id IN (${ph})`).run(tecnicoId, ...proyectosScope);
+  } else {
+    db.prepare('DELETE FROM proyecto_permisos WHERE tecnico_id = ?').run(tecnicoId);
+  }
+  const insert = db.prepare('INSERT INTO proyecto_permisos (proyecto_id, tecnico_id, nivel) VALUES (?,?,?)');
+  for (const p of (permisos || [])) {
+    insert.run(p.proyectoId, tecnicoId, p.nivel || 'asignados');
+  }
+}
+
+// ─── ASIGNACIONES DE PROYECTOS (project_admin) ───────────────────────────────
+function getProyectosDeUsuario(usuarioId) {
+  const ids = db.prepare('SELECT proyecto_id FROM proyecto_asignaciones WHERE usuario_id = ?').all(usuarioId).map(r => r.proyecto_id);
+  if (!ids.length) return [];
+  const ph = ids.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM proyectos WHERE id IN (${ph})`).all(...ids).map(rowToProyecto);
+}
+
+function getUsuariosDeProyecto(proyectoId) {
+  return db.prepare('SELECT usuario_id FROM proyecto_asignaciones WHERE proyecto_id = ?').all(proyectoId).map(r => r.usuario_id);
+}
+
+function asignarProyecto(proyectoId, usuarioId) {
+  db.prepare('INSERT OR IGNORE INTO proyecto_asignaciones (proyecto_id, usuario_id) VALUES (?,?)').run(proyectoId, usuarioId);
+}
+
+function desasignarProyecto(proyectoId, usuarioId) {
+  db.prepare('DELETE FROM proyecto_asignaciones WHERE proyecto_id = ? AND usuario_id = ?').run(proyectoId, usuarioId);
+}
+
+function tieneAccesoAProyecto(usuarioId, proyectoId) {
+  const r = db.prepare('SELECT 1 FROM proyecto_asignaciones WHERE proyecto_id = ? AND usuario_id = ?').get(proyectoId, usuarioId);
+  return !!r;
+}
+
+// ─── Técnico con permiso elevado en proyecto (asignado por project_admin) ─────
+function getPermisosElevadosTecnico(usuarioId) {
+  return db.prepare("SELECT proyecto_id FROM proyecto_permisos WHERE tecnico_id = ? AND nivel = 'editar'").all(usuarioId).map(r => r.proyecto_id);
+}
+
+// ─── TECNICO ↔ SUPERVISOR (project_admin) ─────────────────────────────────────
+function getSupervisoresDelTecnico(tecnicoId) {
+  const rows = db.prepare(
+    "SELECT u.* FROM usuarios u JOIN tecnico_supervisores ts ON ts.supervisor_id = u.id WHERE ts.tecnico_id = ?"
+  ).all(tecnicoId);
+  return rows.map(rowToUsuario);
+}
+
+function getTecnicosDelSupervisor(supervisorId) {
+  const rows = db.prepare(
+    "SELECT u.* FROM usuarios u JOIN tecnico_supervisores ts ON ts.tecnico_id = u.id WHERE ts.supervisor_id = ?"
+  ).all(supervisorId);
+  return rows.map(rowToUsuario);
+}
+
+function asignarTecnicoASupervisor(tecnicoId, supervisorId) {
+  db.prepare('INSERT OR IGNORE INTO tecnico_supervisores (tecnico_id, supervisor_id) VALUES (?,?)').run(tecnicoId, supervisorId);
+}
+
+function desasignarTecnicoASupervisor(tecnicoId, supervisorId) {
+  db.prepare('DELETE FROM tecnico_supervisores WHERE tecnico_id = ? AND supervisor_id = ?').run(tecnicoId, supervisorId);
+}
+
+// ─── PLANTILLA ↔ PROYECTOS ───────────────────────────────────────────────────
+function getProyectosDePlantilla(plantillaId) {
+  return db.prepare('SELECT proyecto_id FROM plantilla_proyectos WHERE plantilla_id = ?')
+    .all(plantillaId).map(r => r.proyecto_id);
+}
+
+function setProyectosDePlantilla(plantillaId, proyectoIds) {
+  db.prepare('DELETE FROM plantilla_proyectos WHERE plantilla_id = ?').run(plantillaId);
+  const insert = db.prepare('INSERT OR IGNORE INTO plantilla_proyectos (plantilla_id, proyecto_id) VALUES (?,?)');
+  for (const id of (proyectoIds || [])) {
+    insert.run(plantillaId, id);
+  }
+}
+
+// Plantillas asociadas a un proyecto específico
+function getPlantillasDeProyecto(proyectoId) {
+  const ids = db.prepare('SELECT plantilla_id FROM plantilla_proyectos WHERE proyecto_id = ?')
+    .all(proyectoId).map(r => r.plantilla_id);
+  if (!ids.length) return [];
+  const ph = ids.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM plantillas WHERE id IN (${ph}) ORDER BY nombre ASC`).all(...ids).map(rowToPlantilla);
+}
+
+// Agrega proyectoIds a cada plantilla (eficiente: una sola query extra)
+function augmentarPlantillasConProyectos(plantillas) {
+  if (!plantillas.length) return plantillas;
+  const ids = plantillas.map(p => p.id);
+  const ph = ids.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT plantilla_id, proyecto_id FROM plantilla_proyectos WHERE plantilla_id IN (${ph})`).all(...ids);
+  const map = {};
+  for (const r of rows) {
+    if (!map[r.plantilla_id]) map[r.plantilla_id] = [];
+    map[r.plantilla_id].push(r.proyecto_id);
+  }
+  return plantillas.map(p => ({ ...p, proyectoIds: map[p.id] || [] }));
+}
+
+// Plantillas visibles para un project_admin (solo las de sus proyectos)
+function getPlantillasParaProyectos(proyectoIds) {
+  if (!proyectoIds.length) return [];
+  const ph = proyectoIds.map(() => '?').join(',');
+  const ids = db.prepare(`SELECT DISTINCT plantilla_id FROM plantilla_proyectos WHERE proyecto_id IN (${ph})`)
+    .all(...proyectoIds).map(r => r.plantilla_id);
+  if (!ids.length) return [];
+  const ph2 = ids.map(() => '?').join(',');
+  return db.prepare(`SELECT * FROM plantillas WHERE id IN (${ph2}) ORDER BY nombre ASC`).all(...ids).map(rowToPlantilla);
+}
+
+// ─── Permisos especiales de técnicos ──────────────────────────────────────────
+function getPermisosEspeciales(usuarioId) {
+  return db.prepare('SELECT permiso FROM usuario_permisos WHERE usuario_id = ?')
+    .all(usuarioId).map(r => r.permiso);
+}
+function setPermisosEspeciales(usuarioId, permisos) {
+  db.prepare('DELETE FROM usuario_permisos WHERE usuario_id = ?').run(usuarioId);
+  const insert = db.prepare('INSERT OR IGNORE INTO usuario_permisos (usuario_id, permiso) VALUES (?,?)');
+  const validos = ['editar_plantillas', 'eliminar_plantillas', 'asignar_tareas'];
+  for (const p of (permisos || [])) {
+    if (validos.includes(p)) insert.run(usuarioId, p);
+  }
+}
+function tienePemisoEspecial(usuarioId, permiso) {
+  return !!db.prepare('SELECT 1 FROM usuario_permisos WHERE usuario_id = ? AND permiso = ?').get(usuarioId, permiso);
+}
+
 module.exports = {
   getProyectos, getProyectoById, createProyecto, updateProyecto, deleteProyecto,
   getEquipos, getEquipoById, getEquiposByProyecto, createEquipo, updateEquipo, deleteEquipo,
   getPlantillas, getPlantillaById, createPlantilla, updatePlantilla, deletePlantilla,
   getTecnicos, getTecnicoById, createTecnico, updateTecnico, deleteTecnico,
+  getUsuarios, getUsuarioById, getUsuarioByEmail, getUsuarioByUsername, createUsuario, updateUsuario, updateUsuarioPassword, deleteUsuario,
+  createRefreshToken, getRefreshToken, rotateRefreshToken, deleteRefreshToken, deleteRefreshTokensByUsuario,
   getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,
   exportarProyecto, importarProyecto, collectArchivoHashes,
   readGlobal, writeGlobal, readProyectoData, writeProyectoData,
   getTareas, getTareaById, getTareasActivas, createTarea, updateTarea, deleteTarea,
   getPermisosProyecto, setPermisosProyecto,
+  getProyectosDeUsuario, getUsuariosDeProyecto, asignarProyecto, desasignarProyecto, tieneAccesoAProyecto,
+  getPermisosElevadosTecnico,
+  getSupervisoresDelTecnico, getTecnicosDelSupervisor, asignarTecnicoASupervisor, desasignarTecnicoASupervisor,
+  getPermisosDelTecnico, setPermisosDelTecnico,
+  getTareasDeTecnico, getTareasDeProyecto, getTareasDeTecnicoEnProyecto, getEquiposDelTecnico,
+  getProyectosDePlantilla, setProyectosDePlantilla, getPlantillasDeProyecto, getPlantillasParaProyectos,
+  augmentarPlantillasConProyectos,
+  getPermisosEspeciales, setPermisosEspeciales, tienePemisoEspecial,
 };

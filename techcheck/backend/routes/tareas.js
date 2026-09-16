@@ -6,7 +6,26 @@ const db = require('../db/dataAccess');
 // GET /api/tareas
 router.get('/', (req, res) => {
   try {
-    res.json({ success: true, data: db.getTareas() });
+    if (req.user.rol !== 'tecnico') {
+      return res.json({ success: true, data: db.getTareas() });
+    }
+
+    const permisos = db.getPermisosDelTecnico(req.user.sub);
+    if (!permisos.length) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const vistas = new Map();
+    for (const permiso of permisos) {
+      const lista = permiso.nivel === 'ver'
+        ? db.getTareasDeProyecto(permiso.proyectoId)
+        : db.getTareasDeTecnicoEnProyecto(req.user.sub, permiso.proyectoId);
+      for (const t of lista) {
+        if (!vistas.has(t.id)) vistas.set(t.id, t);
+      }
+    }
+
+    res.json({ success: true, data: [...vistas.values()] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -26,9 +45,12 @@ router.get('/:id', (req, res) => {
 // POST /api/tareas
 router.post('/', (req, res) => {
   try {
+    // técnico necesita permiso especial asignar_tareas
+    if (req.user.rol === 'tecnico' && !db.tienePemisoEspecial(req.user.sub, 'asignar_tareas')) {
+      return res.status(403).json({ success: false, message: 'Sin permiso para programar tareas' });
+    }
     const { equipoId, tecnicoId, hora, diasSemana, activa, fechaFin } = req.body;
     if (!equipoId) return res.status(400).json({ success: false, message: 'equipoId es requerido' });
-    if (!hora) return res.status(400).json({ success: false, message: 'hora es requerida (HH:MM)' });
     if (!diasSemana || !diasSemana.length) return res.status(400).json({ success: false, message: 'diasSemana es requerido' });
 
     const equipo = db.getEquipoById(equipoId);
@@ -38,7 +60,7 @@ router.post('/', (req, res) => {
       id: uuidv4(),
       equipoId,
       tecnicoId: tecnicoId || null,
-      hora,
+      hora: hora || '',
       diasSemana,
       activa: activa !== false,
       fechaFin: fechaFin || null,

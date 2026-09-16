@@ -28,6 +28,25 @@ db.exec(`
     creado_en TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS usuarios (
+    id            TEXT PRIMARY KEY,
+    nombre        TEXT NOT NULL,
+    email         TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL DEFAULT '',
+    rol           TEXT NOT NULL DEFAULT 'tecnico',
+    activo        INTEGER NOT NULL DEFAULT 1,
+    creado_en     TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id          TEXT PRIMARY KEY,
+    usuario_id  TEXT NOT NULL,
+    token_hash  TEXT NOT NULL UNIQUE,
+    expires_at  TEXT NOT NULL,
+    creado_en   TEXT NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS plantillas (
     id             TEXT PRIMARY KEY,
     nombre         TEXT NOT NULL,
@@ -85,6 +104,30 @@ db.exec(`
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS proyecto_asignaciones (
+    proyecto_id TEXT NOT NULL,
+    usuario_id  TEXT NOT NULL,
+    PRIMARY KEY (proyecto_id, usuario_id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id)  REFERENCES usuarios(id)  ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS tecnico_supervisores (
+    tecnico_id    TEXT NOT NULL,
+    supervisor_id TEXT NOT NULL,
+    PRIMARY KEY (tecnico_id, supervisor_id),
+    FOREIGN KEY (tecnico_id)    REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (supervisor_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS plantilla_proyectos (
+    plantilla_id TEXT NOT NULL,
+    proyecto_id  TEXT NOT NULL,
+    PRIMARY KEY (plantilla_id, proyecto_id),
+    FOREIGN KEY (plantilla_id) REFERENCES plantillas(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id)  REFERENCES proyectos(id)  ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS grupos_elemento (
     id          TEXT PRIMARY KEY,
     nombre      TEXT NOT NULL,
@@ -102,9 +145,51 @@ db.exec(`
     creado_en   TEXT NOT NULL,
     FOREIGN KEY (grupo_id) REFERENCES grupos_elemento(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS usuario_permisos (
+    usuario_id TEXT NOT NULL,
+    permiso    TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, permiso),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
 `);
 
 // Agregar columna restringido a proyectos si no existe (migración incremental)
 try { db.exec('ALTER TABLE proyectos ADD COLUMN restringido INTEGER NOT NULL DEFAULT 0'); } catch {}
+// Agregar creado_por a plantillas (quién la creó, para control de acceso por rol)
+try { db.exec('ALTER TABLE plantillas ADD COLUMN creado_por TEXT'); } catch {}
+// Migración: username como campo de inicio de sesión (reemplaza email)
+try { db.exec('ALTER TABLE usuarios ADD COLUMN username TEXT'); } catch {}
+db.exec(`UPDATE usuarios SET username = email WHERE username IS NULL OR username = ''`);
+// Asignar usernames únicos a técnicos sin email (usando su id como fallback)
+db.prepare("UPDATE usuarios SET username = 'tecnico_' || substr(id, 1, 8) WHERE username IS NULL OR username = ''").run();
+try { db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username)'); } catch {}
+
+// Migrar técnicos existentes → usuarios con rol 'tecnico' (solo si usuarios está vacía)
+const countUsuarios = db.prepare('SELECT COUNT(*) as c FROM usuarios').get();
+if (countUsuarios.c === 0) {
+  const tecnicos = db.prepare('SELECT * FROM tecnicos').all();
+  const insertUsuario = db.prepare(
+    'INSERT OR IGNORE INTO usuarios (id, nombre, email, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?)'
+  );
+  for (const t of tecnicos) {
+    insertUsuario.run(t.id, t.nombre, t.email || '', '', 'tecnico', 1, t.creado_en);
+  }
+}
+
+// Crear admin por defecto si no existe ningún admin
+// El script scripts/crear-admin.js puede usarse para crear/recrear el admin
+const adminExiste = db.prepare("SELECT COUNT(*) as c FROM usuarios WHERE rol = 'admin'").get();
+if (adminExiste.c === 0) {
+  const { v4: uuidv4 } = require('uuid');
+  const bcrypt = require('bcryptjs');
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin1234';
+  const hash = bcrypt.hashSync(adminPassword, 12);
+  db.prepare(
+    'INSERT OR IGNORE INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)'
+  ).run(uuidv4(), 'Administrador', 'admin@techcheck.local', 'admin', hash, 'admin', 1, new Date().toISOString());
+  console.log(`  Admin creado: usuario=admin / ${adminPassword}`);
+  console.log(`  ⚠ Cambia la contraseña en el primer inicio de sesión`);
+}
 
 module.exports = db;
