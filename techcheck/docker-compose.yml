@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: julianquintero/techcheck:1.5.1
     container_name: techcheck
     restart: unless-stopped
     ports:
