@@ -1,8 +1,7 @@
-# TechCheck — Documentación Técnica Completa
+# TechCheck — Documentación Técnica
 
-**Versión:** 1.0.0  
-**Fecha:** Junio 2026  
-**Entorno:** Windows 11 — Zona Franca Rionegro, Antioquia, Colombia
+**Versión:** 1.5.0  
+**Fecha:** Septiembre 2026
 
 ---
 
@@ -11,47 +10,25 @@
 1. [Descripción General](#1-descripción-general)
 2. [Arquitectura del Sistema](#2-arquitectura-del-sistema)
 3. [Estructura de Directorios](#3-estructura-de-directorios)
-4. [Backend — Node.js / Express](#4-backend--nodejs--express)
-   - 4.1 [Configuración (.env)](#41-configuración-env)
-   - 4.2 [Punto de Entrada (index.js)](#42-punto-de-entrada-indexjs) 
-   - 4.3 [Capa de Acceso a Datos (dataAccess.js)](#43-capa-de-acceso-a-datos-dataaccessjs)
-   - 4.4 [Rutas API](#44-rutas-api)
-   - 4.5 [Almacenamiento de Datos](#45-almacenamiento-de-datos)
-5. [Frontend — Angular 19](#5-frontend--angular-19)
-   - 5.1 [Módulos y Componentes](#51-módulos-y-componentes)
-   - 5.2 [Modelos de Datos (TypeScript)](#52-modelos-de-datos-typescript)
-   - 5.3 [Servicios](#53-servicios)
-   - 5.4 [Rutas del Frontend](#54-rutas-del-frontend)
-6. [Funcionalidades del Sistema](#6-funcionalidades-del-sistema)
-   - 6.1 [Gestión de Proyectos](#61-gestión-de-proyectos)
-   - 6.2 [Gestión de Equipos](#62-gestión-de-equipos)
-   - 6.3 [Sistema de Revisiones](#63-sistema-de-revisiones)
-   - 6.4 [Plantillas de Checklist](#64-plantillas-de-checklist)
-   - 6.5 [Gestión de Técnicos](#65-gestión-de-técnicos)
-   - 6.6 [Historial de Revisiones](#66-historial-de-revisiones)
-   - 6.7 [Exportar e Importar Proyectos](#67-exportar-e-importar-proyectos)
-7. [API REST — Referencia Completa](#7-api-rest--referencia-completa)
-8. [Flujo de Datos](#8-flujo-de-datos)
-9. [Instalación y Despliegue](#9-instalación-y-despliegue)
-10. [Variables de Entorno](#10-variables-de-entorno)
-11. [Guía de Uso](#11-guía-de-uso)
-12. [Hoja de Ruta (Roadmap)](#12-hoja-de-ruta-roadmap)
+4. [Base de Datos — SQLite](#4-base-de-datos--sqlite)
+5. [Backend — Node.js / Express](#5-backend--nodejs--express)
+   - 5.1 [Middleware](#51-middleware)
+   - 5.2 [Rutas API](#52-rutas-api)
+6. [Frontend — Angular 19](#6-frontend--angular-19)
+   - 6.1 [Módulos y Componentes](#61-módulos-y-componentes)
+   - 6.2 [Modelos de Datos (TypeScript)](#62-modelos-de-datos-typescript)
+7. [Sistema de Roles y Permisos](#7-sistema-de-roles-y-permisos)
+8. [Autenticación](#8-autenticación)
+9. [Funcionalidades del Sistema](#9-funcionalidades-del-sistema)
+10. [Instalación y Despliegue](#10-instalación-y-despliegue)
+11. [Docker](#11-docker)
+12. [Variables de Entorno](#12-variables-de-entorno)
 
 ---
 
 ## 1. Descripción General
 
-**TechCheck** es una aplicación web de gestión de checklists de mantenimiento técnico desarrollada para uso interno en entornos empresariales, especialmente orientada a equipos de soporte de TI.
-
-### Propósito
-
-Permite a los equipos técnicos:
-- Organizar el mantenimiento de equipos por proyectos
-- Crear checklists reutilizables (plantillas)
-- Registrar revisiones con evidencia fotográfica y archivos adjuntos
-- Hacer seguimiento del estado de mantenimiento (Pendiente, En proceso, Terminado)
-- Asignar técnicos a equipos
-- Exportar e importar proyectos completos
+**TechCheck** es una aplicación web de gestión de checklists de mantenimiento técnico orientada a equipos de soporte de TI. Permite organizar proyectos, asignar técnicos, registrar revisiones con evidencia fotográfica y controlar el acceso por roles.
 
 ### Tecnologías
 
@@ -60,9 +37,9 @@ Permite a los equipos técnicos:
 | Frontend | Angular | 19 |
 | Estilos | Tailwind CSS | 3.x |
 | Backend | Node.js + Express | 4.x |
-| Almacenamiento | JSON local (archivos) | — |
-| ID único | UUID v4 | 9.x |
-| Configuración | dotenv | 16.x |
+| Base de datos | SQLite (`node:sqlite` nativo) | Node ≥ 22 |
+| Autenticación | JWT + bcrypt | — |
+| Contenedor | Docker | — |
 
 ---
 
@@ -73,37 +50,38 @@ Permite a los equipos técnicos:
 │                   NAVEGADOR WEB                      │
 │                                                      │
 │   Angular 19 (SPA)                                   │
-│   ├── Módulo Proyectos / Equipos                     │
-│   ├── Módulo Plantillas                              │
-│   ├── Módulo Técnicos                                │
-│   └── Módulo Historial                               │
+│   ├── Auth (login)                                   │
+│   ├── Dashboard                                      │
+│   ├── Proyectos / Equipos                            │
+│   ├── Revisiones / Historial                         │
+│   ├── Plantillas                                     │
+│   ├── Usuarios                                       │
+│   ├── Tareas programadas                             │
+│   ├── Catálogos                                      │
+│   └── Exportar / Importar                            │
 └────────────────────┬────────────────────────────────┘
-                     │ HTTP / REST API
-                     │ puerto configurable (.env)
+                     │ HTTP / REST API  (Authorization: Bearer <token>)
 ┌────────────────────▼────────────────────────────────┐
 │              BACKEND — Express.js                    │
 │                                                      │
-│   /api/proyectos   /api/equipos   /api/revisiones    │
-│   /api/plantillas  /api/tecnicos                     │
+│   Middleware: auth · roles · proyectoAccess          │
 │                                                      │
-│   dataAccess.js (capa de abstracción de datos)       │
+│   /api/auth        /api/usuarios    /api/proyectos   │
+│   /api/equipos     /api/revisiones  /api/plantillas  │
+│   /api/tareas      /api/catalogos   /api/dashboard   │
+│   /api/archivos    /api/exportar                     │
+│                                                      │
+│   db/dataAccess.js  (abstracción de la BD)           │
 └────────────────────┬────────────────────────────────┘
-                     │ fs (sistema de archivos)
+                     │ node:sqlite
 ┌────────────────────▼────────────────────────────────┐
-│              ALMACENAMIENTO JSON                     │
+│              SQLite — techcheck.db                   │
 │                                                      │
-│   data/global.json          ← proyectos, técnicos,  │
-│                                plantillas            │
-│   data/proyectos/           ← un archivo por        │
-│     {proyectoId}.json          proyecto              │
-│       ├── equipos[]                                  │
-│       └── revisiones[]                               │
+│   proyectos · equipos · revisiones · plantillas      │
+│   usuarios · refresh_tokens · proyecto_permisos      │
+│   tecnico_supervisores · tareas · catalogos          │
 └─────────────────────────────────────────────────────┘
 ```
-
-La arquitectura sigue un patrón **monolítico desacoplado**:
-- El frontend compilado es servido estáticamente por el mismo servidor Express
-- La capa `dataAccess.js` abstrae completamente el origen de datos, preparada para migración futura a PostgreSQL
 
 ---
 
@@ -111,174 +89,172 @@ La arquitectura sigue un patrón **monolítico desacoplado**:
 
 ```
 techcheck/
-├── start.bat                          ← Script de inicio Windows
+├── Dockerfile
+├── docker-compose.yml
 ├── backend/
-│   ├── .env                           ← Variables de entorno
-│   ├── index.js                       ← Servidor Express
+│   ├── index.js                   ← Servidor Express
 │   ├── package.json
 │   ├── data/
-│   │   ├── global.json                ← Proyectos, técnicos, plantillas
-│   │   └── proyectos/
-│   │       └── {uuid}.json            ← Equipos + revisiones por proyecto
+│   │   ├── techcheck.db           ← Base de datos SQLite
+│   │   └── archivos/              ← Archivos adjuntos (por hash SHA-256)
 │   ├── db/
-│   │   └── dataAccess.js              ← Capa de acceso a datos
+│   │   ├── sqlite.js              ← Inicialización y migraciones de la BD
+│   │   ├── dataAccess.js          ← Capa de acceso a datos
+│   │   └── migrate.js             ← Script de migración JSON → SQLite
+│   ├── middleware/
+│   │   ├── auth.js                ← Validación de JWT
+│   │   ├── roles.js               ← Control de acceso por rol
+│   │   └── proyectoAccess.js      ← Acceso a proyectos según rol
 │   └── routes/
+│       ├── auth.js
+│       ├── usuarios.js
 │       ├── proyectos.js
 │       ├── equipos.js
+│       ├── revisiones.js
 │       ├── plantillas.js
-│       ├── tecnicos.js
-│       └── revisiones.js
+│       ├── tareas.js
+│       ├── catalogos.js
+│       ├── dashboard.js
+│       ├── archivos.js
+│       └── exportar.js
 └── frontend/
     ├── angular.json
     ├── package.json
     ├── tailwind.config.js
-    ├── src/
-    │   ├── index.html                 ← Incluye XLSX CDN
-    │   ├── main.ts
-    │   ├── styles.scss
-    │   ├── environments/
-    │   │   ├── environment.ts
-    │   │   └── environment.prod.ts
-    │   └── app/
-    │       ├── app.ts                 ← Layout + sidebar
-    │       ├── app.routes.ts
-    │       ├── app.config.ts
-    │       ├── core/
-    │       │   ├── models/
-    │       │   │   └── models.ts      ← Interfaces TypeScript
-    │       │   └── services/
-    │       │       ├── proyectos.service.ts
-    │       │       ├── equipos.service.ts
-    │       │       ├── plantillas.service.ts
-    │       │       └── otros.services.ts
-    │       ├── shared/
-    │       │   └── done.pipe.ts       ← Pipe para contar ítems completados
-    │       └── modules/
-    │           ├── equipos/
-    │           ├── plantillas/
-    │           ├── tecnicos/
-    │           ├── historial/
-    │           └── revisiones/
-    └── dist/                          ← Build de producción (generado)
+    └── src/app/
+        ├── core/
+        │   ├── models/models.ts   ← Interfaces TypeScript
+        │   ├── services/          ← Servicios HTTP
+        │   └── guards/            ← Guardas de rutas
+        └── modules/
+            ├── auth/
+            ├── dashboard/
+            ├── equipos/
+            ├── revisiones/
+            ├── historial/
+            ├── plantillas/
+            ├── usuarios/
+            ├── tareas/
+            ├── catalogos/
+            └── exportar/
 ```
 
 ---
 
-## 4. Backend — Node.js / Express
+## 4. Base de Datos — SQLite
 
-### 4.1 Configuración (.env)
+La BD vive en `backend/data/techcheck.db` y se inicializa automáticamente al arrancar el servidor. Se usa el módulo nativo `node:sqlite` (disponible desde Node.js 22).
 
-```env
-# ─── SERVIDOR ───────────────────────────────────────────────
-PORT=3000
+### Tablas principales
 
-# ─── ALMACENAMIENTO ─────────────────────────────────────────
-# json = archivos locales (actual)
-# postgres = base de datos PostgreSQL (futuro)
-DATA_SOURCE=json
+| Tabla | Descripción |
+|-------|-------------|
+| `proyectos` | Proyectos de mantenimiento |
+| `equipos` | Dispositivos/activos dentro de un proyecto |
+| `revisiones` | Registros de revisiones realizadas sobre un equipo |
+| `plantillas` | Plantillas de checklist reutilizables |
+| `usuarios` | Todos los usuarios (admin, project_admin, técnico) |
+| `refresh_tokens` | Tokens de refresco para JWT (rotación automática) |
+| `proyecto_permisos` | Nivel de acceso de un técnico a un proyecto |
+| `tecnico_supervisores` | Relación técnico ↔ project_admin |
+| `tareas_programadas` | Revisiones recurrentes (por día/hora) |
+| `grupos_elementos` | Grupos de catálogos |
+| `elementos_grupo` | Ítems de un catálogo |
 
-# ─── BASE DE DATOS (para migración futura a PostgreSQL) ──────
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=techcheck
-DB_USER=postgres
-DB_PASSWORD=
+### Tabla `proyecto_permisos`
 
-# ─── SEGURIDAD (para autenticación futura) ───────────────────
-JWT_SECRET=techcheck_secret_key
-JWT_EXPIRES_IN=8h
+Controla qué técnicos tienen acceso a qué proyectos y con qué nivel:
 
-# ─── APLICACIÓN ─────────────────────────────────────────────
-APP_NAME=TechCheck
-APP_VERSION=1.0.0
-NODE_ENV=development
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `proyecto_id` | TEXT | ID del proyecto |
+| `tecnico_id` | TEXT | ID del técnico |
+| `nivel` | TEXT | `ver` · `asignados` · `editar` |
+
+**Niveles:**
+- `ver` — puede ver todos los equipos del proyecto (solo lectura)
+- `asignados` — solo ve los equipos que tiene asignados como `tecnicoAsignadoId`
+- `editar` — tiene permisos equivalentes a un project_admin en ese proyecto
+
+---
+
+## 5. Backend — Node.js / Express
+
+### 5.1 Middleware
+
+#### `auth.js`
+Valida el JWT enviado en el header `Authorization: Bearer <token>`. Añade `req.user = { sub, rol }` a la solicitud. Las rutas protegidas devuelven 401 si el token es inválido o ha expirado.
+
+#### `roles.js`
+Factory que recibe los roles permitidos y bloquea con 403 si el usuario no tiene el rol requerido:
+```js
+router.use(auth, roles('admin', 'project_admin'));
 ```
 
-> **Nota:** Para cambiar el puerto, modificar `PORT` y reiniciar el servidor.
+#### `proyectoAccess.js`
+Middlewares especializados para el control de acceso a proyectos:
+- `soloAdmin` — solo rol `admin`
+- `adminOProjectAdmin` — `admin` o `project_admin`
+- `verificarAccesoProyecto` — comprueba que el usuario tenga acceso al proyecto solicitado
+- `inyectarProyectosVisibles` — añade `req.proyectosIds` con los IDs de proyectos que el usuario puede ver
 
-### 4.2 Punto de Entrada (index.js)
+### 5.2 Rutas API
 
-El servidor Express:
-- Carga variables de entorno con `dotenv`
-- Configura CORS y límite de 50MB para JSON (necesario por imágenes en base64)
-- Registra todas las rutas bajo el prefijo `/api/`
-- Sirve el frontend compilado de Angular de forma estática
-- Redirige todas las rutas no-API al `index.html` para el enrutamiento SPA
+#### Auth — `/api/auth`
 
-### 4.3 Capa de Acceso a Datos (dataAccess.js)
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| `POST` | `/login` | No | Inicia sesión con username/password. Devuelve access token y establece cookie de refresh token |
+| `POST` | `/refresh` | Cookie | Rota el refresh token y devuelve nuevo access token |
+| `POST` | `/logout` | Sí | Invalida la sesión |
+| `GET` | `/me` | Sí | Datos del usuario autenticado |
+| `GET` | `/mis-permisos` | Sí | Permisos especiales del usuario autenticado |
+| `POST` | `/change-password` | Sí | Cambia la contraseña (requiere contraseña actual) |
 
-Esta capa es el núcleo del almacenamiento. Abstrae completamente el acceso a datos del resto de la aplicación.
+#### Usuarios — `/api/usuarios`
+Requiere al menos rol `project_admin`.
 
-#### Estructura de almacenamiento
-
-**`data/global.json`** — Datos globales compartidos:
-```json
-{
-  "proyectos": [...],
-  "tecnicos": [...],
-  "plantillas": [...]
-}
-```
-
-**`data/proyectos/{id}.json`** — Datos específicos de cada proyecto:
-```json
-{
-  "equipos": [...],
-  "revisiones": [...]
-}
-```
-
-#### Funciones exportadas
-
-| Función | Descripción |
-|---------|-------------|
-| `getProyectos()` | Lista todos los proyectos |
-| `getProyectoById(id)` | Obtiene un proyecto por ID |
-| `createProyecto(obj)` | Crea proyecto + archivo JSON vacío |
-| `updateProyecto(id, datos)` | Actualiza campos del proyecto |
-| `deleteProyecto(id)` | Elimina proyecto y su archivo JSON |
-| `getEquipos()` | Lista equipos de todos los proyectos |
-| `getEquiposByProyecto(proyectoId)` | Equipos de un proyecto específico |
-| `createEquipo(equipo)` | Agrega equipo al JSON del proyecto |
-| `updateEquipo(id, datos)` | Actualiza equipo buscando en todos los proyectos |
-| `deleteEquipo(id)` | Elimina equipo y su archivo |
-| `getRevisiones(filtros)` | Lista revisiones con filtros opcionales |
-| `createRevision(revision)` | Guarda revisión en el JSON del proyecto del equipo |
-| `exportarProyecto(id)` | Genera objeto completo con proyecto, equipos, revisiones, técnicos |
-| `importarProyecto(datos)` | Importa un proyecto con nuevos IDs |
-
-### 4.4 Rutas API
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Lista usuarios (admin ve todos; project_admin solo sus técnicos) |
+| `POST` | `/` | Crea usuario (admin: cualquier rol; project_admin: solo técnicos) |
+| `PUT` | `/:id` | Actualiza usuario |
+| `DELETE` | `/:id` | Elimina usuario (solo admin) |
+| `GET` | `/:id/permisos-proyectos` | Proyectos asignados al técnico con su nivel |
+| `PUT` | `/:id/permisos-proyectos` | Establece proyectos asignados al técnico |
+| `GET` | `/:id/permisos-especiales` | Permisos especiales del técnico |
+| `PUT` | `/:id/permisos-especiales` | Establece permisos especiales |
+| `GET` | `/:id/proyectos` | Proyectos asignados a un project_admin (solo admin) |
+| `GET` | `/:id/supervisores` | Supervisores de un técnico (solo admin) |
+| `POST` | `/:id/supervisores` | Asigna un supervisor a un técnico (solo admin) |
+| `DELETE` | `/:id/supervisores/:supervisorId` | Quita un supervisor (solo admin) |
+| `GET` | `/:id/tareas` | Tareas asignadas al técnico |
+| `GET` | `/:id/equipos-disponibles` | Equipos de los proyectos accesibles al técnico |
 
 #### Proyectos — `/api/proyectos`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/` | Lista todos los proyectos con total de equipos |
-| `GET` | `/:id` | Obtiene un proyecto por ID |
-| `GET` | `/:id/equipos?estado=` | Lista equipos del proyecto con filtro de estado |
-| `GET` | `/:id/todos-equipos` | Lista todos los equipos sin filtrar (para historial) |
-| `GET` | `/:id/exportar` | Exporta el proyecto completo como JSON |
-| `POST` | `/` | Crea un nuevo proyecto |
-| `POST` | `/importar` | Importa un proyecto desde JSON |
+| `GET` | `/` | Lista proyectos visibles según el rol |
+| `GET` | `/:id` | Obtiene un proyecto |
+| `GET` | `/:id/equipos?estado=` | Equipos del proyecto con filtro de estado (`pendiente`, `en_proceso`, `terminado`, `archivado`) |
+| `GET` | `/:id/todos-equipos` | Todos los equipos sin filtrar |
+| `GET` | `/:id/asignaciones` | Técnicos con acceso al proyecto |
+| `GET` | `/:id/permisos` | Permisos de técnicos en el proyecto |
+| `PUT` | `/:id/permisos` | Establece permisos de técnicos en el proyecto |
+| `POST` | `/` | Crea un proyecto (admin o project_admin) |
 | `PUT` | `/:id` | Actualiza un proyecto |
-| `DELETE` | `/:id` | Elimina un proyecto |
-
-**Filtros de estado para `/:id/equipos?estado=`:**
-
-| Valor | Descripción |
-|-------|-------------|
-| `pendiente` | Equipos sin ninguna revisión o sin ítems marcados |
-| `en_proceso` | Equipos con al menos 1 ítem marcado pero no todos |
-| `terminado` | Equipos con todos los ítems marcados al 100% |
+| `DELETE` | `/:id` | Elimina un proyecto (solo admin) |
 
 #### Equipos — `/api/equipos`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/` | Lista todos los equipos |
-| `GET` | `/:id` | Obtiene un equipo por ID |
-| `POST` | `/` | Crea un nuevo equipo |
+| `GET` | `/` | Lista equipos |
+| `GET` | `/:id` | Obtiene un equipo |
+| `POST` | `/` | Crea un equipo |
 | `PUT` | `/:id` | Actualiza un equipo |
+| `PUT` | `/:id/archivar` | Archiva/desarchiva un equipo |
 | `DELETE` | `/:id` | Elimina un equipo |
 
 #### Revisiones — `/api/revisiones`
@@ -286,8 +262,8 @@ Esta capa es el núcleo del almacenamiento. Abstrae completamente el acceso a da
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/` | Lista revisiones con filtros opcionales (`equipoId`, `tecnicoId`, `estado`) |
-| `GET` | `/:id` | Obtiene una revisión por ID |
-| `POST` | `/` | Crea una nueva revisión |
+| `GET` | `/:id` | Obtiene una revisión |
+| `POST` | `/` | Crea una revisión |
 | `PUT` | `/:id` | Actualiza una revisión |
 | `DELETE` | `/:id` | Elimina una revisión |
 
@@ -295,147 +271,105 @@ Esta capa es el núcleo del almacenamiento. Abstrae completamente el acceso a da
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/` | Lista todas las plantillas |
-| `GET` | `/:id` | Obtiene una plantilla por ID |
-| `POST` | `/` | Crea una nueva plantilla |
+| `GET` | `/` | Lista plantillas |
+| `GET` | `/:id` | Obtiene una plantilla |
+| `POST` | `/` | Crea una plantilla |
 | `PUT` | `/:id` | Actualiza una plantilla |
 | `DELETE` | `/:id` | Elimina una plantilla |
 
-#### Técnicos — `/api/tecnicos`
+#### Tareas Programadas — `/api/tareas`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/` | Lista todos los técnicos |
-| `POST` | `/` | Crea un nuevo técnico |
-| `PUT` | `/:id` | Actualiza un técnico |
-| `DELETE` | `/:id` | Elimina un técnico |
+| `GET` | `/` | Lista tareas (filtradas por rol) |
+| `POST` | `/` | Crea una tarea programada |
+| `PUT` | `/:id` | Actualiza una tarea |
+| `DELETE` | `/:id` | Elimina una tarea |
 
-#### Health Check — `/api/health`
+#### Catálogos — `/api/catalogos`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Lista grupos con sus elementos |
+| `POST` | `/` | Crea un grupo |
+| `PUT` | `/:id` | Actualiza un grupo |
+| `DELETE` | `/:id` | Elimina un grupo |
+| `POST` | `/:grupoId/elementos` | Agrega un elemento al grupo |
+| `PUT` | `/:grupoId/elementos/:elemId` | Actualiza un elemento |
+| `DELETE` | `/:grupoId/elementos/:elemId` | Elimina un elemento |
+
+#### Dashboard — `/api/dashboard`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Estadísticas generales (totales, estado de equipos, revisiones por día, top técnicos) |
+
+#### Archivos — `/api/archivos`
+
+Los archivos adjuntos se almacenan en `backend/data/archivos/` identificados por su hash SHA-256.
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/:hash` | Descarga un archivo por su hash |
+| `POST` | `/upload` | Sube un archivo y devuelve su hash y URL |
+
+#### Exportar — `/api/exportar` y `/api/proyectos/:id/exportar`
+
+Permite exportar/importar proyectos completos como archivo ZIP o JSON.
+
+#### Health Check — `GET /api/health`
 
 ```json
 {
   "success": true,
   "app": "TechCheck",
-  "version": "1.0.0",
-  "entorno": "development",
-  "dataSource": "json",
-  "mensaje": "TechCheck API funcionando"
-}
-```
-
-### 4.5 Almacenamiento de Datos
-
-#### Estructura del equipo en JSON
-
-```json
-{
-  "id": "uuid-v4",
-  "nombre": "PC-Recepcion",
-  "descripcion": "Dell OptiPlex 7090",
-  "items": [
-    {
-      "label": "Verificar antivirus",
-      "observacionGuia": "Abrir Avast y verificar ultima actualizacion",
-      "archivosGuia": ["data:image/png;base64,..."]
-    }
-  ],
-  "plantillaId": "uuid-plantilla | null",
-  "proyectoIds": ["uuid-proyecto"],
-  "tecnicoAsignadoId": "uuid-tecnico | null",
-  "tiempoLimite": 3,
-  "unidadTiempo": "horas | dias",
-  "iniciadoEn": "2026-06-10T10:00:00.000Z",
-  "terminadoEn": null,
-  "creadoEn": "2026-06-01T00:00:00.000Z",
-  "actualizadoEn": "2026-06-01T00:00:00.000Z"
-}
-```
-
-#### Estructura de la revisión en JSON
-
-```json
-{
-  "id": "uuid-v4",
-  "equipoId": "uuid-equipo",
-  "tecnicoId": "uuid-tecnico | null",
-  "tecnicoNombre": "Juan Pérez",
-  "estado": "ok | observacion | problema",
-  "items": [
-    {
-      "label": "Verificar antivirus",
-      "checked": true,
-      "nota": "Actualizado a versión 22.x",
-      "archivos": ["data:image/png;base64,..."],
-      "observacionGuia": "...",
-      "archivosGuia": [...]
-    }
-  ],
-  "observacionGeneral": "Todo en orden",
-  "fotos": ["data:image/png;base64,..."],
-  "creadoEn": "2026-06-10T10:30:00.000Z",
-  "actualizadoEn": "2026-06-10T10:30:00.000Z"
+  "version": "1.5.0",
+  "entorno": "production",
+  "dataSource": "sqlite"
 }
 ```
 
 ---
 
-## 5. Frontend — Angular 19
+## 6. Frontend — Angular 19
 
-### 5.1 Módulos y Componentes
+### 6.1 Módulos y Componentes
 
-#### Componente Principal — `app.ts`
+| Módulo | Ruta | Descripción |
+|--------|------|-------------|
+| `auth` | `/login` | Pantalla de inicio de sesión |
+| `dashboard` | `/dashboard` | Estadísticas generales |
+| `equipos` | `/equipos` | Proyectos y equipos (vista principal) |
+| `revisiones` | `/revisiones` | Formulario de revisión |
+| `historial` | `/historial` | Historial de revisiones completadas |
+| `plantillas` | `/plantillas` | Gestión de plantillas |
+| `usuarios` | `/usuarios` | Gestión de usuarios y permisos |
+| `tareas` | `/tareas` | Tareas programadas |
+| `catalogos` | `/catalogos` | Catálogos de valores |
+| `exportar` | `/exportar` | Exportar e importar proyectos |
 
-Layout general de la aplicación. Contiene el sidebar de navegación con los módulos:
-- **Proyectos** — Vista principal
-- **Plantillas** — Gestión de plantillas
-- **Técnicos** — Gestión de técnicos
+Todas las rutas usan **lazy loading** y están protegidas por un `AuthGuard` que redirige a `/login` si no hay sesión válida.
 
-#### Módulo Equipos — `equipos-list.component`
-
-El componente más complejo de la aplicación. Maneja dos vistas:
-
-**Vista 1 — Lista de Proyectos:**
-- Cards de proyectos con total de equipos
-- Botones de editar, exportar y eliminar (visibles al hover)
-- Botón de importar proyecto desde JSON
-
-**Vista 2 — Lista de Equipos del Proyecto:**
-- Tres filtros: Pendientes / En proceso / Terminados
-- Cards de equipos con estado, progreso y técnico asignado
-- Acciones: Revisar, Editar, Eliminar
-
-**Modales:**
-- Modal de proyecto (crear/editar)
-- Modal de equipo (crear/editar con ítems, guías, técnico y tiempo límite)
-- Modal de revisión (checklist interactivo con archivos y observaciones)
-
-#### Módulo Plantillas — `plantillas-list.component`
-
-- Lista de plantillas con sus ítems
-- Crear/editar plantillas
-- Importar plantillas desde Excel (XLSX)
-- Formato Excel: columnas `nombre | descripcion | items` (ítems separados por `|`)
-
-#### Módulo Técnicos — `tecnicos-list.component`
-
-- CRUD de técnicos con nombre y email
-
-#### Módulo Historial — `historial-list.component`
-
-- Vista por proyecto (selección de proyecto)
-- Vista de revisiones completadas del proyecto seleccionado
-- Solo muestra revisiones con todos los ítems marcados
-- Detalle de revisión con ítems, notas, observación general y fotos
-- Filtros por estado y búsqueda por equipo/técnico
-
-### 5.2 Modelos de Datos (TypeScript)
+### 6.2 Modelos de Datos (TypeScript)
 
 ```typescript
-// Ítem de un equipo (con guía permanente)
-interface ItemEquipo {
-  label: string;
-  observacionGuia: string;    // Instrucciones para el técnico
-  archivosGuia: string[];     // Archivos de referencia (base64)
+// Roles disponibles
+type UserRol = 'admin' | 'project_admin' | 'tecnico';
+
+// Usuario
+interface Usuario {
+  id: string;
+  nombre: string;
+  username: string;     // usado para iniciar sesión
+  rol: UserRol;
+  activo: boolean;
+  creadoEn: string;
+}
+
+// Permiso de técnico en un proyecto
+interface ProyectoPermiso {
+  tecnicoId: string;
+  nivel: 'ver' | 'asignados' | 'editar';
 }
 
 // Equipo
@@ -448,24 +382,11 @@ interface Equipo {
   plantillaId: string | null;
   tecnicoAsignadoId: string | null;
   tecnicoAsignadoNombre?: string;
-  tiempoLimite?: number;
-  unidadTiempo?: 'horas' | 'dias';
-  iniciadoEn?: string;
-  terminadoEn?: string;
+  archivado?: boolean;
   ultimaRevision?: Revision | null;
   totalRevisiones?: number;
   creadoEn: string;
   actualizadoEn: string;
-}
-
-// Ítem de una revisión
-interface ItemRevision {
-  label: string;
-  checked: boolean;
-  nota: string;               // Observación del técnico al revisar
-  archivos: string[];         // Evidencia fotográfica del ítem (base64)
-  observacionGuia?: string;   // Hereda del ItemEquipo (solo lectura)
-  archivosGuia?: string[];    // Hereda del ItemEquipo (solo lectura)
 }
 
 // Revisión
@@ -477,457 +398,195 @@ interface Revision {
   estado: 'ok' | 'observacion' | 'problema';
   items: ItemRevision[];
   observacionGeneral: string;
-  fotos: string[];            // Fotos generales de la revisión (base64)
-  creadoEn: string;
-  actualizadoEn: string;
-  equipoNombre?: string;
-}
-
-// Plantilla
-interface Plantilla {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  items: string[];
+  fotos: (ArchivoAdjunto | string)[];
   creadoEn: string;
   actualizadoEn: string;
 }
-
-// Técnico
-interface Tecnico {
-  id: string;
-  nombre: string;
-  email: string;
-  creadoEn: string;
-}
-```
-
-### 5.3 Servicios
-
-Todos los servicios heredan el patrón básico de llamadas HTTP con `HttpClient` y mapean la respuesta `ApiResponse<T>`:
-
-```typescript
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
-```
-
-| Servicio | Archivo | Responsabilidad |
-|----------|---------|-----------------|
-| `ProyectosService` | `proyectos.service.ts` | CRUD proyectos, obtener equipos filtrados, exportar/importar |
-| `EquiposService` | `equipos.service.ts` | CRUD equipos |
-| `PlantillasService` | `plantillas.service.ts` | CRUD plantillas |
-| `TecnicosService` | `otros.services.ts` | CRUD técnicos |
-| `RevisionesService` | `otros.services.ts` | CRUD revisiones |
-
-### 5.4 Rutas del Frontend
-
-```typescript
-const routes = [
-  { path: '',          redirectTo: 'equipos', pathMatch: 'full' },
-  { path: 'equipos',   loadChildren: () => import('./modules/equipos/equipos.routes') },
-  { path: 'historial', loadChildren: () => import('./modules/historial/historial.routes') },
-  { path: 'plantillas',loadChildren: () => import('./modules/plantillas/plantillas.routes') },
-  { path: 'tecnicos',  loadChildren: () => import('./modules/tecnicos/tecnicos.routes') },
-];
-```
-
-Todas las rutas usan **lazy loading** para optimizar el tiempo de carga inicial.
-
----
-
-## 6. Funcionalidades del Sistema
-
-### 6.1 Gestión de Proyectos
-
-Los proyectos son el contenedor principal de la aplicación. Cada proyecto agrupa equipos relacionados.
-
-**Operaciones:**
-- Crear proyecto con nombre y descripción opcional
-- Editar nombre y descripción
-- Eliminar proyecto (el archivo JSON del proyecto también se elimina)
-- Exportar proyecto completo como JSON
-- Importar proyecto desde un JSON previamente exportado
-
-**Vista de proyectos:** Cards con el nombre, descripción, total de equipos y botones de acción visibles al pasar el mouse.
-
-### 6.2 Gestión de Equipos
-
-Los equipos representan los activos físicos o lógicos que se van a mantener (PCs, servidores, impresoras, etc.).
-
-**Campos del equipo:**
-- Nombre (requerido)
-- Descripción
-- Técnico asignado (selector de técnicos registrados)
-- Plantilla de checklist (opcional, aplica ítems predefinidos)
-- Tiempo límite (número + unidad: horas o días)
-- Ítems del checklist (cada uno con observación guía y archivos guía)
-
-**Ítems del checklist — información de guía:**
-Cada ítem puede tener:
-- **Observación guía:** Instrucciones permanentes para el técnico (cómo abordar la tarea)
-- **Archivos guía:** Imágenes o documentos de referencia (manuales, capturas de pantalla)
-
-Esta información es de solo lectura durante la revisión y sirve como guía para el técnico.
-
-**Filtros de estado:**
-Los equipos dentro de un proyecto se clasifican automáticamente en tres estados:
-
-| Estado | Condición |
-|--------|-----------|
-| Pendiente | Sin revisión o sin ningún ítem marcado |
-| En proceso | Al menos 1 ítem marcado, no todos |
-| Terminado | Todos los ítems marcados al 100% |
-
-Los equipos terminados desaparecen de Pendientes y En Proceso y solo aparecen en el filtro Terminados.
-
-### 6.3 Sistema de Revisiones
-
-Una revisión es el registro de una sesión de mantenimiento sobre un equipo.
-
-**Flujo de revisión:**
-1. El técnico hace clic en **Revisar** en la tarjeta del equipo
-2. Se abre el modal de revisión con el checklist del equipo
-3. Por cada ítem, el técnico puede:
-   - Marcar el ítem como completado (checkbox)
-   - Ver la observación guía y archivos de referencia (solo lectura)
-   - Agregar una observación propia
-   - Adjuntar archivos o imágenes como evidencia
-4. El técnico define el estado general: OK / Con observaciones / Con problemas
-5. Opcionalmente agrega una observación general y fotos de evidencia
-6. Guarda la revisión
-
-**Retomar revisión incompleta:**
-Si una revisión se guarda sin completar todos los ítems, al hacer clic en **Revisar** nuevamente se carga el estado anterior (ítems ya marcados, notas, etc.) para continuar donde se dejó.
-
-Al guardar una revisión retomada, la revisión incompleta anterior se elimina y se crea una nueva con el estado actualizado.
-
-### 6.4 Plantillas de Checklist
-
-Las plantillas permiten reutilizar listas de ítems en múltiples equipos.
-
-**Operaciones:**
-- Crear plantilla con nombre, descripción e ítems
-- Editar plantilla existente (agregar/quitar ítems)
-- Eliminar plantilla
-- **Importar desde Excel:** Archivo `.xlsx` con columnas `nombre | descripcion | items` donde los ítems se separan con `|`
-
-**Formato Excel para importación:**
-
-| nombre | descripcion | items |
-|--------|-------------|-------|
-| Mantenimiento PC | Revisión periódica | Revisar antivirus\|Revisar disco\|Verificar RAM |
-
-**Nota:** Al aplicar una plantilla a un equipo, los ítems se copian y pueden modificarse libremente sin afectar la plantilla original.
-
-### 6.5 Gestión de Técnicos
-
-Registro de los técnicos que realizan las revisiones.
-
-**Campos:** Nombre (requerido) y correo electrónico.
-
-Los técnicos pueden ser asignados a equipos (técnico responsable) y seleccionados durante las revisiones (técnico que realizó la revisión).
-
-### 6.6 Historial de Revisiones
-
-El historial muestra únicamente las revisiones **completadas al 100%** (todos los ítems marcados).
-
-**Navegación:**
-1. Seleccionar el proyecto
-2. Ver la lista de revisiones completas con filtros de texto y estado
-3. Hacer clic en **Ver** para ver el detalle completo de la revisión
-
-**Detalle de revisión muestra:**
-- Estado general (OK / Observaciones / Problemas)
-- Técnico que realizó la revisión
-- Lista de ítems con su estado y observaciones
-- Archivos adjuntos por ítem (imágenes y documentos)
-- Observación general
-- Fotos de evidencia
-
-### 6.7 Exportar e Importar Proyectos
-
-Permite hacer copias de seguridad de proyectos y restaurarlos.
-
-**Exportar:**
-- Clic en el botón ⬇️ en la tarjeta del proyecto
-- Se descarga un archivo `{nombre_proyecto}_techcheck.json`
-- El JSON contiene: proyecto, equipos (con sus ítems y guías), revisiones y técnicos
-
-**Importar:**
-- Clic en **Importar proyecto** en la vista de proyectos
-- Seleccionar el archivo JSON exportado previamente
-- Se crea un nuevo proyecto con nuevos IDs
-- Los técnicos nuevos se agregan al sistema si no existen (verificado por email)
-
-**Estructura del JSON exportado:**
-```json
-{
-  "proyecto": { "nombre": "...", "descripcion": "..." },
-  "equipos": [...],
-  "revisiones": [...],
-  "tecnicos": [...]
-}
 ```
 
 ---
 
-## 7. API REST — Referencia Completa
+## 7. Sistema de Roles y Permisos
 
-### Formato de Respuesta
+TechCheck tiene tres roles jerárquicos:
 
-Todas las respuestas siguen el mismo formato:
+### `admin`
+- Ve y gestiona todo el sistema
+- Crea y elimina cualquier usuario (incluyendo otros admins)
+- Asigna proyectos a project_admins
+- Asigna supervisores a técnicos
+- Accede a todos los proyectos sin restricción
+
+### `project_admin`
+- Gestiona los proyectos que le fueron asignados por un admin
+- Crea técnicos (quedan automáticamente bajo su supervisión)
+- Gestiona permisos de sus técnicos en sus proyectos
+- No puede ver ni editar proyectos de otros project_admins
+
+### `tecnico`
+- Solo accede a los proyectos para los que tiene permiso explícito (`proyecto_permisos`)
+- Su nivel de acceso por proyecto determina qué ve:
+  - `ver` — ve todos los equipos del proyecto
+  - `asignados` — solo ve los equipos donde él está marcado como `tecnicoAsignadoId`
+  - `editar` — puede editar equipos (permisos equivalentes a project_admin en ese proyecto)
+- Realiza revisiones sobre los equipos que puede ver
+
+---
+
+## 8. Autenticación
+
+### Flujo de login
+
+1. El cliente envía `POST /api/auth/login` con `{ username, password }`
+2. El servidor valida con bcrypt y devuelve:
+   - **Access token** (JWT, expira en 8h) en el body
+   - **Refresh token** (aleatorio, expira en 7 días) en una cookie `HttpOnly`
+3. El cliente guarda el access token en memoria y lo envía en cada petición como `Authorization: Bearer <token>`
+4. Cuando el access token expira, el cliente llama `POST /api/auth/refresh` usando la cookie automáticamente
+5. El refresh token se **rota** en cada uso (el anterior queda invalidado)
+
+### Payload del JWT
 
 ```json
-{
-  "success": true | false,
-  "data": { ... } | [...],
-  "message": "Mensaje de error (solo en errores)"
-}
+{ "sub": "<userId>", "rol": "admin | project_admin | tecnico" }
 ```
 
-### Códigos de Estado HTTP
+### Cambio de contraseña
 
-| Código | Uso |
-|--------|-----|
-| `200` | Operación exitosa |
-| `201` | Recurso creado exitosamente |
-| `400` | Error de validación (datos incorrectos) |
-| `404` | Recurso no encontrado |
-| `500` | Error interno del servidor |
-
-### Ejemplos de Llamadas
-
-#### Crear un equipo
-```http
-POST /api/equipos
-Content-Type: application/json
-
-{
-  "nombre": "PC-Recepcion",
-  "descripcion": "Dell OptiPlex 7090",
-  "items": [
-    {
-      "label": "Verificar antivirus",
-      "observacionGuia": "Abrir Avast y verificar version",
-      "archivosGuia": []
-    }
-  ],
-  "proyectoIds": ["uuid-del-proyecto"],
-  "tecnicoAsignadoId": "uuid-del-tecnico",
-  "tiempoLimite": 2,
-  "unidadTiempo": "horas"
-}
-```
-
-#### Crear una revisión
-```http
-POST /api/revisiones
-Content-Type: application/json
-
-{
-  "equipoId": "uuid-del-equipo",
-  "tecnicoId": "uuid-del-tecnico",
-  "estado": "ok",
-  "items": [
-    {
-      "label": "Verificar antivirus",
-      "checked": true,
-      "nota": "Actualizado correctamente",
-      "archivos": []
-    }
-  ],
-  "observacionGeneral": "Equipo en buen estado",
-  "fotos": []
-}
-```
-
-#### Obtener equipos de un proyecto filtrados
-```http
-GET /api/proyectos/{id}/equipos?estado=en_proceso
-```
+`POST /api/auth/change-password` requiere la contraseña actual y la nueva (mínimo 8 caracteres). Al cambiar la contraseña se invalidan todos los refresh tokens del usuario.
 
 ---
 
-## 8. Flujo de Datos
+## 9. Funcionalidades del Sistema
 
-### Ciclo de vida de un mantenimiento
+### Gestión de Proyectos
+- Crear, editar y eliminar proyectos
+- Asignar técnicos con nivel de acceso (`ver`, `asignados`, `editar`)
+- Marcar proyectos como restringidos (solo técnicos con permiso explícito pueden verlos)
 
-```
-1. CREAR PROYECTO
-   └── Nombre + descripción
-       └── Se crea archivo data/proyectos/{id}.json vacío
+### Gestión de Equipos
+- CRUD de equipos dentro de un proyecto
+- Asignar técnico responsable (`tecnicoAsignadoId`)
+- Aplicar plantillas de checklist
+- Ítems con observación guía y archivos de referencia
+- Archivar equipos sin eliminarlos
+- Filtros por estado: `pendiente`, `en_proceso`, `terminado`, `archivado`
 
-2. AGREGAR EQUIPO AL PROYECTO
-   └── Nombre, ítems, técnico, tiempo límite
-       └── Se guarda en data/proyectos/{proyectoId}.json → equipos[]
+### Sistema de Revisiones
+- Checklist interactivo por equipo
+- Evidencia fotográfica por ítem y general
+- Estados: `ok`, `observacion`, `problema`
+- Retomar revisión incompleta (al guardar reemplaza la anterior)
 
-3. REALIZAR REVISIÓN
-   └── Técnico abre modal de revisión
-   └── Marca ítems, agrega notas y archivos
-   └── Guarda → se crea en data/proyectos/{proyectoId}.json → revisiones[]
-   └── Si retoma revisión incompleta → elimina la anterior, crea nueva
+### Tareas Programadas
+- Definir revisiones recurrentes por equipo y técnico
+- Configurar días de la semana y hora
+- Fecha de fin opcional
 
-4. FILTRADO AUTOMÁTICO
-   └── Pendiente: sin revisión o 0 ítems marcados
-   └── En proceso: 1+ ítems marcados, no todos
-   └── Terminado: todos los ítems marcados
+### Catálogos
+- Grupos de valores reutilizables en el sistema
+- Administrados desde el módulo de Catálogos
 
-5. HISTORIAL
-   └── Solo revisiones con 100% de ítems marcados
-   └── Organizadas por proyecto
-```
+### Dashboard
+- Totales de proyectos, equipos, revisiones y técnicos
+- Distribución de equipos por estado
+- Revisiones por día (últimos 30 días)
+- Top técnicos y top equipos por actividad
 
-### Flujo de importación de plantillas Excel
+### Exportar e Importar
+- Exportar proyecto completo como ZIP (incluye archivos adjuntos)
+- Importar proyecto desde ZIP o JSON
+- Los archivos adjuntos se deduplicaban por hash SHA-256
 
-```
-Excel (.xlsx)
-  └── Librería XLSX (CDN)
-      └── Parsear hoja 1
-          └── Fila por fila (saltar header)
-              └── Columna 0: nombre
-              └── Columna 1: descripcion  
-              └── Columna 2: items separados por "|"
-                  └── POST /api/plantillas por cada plantilla válida
-                      └── Mensaje de éxito con cantidad importada
-```
+### Plantillas
+- CRUD de plantillas de checklist
+- Importar desde Excel (columnas: `nombre | descripcion | items`, ítems separados por `|`)
 
 ---
 
-## 9. Instalación y Despliegue
+## 10. Instalación y Despliegue
 
 ### Requisitos
 
-- Node.js 18 o superior
+- Node.js **22** o superior (requerido por `node:sqlite`)
 - npm 9 o superior
-- Windows 10/11 (o cualquier OS con Node.js)
 
-### Instalación del Backend
+### Backend
 
 ```bash
 cd techcheck/backend
 npm install
-```
-
-### Compilar el Frontend
-
-```bash
-cd techcheck/frontend
-npm install
-npx ng build --configuration=production
-```
-
-### Iniciar la Aplicación
-
-**Opción 1 — Script automático (Windows):**
-```
-Doble clic en start.bat
-```
-
-**Opción 2 — Manual:**
-```bash
-cd techcheck/backend
 node index.js
 ```
 
-Luego abrir: `http://localhost:3000` (o el puerto configurado en `.env`)
-
-### Limpiar caché de Angular (si hay problemas de compilación)
+### Frontend (compilar)
 
 ```bash
 cd techcheck/frontend
-npx ng cache clean
+npm install
 npx ng build --configuration=production
+```
+
+El build de producción queda en `frontend/dist/` y es servido automáticamente por el backend Express.
+
+### Acceso
+
+Abrir `http://localhost:3010` (o el puerto configurado en `.env`).
+
+**Credenciales por defecto (primera vez):**
+- Usuario: `admin`
+- Contraseña: `admin1234`
+
+> Cambiar la contraseña inmediatamente después del primer acceso desde el perfil o con `POST /api/auth/change-password`.
+
+---
+
+## 11. Docker
+
+### Imágenes en Docker Hub
+
+| Repositorio | Tag | Descripción |
+|-------------|-----|-------------|
+| `julianquintero/techcheck` | `1.5.0` / `latest` | Imagen oficial |
+| `lacimarrona/todos-manager` | `techcheck-1.5.0` | Espejo alternativo |
+
+### Levantar con Docker Compose
+
+```bash
+docker compose up -d
+```
+
+El archivo `docker-compose.yml` ya está configurado con:
+- Puerto `3010` expuesto
+- Volumen `./data` para persistir la BD y archivos adjuntos
+- Health check automático
+
+### Levantar solo con Docker
+
+```bash
+docker run -d \
+  -p 3010:3010 \
+  -v $(pwd)/data:/app/backend/data \
+  --name techcheck \
+  julianquintero/techcheck:1.5.0
 ```
 
 ---
 
-## 10. Variables de Entorno
+## 12. Variables de Entorno
 
 | Variable | Valor por defecto | Descripción |
 |----------|------------------|-------------|
-| `PORT` | `3000` | Puerto del servidor Express |
-| `DATA_SOURCE` | `json` | Fuente de datos (`json` o `postgres` en el futuro) |
-| `DB_HOST` | `localhost` | Host de la base de datos (futuro) |
-| `DB_PORT` | `5432` | Puerto de PostgreSQL (futuro) |
-| `DB_NAME` | `techcheck` | Nombre de la base de datos (futuro) |
-| `DB_USER` | `postgres` | Usuario de la base de datos (futuro) |
-| `DB_PASSWORD` | *(vacío)* | Contraseña de la base de datos (futuro) |
-| `JWT_SECRET` | `techcheck_secret_key` | Clave para tokens JWT (futuro) |
-| `JWT_EXPIRES_IN` | `8h` | Expiración de tokens JWT (futuro) |
+| `PORT` | `3010` | Puerto del servidor Express |
+| `DATA_SOURCE` | `sqlite` | Fuente de datos (actualmente solo `sqlite`) |
+| `JWT_SECRET` | `techcheck_secret_dev` | Clave secreta para firmar tokens JWT |
+| `JWT_EXPIRES_IN` | `8h` | Duración del access token |
 | `APP_NAME` | `TechCheck` | Nombre de la aplicación |
-| `APP_VERSION` | `1.0.0` | Versión actual |
+| `APP_VERSION` | `1.5.0` | Versión actual |
 | `NODE_ENV` | `development` | Entorno (`development` o `production`) |
 
----
-
-## 11. Guía de Uso
-
-### Primer uso — Configuración inicial
-
-1. Crear los técnicos que usará el sistema (menú **Técnicos**)
-2. Crear plantillas de checklist reutilizables (menú **Plantillas**)
-   - O importar plantillas desde Excel
-3. Crear el primer proyecto (botón **+ Nuevo proyecto**)
-4. Dentro del proyecto, crear los equipos
-   - Asignar un técnico responsable
-   - Aplicar una plantilla o agregar ítems manualmente
-   - Opcionalmente agregar observaciones guía e imágenes de referencia por ítem
-
-### Realizar una revisión
-
-1. Entrar al proyecto correspondiente
-2. En la pestaña **Pendientes**, localizar el equipo a revisar
-3. Clic en **Revisar**
-4. Verificar cada ítem del checklist:
-   - Marcar como completado
-   - Ver la guía del ítem si existe
-   - Agregar observaciones y archivos de evidencia
-5. Definir el estado general y agregar observación general si aplica
-6. Clic en **Guardar revisión**
-
-### Consultar el historial
-
-1. Ir al menú **Historial** (si está habilitado) o ver en la pestaña **Terminados** del proyecto
-2. Las revisiones completadas al 100% aparecen en la pestaña **Terminados**
-3. Clic en **Ver** para ver el detalle completo
-
-### Hacer copia de seguridad de un proyecto
-
-1. En la vista de proyectos, pasar el mouse sobre el proyecto
-2. Clic en el botón ⬇️ (exportar)
-3. Se descarga el archivo JSON con todos los datos del proyecto
-
-### Restaurar un proyecto
-
-1. En la vista de proyectos, clic en **Importar proyecto**
-2. Seleccionar el archivo JSON exportado previamente
-3. El proyecto se crea con todos sus equipos y revisiones
+> En producción, definir `JWT_SECRET` con un valor aleatorio seguro (mínimo 32 caracteres).
 
 ---
 
-## 12. Hoja de Ruta (Roadmap)
-
-Las siguientes funcionalidades están planificadas para futuras versiones:
-
-### Corto plazo
-- [ ] Temporizador en vivo con alerta de tiempo excedido por equipo
-- [ ] Notificaciones cuando un equipo excede su tiempo límite
-
-### Mediano plazo
-- [ ] Migración a PostgreSQL (infraestructura preparada en `dataAccess.js` y `.env`)
-- [ ] Sistema de autenticación con JWT (infraestructura preparada en `.env`)
-- [ ] Dashboard con estadísticas de mantenimiento
-- [ ] Exportar reportes en PDF
-
-### Largo plazo
-- [ ] Aplicación móvil (PWA)
-- [ ] Notificaciones por correo electrónico
-- [ ] Multi-empresa / multi-tenant
-- [ ] Integración con sistemas ERP
-
----
-
-*Documentación generada — TechCheck v1.0.0 — Junio 2026*
+*TechCheck v1.5.0 — Septiembre 2026*
