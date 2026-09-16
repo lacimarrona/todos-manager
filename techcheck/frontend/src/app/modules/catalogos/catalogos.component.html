@@ -4,8 +4,8 @@
   @if (!grupoActivo()) {
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Catálogos</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Grupos de valores reutilizables en el sistema</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Catálogos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Grupos de valores reutilizables en el sistema</p>
       </div>
       <button (click)="abrirNuevoGrupo()"
               class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -26,16 +26,16 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       @for (g of grupos(); track g.id) {
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
           <div class="flex items-start justify-between mb-2">
             <div class="flex-1 min-w-0">
-              <h2 class="font-semibold text-gray-900 truncate">{{ g.nombre }}</h2>
+              <h2 class="font-semibold text-gray-900 dark:text-white truncate">{{ g.nombre }}</h2>
               @if (g.descripcion) {
                 <p class="text-xs text-gray-400 mt-0.5 line-clamp-2">{{ g.descripcion }}</p>
               }
             </div>
             <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium shrink-0"
-                  [class]="g.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+                  [class]="g.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500 dark:text-gray-400'">
               {{ g.activo ? 'Activo' : 'Inactivo' }}
             </span>
           </div>
@@ -46,7 +46,7 @@
               Ver elementos
             </button>
             <button (click)="abrirEditarGrupo(g)"
-                    class="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
               Editar
             </button>
             <button (click)="eliminarGrupo(g)"
@@ -67,7 +67,7 @@
         ← Catálogos
       </button>
       <span class="text-gray-300">/</span>
-      <h1 class="text-xl font-bold text-gray-900">{{ g.nombre }}</h1>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ g.nombre }}</h1>
       <button (click)="abrirNuevoElemento()"
               class="ml-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
         + Nuevo elemento
@@ -75,7 +75,7 @@
     </div>
 
     @if (g.descripcion) {
-      <p class="text-sm text-gray-500 mb-4">{{ g.descripcion }}</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ g.descripcion }}</p>
     }
 
     @if (g.elementos.length === 0) {
@@ -84,12 +84,12 @@
       </div>
     }
 
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       @for (e of g.elementos; track e.id; let i = $index) {
         <div class="flex items-center gap-4 px-5 py-3"
              [class.border-t]="i > 0" [class.border-gray-50]="i > 0">
           <div class="flex-1 min-w-0">
-            <span class="font-medium text-gray-800 text-sm">{{ e.valor }}</span>
+            <span class="font-medium text-gray-800 dark:text-gray-100 text-sm">{{ e.valor }}</span>
             @if (e.descripcion) {
               <span class="ml-2 text-xs text-gray-400">{{ e.descripcion }}</span>
             }
@@ -100,7 +100,7 @@
           </span>
           <div class="flex gap-2 shrink-0">
             <button (click)="abrirEditarElemento(e)"
-                    class="px-3 py-1 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    class="px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
               Editar
             </button>
             <button (click)="eliminarElemento(e)"
@@ -116,28 +116,28 @@
   <!-- ── Modal: crear/editar grupo ──────────────────────────────────────── -->
   @if (modalGrupo()) {
     <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" (click)="cerrarModalGrupo()">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md" (click)="$event.stopPropagation()">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 class="font-semibold text-gray-900">{{ editandoGrupoId() ? 'Editar grupo' : 'Nuevo grupo' }}</h2>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md" (click)="$event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <h2 class="font-semibold text-gray-900 dark:text-white">{{ editandoGrupoId() ? 'Editar grupo' : 'Nuevo grupo' }}</h2>
           <button (click)="cerrarModalGrupo()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
         </div>
         <div class="px-6 py-5 space-y-4">
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Nombre *</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre *</label>
             <input [(ngModel)]="formGrupo.nombre" type="text" placeholder="Ej: Tipos de falla"
-                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Descripción</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descripción</label>
             <input [(ngModel)]="formGrupo.descripcion" type="text" placeholder="Descripción opcional"
-                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           @if (errorMsg()) {
             <p class="text-xs text-red-600">{{ errorMsg() }}</p>
           }
         </div>
-        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button (click)="cerrarModalGrupo()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200">
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+          <button (click)="cerrarModalGrupo()" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 rounded-lg border border-gray-200 dark:border-gray-700">
             Cancelar
           </button>
           <button (click)="guardarGrupo()" [disabled]="guardando()"
@@ -152,28 +152,28 @@
   <!-- ── Modal: crear/editar elemento ──────────────────────────────────── -->
   @if (modalElemento()) {
     <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" (click)="cerrarModalElemento()">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md" (click)="$event.stopPropagation()">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 class="font-semibold text-gray-900">{{ editandoElementoId() ? 'Editar elemento' : 'Nuevo elemento' }}</h2>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md" (click)="$event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <h2 class="font-semibold text-gray-900 dark:text-white">{{ editandoElementoId() ? 'Editar elemento' : 'Nuevo elemento' }}</h2>
           <button (click)="cerrarModalElemento()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
         </div>
         <div class="px-6 py-5 space-y-4">
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Valor *</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Valor *</label>
             <input [(ngModel)]="formElemento.valor" type="text" placeholder="Ej: Eléctrico"
-                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Descripción</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descripción</label>
             <input [(ngModel)]="formElemento.descripcion" type="text" placeholder="Descripción opcional"
-                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           @if (errorMsg()) {
             <p class="text-xs text-red-600">{{ errorMsg() }}</p>
           }
         </div>
-        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-          <button (click)="cerrarModalElemento()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200">
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+          <button (click)="cerrarModalElemento()" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 rounded-lg border border-gray-200 dark:border-gray-700">
             Cancelar
           </button>
           <button (click)="guardarElemento()" [disabled]="guardando()"

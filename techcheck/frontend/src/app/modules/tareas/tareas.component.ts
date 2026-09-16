@@ -6,6 +6,7 @@ import { TareasService } from '../../core/services/otros.services';
 import { EquiposService } from '../../core/services/equipos.service';
 import { TecnicosService } from '../../core/services/otros.services';
 import { ProyectosService } from '../../core/services/proyectos.service';
+import { AuthService } from '../../core/services/auth.service';
 
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
@@ -59,7 +60,14 @@ export class TareasComponent implements OnInit {
     private equiposSvc: EquiposService,
     private tecnicosSvc: TecnicosService,
     private proyectosSvc: ProyectosService,
+    public auth: AuthService,
   ) {}
+
+  puedeProgramar(): boolean {
+    if (this.auth.canManage()) return true;
+    if (this.auth.isTecnico() && this.auth.tienePermiso('asignar_tareas')) return true;
+    return false;
+  }
 
   ngOnInit() {
     this.cargar();

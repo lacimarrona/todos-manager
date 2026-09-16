@@ -1,20 +1,135 @@
 <div class="p-6 max-w-2xl">
   <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Exportar / Importar</h1>
-    <p class="text-sm text-gray-500 mt-0.5">Descarga datos en CSV o JSON, o restaura desde un backup</p>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Exportar / Importar</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Descarga un backup completo de la aplicación o restaura desde uno existente</p>
   </div>
 
-  <!-- Exportar CSV -->
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
-    <h2 class="text-sm font-semibold text-gray-700 mb-1">Exportar revisiones a CSV</h2>
-    <p class="text-xs text-gray-400 mb-4">Genera un archivo CSV con todas las revisiones e ítems. Compatible con Excel.</p>
+  <!-- Backup completo -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 mb-4">
+    <div class="flex items-start gap-3 mb-4">
+      <div class="text-2xl">💾</div>
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">Descargar backup completo</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Descarga un archivo JSON con <strong>todos los datos</strong> de la aplicación: usuarios, proyectos, equipos, plantillas, revisiones, tareas, permisos y catálogos.</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4 bg-gray-50 dark:bg-gray-900 rounded-lg px-3 py-2">
+      <span class="flex items-center gap-1">✓ Usuarios</span>
+      <span class="flex items-center gap-1">✓ Proyectos</span>
+      <span class="flex items-center gap-1">✓ Equipos</span>
+      <span class="flex items-center gap-1">✓ Plantillas</span>
+      <span class="flex items-center gap-1">✓ Revisiones</span>
+      <span class="flex items-center gap-1">✓ Tareas</span>
+      <span class="flex items-center gap-1">✓ Permisos</span>
+      <span class="flex items-center gap-1">✓ Catálogos</span>
+    </div>
+    <button (click)="exportarBackup()"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+      ⬇ Descargar backup
+    </button>
+  </div>
 
+  <!-- Importar / Restaurar backup -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 mb-4">
+    <div class="flex items-start gap-3 mb-4">
+      <div class="text-2xl">📂</div>
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">Importar backup</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Carga un archivo de backup exportado previamente desde TechCheck.</p>
+      </div>
+    </div>
+
+    <!-- Modo de importación -->
+    <div class="mb-4">
+      <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Modo de importación</p>
+      <div class="flex gap-2">
+        <label class="flex-1 flex items-start gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all"
+               [class]="modoImport === 'agregar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'">
+          <input type="radio" [(ngModel)]="modoImport" value="agregar" class="mt-0.5">
+          <div>
+            <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Solo agregar nuevos</p>
+            <p class="text-xs text-gray-400 mt-0.5">Los datos existentes no se modifican. Solo se insertan registros que no existan.</p>
+          </div>
+        </label>
+        <label class="flex-1 flex items-start gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all"
+               [class]="modoImport === 'reemplazar' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'">
+          <input type="radio" [(ngModel)]="modoImport" value="reemplazar" class="mt-0.5">
+          <div>
+            <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Restaurar completo</p>
+            <p class="text-xs text-gray-400 mt-0.5">Sobreescribe los datos existentes. Útil para restaurar en un servidor nuevo.</p>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Confirmación para modo reemplazar -->
+    @if (modoImport === 'reemplazar') {
+      <label class="flex items-start gap-2 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer">
+        <input type="checkbox" [checked]="confirmarReemplazar()" (change)="confirmarReemplazar.set(!confirmarReemplazar())" class="mt-0.5">
+        <p class="text-xs text-orange-700">Entiendo que esto sobreescribirá los datos existentes en la aplicación. He verificado que el archivo de backup es correcto.</p>
+      </label>
+    }
+
+    <label class="flex items-center gap-3 cursor-pointer">
+      <span class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            [class]="importando() ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'">
+        {{ importando() ? '⏳ Importando...' : '⬆ Seleccionar archivo de backup' }}
+      </span>
+      <input type="file" accept=".json" class="hidden" [disabled]="importando()" (change)="onFileChange($event)">
+    </label>
+
+    @if (importError()) {
+      <div class="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+        ⚠ {{ importError() }}
+      </div>
+    }
+
+    @if (importResult(); as r) {
+      <div class="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+        <p class="text-sm font-semibold text-green-700 mb-3">✓ Importación completada — {{ totalImportado() }} registros procesados</p>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['usuarios'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">usuarios</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['proyectos'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">proyectos</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['equipos'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">equipos</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['plantillas'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">plantillas</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['revisiones'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">revisiones</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['tareas'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">tareas</div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Exportar CSV (revisiones) -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
+    <div class="flex items-start gap-3 mb-4">
+      <div class="text-2xl">📊</div>
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">Exportar revisiones a CSV</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Genera un archivo CSV con todas las revisiones e ítems, compatible con Excel.</p>
+      </div>
+    </div>
     <div class="flex gap-3 flex-wrap">
       <div class="flex-1 min-w-48">
-        <select [(ngModel)]="proyectoSeleccionado"
-                [ngModel]="proyectoSeleccionado()"
-                (ngModelChange)="proyectoSeleccionado.set($event)"
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+        <select [ngModel]="proyectoSeleccionado()" (ngModelChange)="proyectoSeleccionado.set($event)"
+                class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800">
           <option value="">Todos los proyectos</option>
           @for (p of proyectos(); track p.id) {
             <option [value]="p.id">{{ p.nombre }}</option>
@@ -26,68 +141,5 @@
         ⬇ Descargar CSV
       </button>
     </div>
-  </div>
-
-  <!-- Exportar JSON -->
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
-    <h2 class="text-sm font-semibold text-gray-700 mb-1">Exportar backup completo (JSON)</h2>
-    <p class="text-xs text-gray-400 mb-4">Descarga todos los datos del sistema: proyectos, equipos, plantillas, técnicos, revisiones y tareas programadas.</p>
-    <button (click)="exportarJSON()"
-            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-      ⬇ Descargar JSON
-    </button>
-  </div>
-
-  <!-- Importar JSON -->
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-    <h2 class="text-sm font-semibold text-gray-700 mb-1">Importar backup (JSON)</h2>
-    <p class="text-xs text-gray-400 mb-4">
-      Carga un JSON exportado previamente. Solo inserta registros nuevos — no sobreescribe los existentes.
-    </p>
-
-    <label class="flex items-center gap-3 cursor-pointer">
-      <span class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-        {{ importando() ? 'Importando...' : '⬆ Seleccionar archivo JSON' }}
-      </span>
-      <input type="file" accept=".json" class="hidden" [disabled]="importando()" (change)="onFileChange($event)">
-    </label>
-
-    @if (importError()) {
-      <div class="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-        {{ importError() }}
-      </div>
-    }
-
-    @if (importResult(); as r) {
-      <div class="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-        <p class="text-sm font-medium text-green-700 mb-2">Importación completada</p>
-        <div class="grid grid-cols-3 gap-2">
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.proyectos }}</div>
-            <div class="text-xs text-green-600">proyectos</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.equipos }}</div>
-            <div class="text-xs text-green-600">equipos</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.plantillas }}</div>
-            <div class="text-xs text-green-600">plantillas</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.tecnicos }}</div>
-            <div class="text-xs text-green-600">técnicos</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.revisiones }}</div>
-            <div class="text-xs text-green-600">revisiones</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r.tareas }}</div>
-            <div class="text-xs text-green-600">tareas</div>
-          </div>
-        </div>
-      </div>
-    }
   </div>
 </div>

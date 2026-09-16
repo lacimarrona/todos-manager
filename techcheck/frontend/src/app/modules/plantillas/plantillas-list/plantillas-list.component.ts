@@ -1,9 +1,12 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo } from '../../../core/models/models';
+import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo, Proyecto } from '../../../core/models/models';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { ArchivosService } from '../../../core/services/archivos.service';
+import { ProyectosService } from '../../../core/services/proyectos.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-plantillas-list',
@@ -24,8 +27,14 @@ export class PlantillasListComponent implements OnInit {
   importandoZip = signal(false);
   sincronizando = signal<string | null>(null);
   resultadoSync = signal<{ totalEquipos: number; equiposActualizados: number; itemsAgregados: number; itemsActualizados: number } | null>(null);
-  form: PlantillaForm = { nombre: '', descripcion: '', items: [] };
+  form: PlantillaForm = { nombre: '', descripcion: '', items: [], proyectoIds: [] };
   guiasTemp: string[][] = [];
+
+  // ── Proyectos para asociar plantillas ──────────────────────────────────────
+  todosProyectos = signal<Proyecto[]>([]);
+  proyectosSeleccionados = new Set<string>();
+  proyectosDePlantillaActual = signal<string[]>([]);
+  cargandoProyectos = signal(false);
 
   // ── Modal de sincronización ──────────────────────────────────────
   mostrarModalSync = signal(false);
@@ -41,9 +50,57 @@ export class PlantillasListComponent implements OnInit {
       : this.equiposSyncDisponibles();
   });
 
-  constructor(private svc: PlantillasService, private archivosSvc: ArchivosService) {}
+  constructor(
+    private svc: PlantillasService,
+    private archivosSvc: ArchivosService,
+    private proyectosSvc: ProyectosService,
+    public auth: AuthService,
+  ) {}
 
-  ngOnInit() { this.cargar(); }
+  ngOnInit() {
+    this.cargar();
+    this.proyectosSvc.getAll().subscribe({ next: d => this.todosProyectos.set(d) });
+  }
+
+  proyectosDisponibles(): Proyecto[] {
+    if (this.auth.isAdmin()) return this.todosProyectos();
+    // project_admin solo ve sus proyectos (el backend ya filtra plantillas, pero proyectos los cargamos todos)
+    // En la práctica el backend de plantillas filtrará por sus proyectos, aquí mostramos los que le son visibles
+    return this.todosProyectos();
+  }
+
+  toggleProyectoSeleccion(proyectoId: string) {
+    if (this.proyectosSeleccionados.has(proyectoId)) {
+      this.proyectosSeleccionados.delete(proyectoId);
+    } else {
+      this.proyectosSeleccionados.add(proyectoId);
+    }
+  }
+
+  puedeEditar(p: Plantilla): boolean {
+    if (this.auth.isAdmin()) return true;
+    if (this.auth.isProjectAdmin()) return true;
+    if (this.auth.isTecnico() && this.auth.tienePermiso('editar_plantillas')) return true;
+    return false;
+  }
+
+  puedeEliminar(p: Plantilla): boolean {
+    if (this.auth.isAdmin()) return true;
+    if (this.auth.isProjectAdmin()) return true;
+    if (this.auth.isTecnico() && this.auth.tienePermiso('eliminar_plantillas')) return true;
+    return false;
+  }
+
+  puedeCrear(): boolean {
+    if (this.auth.isAdmin()) return true;
+    if (this.auth.isProjectAdmin()) return true;
+    if (this.auth.isTecnico() && this.auth.tienePermiso('editar_plantillas')) return true;
+    return false;
+  }
+
+  nombreProyecto(id: string): string {
+    return this.todosProyectos().find(p => p.id === id)?.nombre || id;
+  }
 
   cargar() {
     this.cargando.set(true);
@@ -61,8 +118,9 @@ export class PlantillasListComponent implements OnInit {
   }
 
   abrirModalNueva() {
-    this.form = { nombre: '', descripcion: '', items: [] };
+    this.form = { nombre: '', descripcion: '', items: [], proyectoIds: [] };
     this.guiasTemp = [];
+    this.proyectosSeleccionados = new Set<string>();
     this.modoEdicion.set(false);
     this.plantillaEditandoId = '';
     this.nuevoItem = '';
@@ -75,7 +133,8 @@ export class PlantillasListComponent implements OnInit {
       descripcion: p.descripcion,
       items: p.items.map((i: any) => typeof i === 'string'
         ? { label: i, observacionGuia: '', archivosGuia: [] }
-        : { ...i, archivosGuia: i.archivosGuia || [] })
+        : { ...i, archivosGuia: i.archivosGuia || [] }),
+      proyectoIds: []
     };
     this.guiasTemp = this.form.items.map(item => {
       const g = item.observacionGuia || '';
@@ -84,6 +143,15 @@ export class PlantillasListComponent implements OnInit {
     this.modoEdicion.set(true);
     this.plantillaEditandoId = p.id;
     this.nuevoItem = '';
+    this.proyectosSeleccionados = new Set<string>();
+    this.cargandoProyectos.set(true);
+    this.svc.getProyectosDePlantilla(p.id).subscribe({
+      next: ids => {
+        this.proyectosSeleccionados = new Set(ids);
+        this.cargandoProyectos.set(false);
+      },
+      error: () => this.cargandoProyectos.set(false)
+    });
     this.mostrarModal.set(true);
   }
 
@@ -239,20 +307,23 @@ export class PlantillasListComponent implements OnInit {
       ...item,
       observacionGuia: (this.guiasTemp[idx] || []).filter(g => g.trim()).join('\n') || (item.observacionGuia || ''),
     }));
+    const proyectoIds = [...this.proyectosSeleccionados];
+    const formConProyectos = { ...this.form, proyectoIds };
     if (this.modoEdicion()) {
-      this.svc.update(this.plantillaEditandoId, this.form).subscribe({
+      this.svc.update(this.plantillaEditandoId, formConProyectos).subscribe({
         next: () => { this.mostrarModal.set(false); this.cargar(); }
       });
     } else {
-      this.svc.create(this.form).subscribe({
+      this.svc.create(formConProyectos).subscribe({
         next: () => { this.mostrarModal.set(false); this.cargar(); }
       });
     }
   }
 
-  eliminar(id: string) {
+  eliminar(p: Plantilla) {
+    if (!this.puedeEliminar(p)) return;
     if (!confirm('Eliminar esta plantilla?')) return;
-    this.svc.delete(id).subscribe({ next: () => this.cargar() });
+    this.svc.delete(p.id).subscribe({ next: () => this.cargar() });
   }
 
   onImportarExcel(event: Event) {
