@@ -282,6 +282,11 @@ function deleteTecnico(id) {
 }
 
 // ─── USUARIOS ─────────────────────────────────────────────────────────────────
+function hasAdmin() {
+  const row = db.prepare("SELECT COUNT(*) as cnt FROM usuarios WHERE rol = 'admin' AND activo = 1").get();
+  return row.cnt > 0;
+}
+
 function getUsuarios() {
   return db.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all().map(rowToUsuario);
 }
@@ -683,6 +688,7 @@ module.exports = {
   getEquipos, getEquipoById, getEquiposByProyecto, createEquipo, updateEquipo, deleteEquipo,
   getPlantillas, getPlantillaById, createPlantilla, updatePlantilla, deletePlantilla,
   getTecnicos, getTecnicoById, createTecnico, updateTecnico, deleteTecnico,
+  hasAdmin,
   getUsuarios, getUsuarioById, getUsuarioByEmail, getUsuarioByUsername, createUsuario, updateUsuario, updateUsuarioPassword, deleteUsuario,
   createRefreshToken, getRefreshToken, rotateRefreshToken, deleteRefreshToken, deleteRefreshTokensByUsuario,
   getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,

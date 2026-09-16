@@ -29,6 +29,60 @@ function setRefreshCookie(res, rawToken) {
   });
 }
 
+// GET /api/auth/setup-needed — público: indica si aún no hay ningún admin
+router.get('/setup-needed', (req, res) => {
+  res.json({ success: true, data: { needsSetup: !db.hasAdmin() } });
+});
+
+// POST /api/auth/setup — público: crea el primer admin (solo si no existe ninguno)
+router.post('/setup', async (req, res) => {
+  try {
+    if (db.hasAdmin()) {
+      return res.status(403).json({ success: false, message: 'Ya existe un administrador en el sistema' });
+    }
+    const { nombre, username, password } = req.body;
+    if (!nombre || !username || !password) {
+      return res.status(400).json({ success: false, message: 'Nombre, usuario y contraseña son requeridos' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 8 caracteres' });
+    }
+    const existe = db.getUsuarioByUsername(username.trim().toLowerCase());
+    if (existe) {
+      return res.status(400).json({ success: false, message: 'Ese nombre de usuario ya está en uso' });
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    const admin = db.createUsuario({
+      id: uuidv4(),
+      nombre: nombre.trim(),
+      username: username.trim().toLowerCase(),
+      passwordHash,
+      rol: 'admin',
+      activo: true,
+      creadoEn: new Date().toISOString(),
+    });
+
+    // Iniciar sesión automáticamente
+    const accessToken = signAccess(admin);
+    const rawRefresh = crypto.randomBytes(64).toString('hex');
+    const tokenHash = hashToken(rawRefresh);
+    const expiresAt = new Date(Date.now() + REFRESH_TTL_MS).toISOString();
+    db.createRefreshToken({ id: uuidv4(), usuarioId: admin.id, tokenHash, expiresAt });
+    setRefreshCookie(res, rawRefresh);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        access_token: accessToken,
+        token_type: 'Bearer',
+        user: { id: admin.id, nombre: admin.nombre, username: admin.username, rol: admin.rol },
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {

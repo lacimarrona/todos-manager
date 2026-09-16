@@ -38,6 +38,23 @@ export class AuthService {
     private router: Router,
   ) {}
 
+  checkSetupNeeded(): Observable<boolean> {
+    return this.http.get<ApiResponse<{ needsSetup: boolean }>>(`${this.authUrl}/setup-needed`).pipe(
+      map(r => r.data?.needsSetup ?? false)
+    );
+  }
+
+  setup(data: { nombre: string; username: string; password: string }): Observable<{ data: LoginResponse }> {
+    return this.http.post<{ success: boolean; data: LoginResponse }>(
+      `${this.authUrl}/setup`, data, { withCredentials: true }
+    ).pipe(
+      tap(res => {
+        this.storage.setToken(res.data.access_token);
+        this._user.set(res.data.user);
+      })
+    );
+  }
+
   login(creds: LoginRequest): Observable<{ data: LoginResponse }> {
     return this.http.post<{ success: boolean; data: LoginResponse }>(
       `${this.authUrl}/login`, creds, { withCredentials: true }
