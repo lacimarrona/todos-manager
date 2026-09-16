@@ -3,6 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+// Migrar datos JSON → SQLite si la DB está vacía
+const { migrar } = require('./db/migrate');
+migrar();
+
+// Iniciar cron de tareas programadas
+const { iniciarCron } = require('./jobs/tareas-cron');
+iniciarCron();
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -20,6 +28,10 @@ app.use('/api/plantillas', require('./routes/plantillas'));
 app.use('/api/tecnicos',   require('./routes/tecnicos'));
 app.use('/api/revisiones', require('./routes/revisiones'));
 app.use('/api/archivos',   require('./routes/archivos'));
+app.use('/api/tareas',     require('./routes/tareas'));
+app.use('/api/dashboard',  require('./routes/dashboard'));
+app.use('/api/exportar',   require('./routes/exportar'));
+app.use('/api/catalogos',  require('./routes/catalogos'));
 
 app.get('/api/health', (req, res) => {
   res.json({

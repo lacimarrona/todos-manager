@@ -3,9 +3,15 @@ export interface Proyecto {
   id: string;
   nombre: string;
   descripcion: string;
+  restringido?: boolean;
   creadoEn: string;
   actualizadoEn: string;
   totalEquipos?: number;
+}
+
+export interface ProyectoPermiso {
+  tecnicoId: string;
+  nivel: 'ver' | 'asignados' | 'editar';
 }
 
 export interface ProyectoForm {
@@ -67,6 +73,8 @@ export interface Plantilla {
   nombre: string;
   descripcion: string;
   items: ItemPlantilla[];
+  creadoPor?: string | null;
+  proyectoIds?: string[];
   creadoEn: string;
   actualizadoEn: string;
 }
@@ -75,6 +83,7 @@ export interface PlantillaForm {
   nombre: string;
   descripcion: string;
   items: ItemPlantilla[];
+  proyectoIds?: string[];
 }
 
 // ─── TÉCNICO ────────────────────────────────────────────────
@@ -127,6 +136,114 @@ export interface RevisionForm {
   items: ItemRevision[];
   observacionGeneral: string;
   fotos: (ArchivoAdjunto | string)[];
+}
+
+// ─── TAREAS PROGRAMADAS ──────────────────────────────────────
+export interface TareaProgramada {
+  id: string;
+  equipoId: string;
+  equipoNombre: string;
+  tecnicoId: string | null;
+  tecnicoNombre: string;
+  hora: string;        // HH:MM
+  diasSemana: number[]; // 0=domingo … 6=sábado
+  activa: boolean;
+  fechaFin: string | null;
+  creadoEn: string;
+}
+
+export interface TareaForm {
+  equipoId: string;
+  tecnicoId?: string;
+  hora: string;
+  diasSemana: number[];
+  activa?: boolean;
+  fechaFin?: string;
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+export interface DashboardStats {
+  totales: {
+    proyectos: number;
+    equiposActivos: number;
+    equiposArchivados: number;
+    revisiones: number;
+    tecnicos: number;
+    revisionesEstaSemana: number;
+  };
+  equiposPorEstado: {
+    ok: number;
+    observacion: number;
+    problema: number;
+    sinRevision: number;
+  };
+  revisionesPorDia: { fecha: string; total: number }[];
+  topTecnicos: { nombre: string; total: number }[];
+  topEquipos: { nombre: string; total: number }[];
+  ultimasRevisiones: {
+    id: string;
+    estado: string;
+    creadoEn: string;
+    tecnicoNombre: string;
+    equipoNombre: string;
+  }[];
+}
+
+// ─── CATÁLOGOS ───────────────────────────────────────────────
+export interface ElementoGrupo {
+  id: string;
+  grupoId: string;
+  valor: string;
+  descripcion: string;
+  activo: boolean;
+  creadoEn: string;
+}
+
+export interface GrupoElemento {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+  creadoEn: string;
+  elementos: ElementoGrupo[];
+}
+
+// ─── USUARIO ─────────────────────────────────────────────────
+export type UserRol = 'admin' | 'project_admin' | 'tecnico';
+
+export interface Usuario {
+  id: string;
+  nombre: string;
+  username: string;
+  rol: UserRol;
+  activo: boolean;
+  creadoEn: string;
+}
+
+export interface UsuarioForm {
+  nombre: string;
+  username: string;
+  password?: string;
+  rol: UserRol;
+  activo?: boolean;
+}
+
+export interface ProyectoAsignacion {
+  id: string;
+  nombre: string;
+  username: string;
+  rol: UserRol;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: { id: string; nombre: string; username: string; rol: UserRol };
 }
 
 // ─── API RESPONSE ────────────────────────────────────────────

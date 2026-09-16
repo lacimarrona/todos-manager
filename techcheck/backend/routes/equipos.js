@@ -3,7 +3,17 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/dataAccess');
 
-// GET /api/equipos
+// GET /api/equipos — lista todos (para tareas programadas)
+router.get('/', (req, res) => {
+  try {
+    const equipos = db.getEquipos().filter(e => !e.archivado);
+    res.json({ success: true, data: equipos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/equipos/:proyectoId/equipos — filtrado por proyecto
 router.get('/:id/equipos', (req, res) => {
   try {
     const proyecto = db.getProyectoById(req.params.id);
