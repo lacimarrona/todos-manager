@@ -100,11 +100,28 @@ export class ExportarService {
 
   exportarCSV(proyectoId?: string): void {
     const params = proyectoId ? `?proyectoId=${proyectoId}` : '';
-    window.location.href = `${this.url}/revisiones-csv${params}`;
+    this.http.get(`${this.url}/revisiones-csv${params}`, { responseType: 'blob' }).subscribe(blob => {
+      this._descargar(blob, `techcheck-revisiones-${this._fecha()}.csv`);
+    });
   }
 
   exportarJSON(): void {
-    window.location.href = `${this.url}/json`;
+    this.http.get(`${this.url}/json`, { responseType: 'blob' }).subscribe(blob => {
+      this._descargar(blob, `techcheck-backup-${this._fecha()}.json`);
+    });
+  }
+
+  private _fecha(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private _descargar(blob: Blob, nombre: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   importarJSON(file: File, modo: 'agregar' | 'reemplazar' = 'agregar'): Observable<Record<string, number>> {
