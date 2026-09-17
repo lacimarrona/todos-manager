@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: julianquintero/techcheck:1.5.13
+    image: julianquintero/techcheck:1.5.14
     container_name: techcheck
     restart: unless-stopped
     ports:
@@ -17,7 +17,7 @@ services:
       - NODE_ENV=production
       - DATA_SOURCE=sqlite
       - APP_NAME=TechCheck
-      - APP_VERSION=1.5.13
+      - APP_VERSION=1.5.14
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-3010}/api/health || exit 1"]
       interval: 30s

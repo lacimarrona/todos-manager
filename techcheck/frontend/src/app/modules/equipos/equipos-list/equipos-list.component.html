@@ -143,7 +143,7 @@
             <p *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5 truncate">{{ equipo.descripcion }}</p>
           </div>
         </div>
-        <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
+        <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
       </div>
       <div class="flex flex-wrap gap-x-3 gap-y-1 mb-3">
         <span class="text-xs text-gray-500 dark:text-gray-400">📋 {{ equipo.items.length }} items</span>
@@ -218,7 +218,7 @@
               <ng-template #sinRevision><span class="text-gray-300 text-xs">—</span></ng-template>
             </td>
             <td class="px-4 py-3 text-center">
-              <span class="text-xs font-medium px-2.5 py-1 rounded-full" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
+              <span class="text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">{{ estadoLabel(equipo) }}</span>
             </td>
             <td class="px-4 py-3 text-xs text-gray-400">{{ equipo.ultimaRevision ? (equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm') : '—' }}</td>
             <td class="px-4 py-3">
