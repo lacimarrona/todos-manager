@@ -9,7 +9,7 @@
     <div class="flex items-start gap-3 mb-4">
       <div class="text-2xl">💾</div>
       <div>
-        <h2 class="text-sm font-semibold text-gray-800">Descargar backup completo</h2>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Descargar backup completo</h2>
         <p class="text-xs text-gray-400 mt-0.5">Descarga un archivo JSON con <strong>todos los datos</strong> de la aplicación: usuarios, proyectos, equipos, plantillas, revisiones, tareas, permisos y catálogos.</p>
       </div>
     </div>
@@ -34,7 +34,7 @@
     <div class="flex items-start gap-3 mb-4">
       <div class="text-2xl">📂</div>
       <div>
-        <h2 class="text-sm font-semibold text-gray-800">Importar backup</h2>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Importar backup</h2>
         <p class="text-xs text-gray-400 mt-0.5">Carga un archivo de backup exportado previamente desde TechCheck.</p>
       </div>
     </div>
@@ -44,7 +44,7 @@
       <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Modo de importación</p>
       <div class="flex gap-2">
         <label class="flex-1 flex items-start gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all"
-               [class]="modoImport === 'agregar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'">
+               [class]="modoImport === 'agregar' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'">
           <input type="radio" [(ngModel)]="modoImport" value="agregar" class="mt-0.5">
           <div>
             <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Solo agregar nuevos</p>
@@ -52,7 +52,7 @@
           </div>
         </label>
         <label class="flex-1 flex items-start gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all"
-               [class]="modoImport === 'reemplazar' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'">
+               [class]="modoImport === 'reemplazar' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-500' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'">
           <input type="radio" [(ngModel)]="modoImport" value="reemplazar" class="mt-0.5">
           <div>
             <p class="text-xs font-medium text-gray-700 dark:text-gray-300">Restaurar completo</p>
@@ -64,9 +64,9 @@
 
     <!-- Confirmación para modo reemplazar -->
     @if (modoImport === 'reemplazar') {
-      <label class="flex items-start gap-2 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer">
-        <input type="checkbox" [checked]="confirmarReemplazar()" (change)="confirmarReemplazar.set(!confirmarReemplazar())" class="mt-0.5">
-        <p class="text-xs text-orange-700">Entiendo que esto sobreescribirá los datos existentes en la aplicación. He verificado que el archivo de backup es correcto.</p>
+      <label class="flex items-start gap-2 mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg cursor-pointer">
+        <input type="checkbox" [checked]="confirmarReemplazar()" (change)="confirmarReemplazar.set(!confirmarReemplazar())" class="mt-0.5 accent-orange-500">
+        <p class="text-xs text-orange-700 dark:text-orange-400">Entiendo que esto sobreescribirá los datos existentes en la aplicación. He verificado que el archivo de backup es correcto.</p>
       </label>
     }
 
@@ -122,7 +122,7 @@
     <div class="flex items-start gap-3 mb-4">
       <div class="text-2xl">📊</div>
       <div>
-        <h2 class="text-sm font-semibold text-gray-800">Exportar revisiones a CSV</h2>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Exportar revisiones a CSV</h2>
         <p class="text-xs text-gray-400 mt-0.5">Genera un archivo CSV con todas las revisiones e ítems, compatible con Excel.</p>
       </div>
     </div>
