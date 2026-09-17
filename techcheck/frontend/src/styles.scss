@@ -133,7 +133,41 @@
   border-color: rgb(161 98 7 / 0.5) !important;
 }
 
-/* ── 12. Badges de estado (bg-*-100) ────────────────────────── */
+/* ── 12. Botones / labels con borde ÍNDIGO ──────────────────── */
+.dark button[class*="border-indigo-2"],
+.dark label[class*="border-indigo-2"] {
+  border-color: rgb(99 102 241 / 0.5);  /* indigo-500/50 */
+  color:        rgb(199 210 254);        /* indigo-200    */
+}
+.dark button[class*="border-indigo-2"]:hover,
+.dark label[class*="border-indigo-2"]:hover {
+  background-color: rgb(99 102 241 / 0.15);
+}
+
+/* ── 13. Fondos gris claro (bg-gray-50) — cabeceras de tabla ── */
+.dark .bg-gray-50 {
+  background-color: rgb(17 24 39 / 0.6) !important;  /* gray-900/60 */
+}
+
+/* ── 14. Hover en filas de tabla (hover:bg-gray-50) ─────────── */
+.dark .hover\:bg-gray-50:hover {
+  background-color: rgb(55 65 81 / 0.6) !important;  /* gray-700/60 */
+}
+
+/* ── 15. Divisores de tabla (divide-gray-50) ────────────────── */
+.dark .divide-gray-50 > * + * {
+  border-color: rgb(55 65 81) !important;  /* gray-700 */
+}
+.dark .divide-gray-100 > * + * {
+  border-color: rgb(55 65 81) !important;
+}
+
+/* ── 16. Fila con problema en informe (bg-red-50/50) ────────── */
+.dark .bg-red-50\/50 {
+  background-color: rgb(127 29 29 / 0.12) !important;
+}
+
+/* ── 17. Badges de estado (bg-*-100) ────────────────────────── */
 .dark .bg-green-100 {
   background-color: rgb(22 101 52 / 0.25) !important;
 }
