@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -25,7 +26,7 @@ export class LoginComponent implements OnInit {
   cargando = signal(false);
   error    = signal('');
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(public theme: ThemeService, private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
     this.auth.checkSetupNeeded().subscribe({
