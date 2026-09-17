@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const sqliteDb = require('../db/sqlite');
+const JSZip   = require('jszip');
+const fs      = require('fs');
+const path    = require('path');
+const multer  = require('multer');
+
+const ARCHIVOS_DIR = path.join(__dirname, '../data/archivos');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 * 1024 } });
 
 // Escapa un valor para CSV
 function csvCell(v) {
@@ -54,49 +61,73 @@ router.get('/revisiones-csv', (req, res) => {
   }
 });
 
-// GET /api/exportar/json — backup COMPLETO de toda la aplicación
-router.get('/json', (req, res) => {
+// GET /api/exportar/json — backup COMPLETO en ZIP (datos SQLite + archivos físicos)
+router.get('/json', async (req, res) => {
   try {
     const backup = {
       version: '2.0',
       exportadoEn: new Date().toISOString(),
-      // Datos principales
-      proyectos:           sqliteDb.prepare('SELECT * FROM proyectos ORDER BY creado_en ASC').all(),
-      equipos:             sqliteDb.prepare('SELECT * FROM equipos ORDER BY creado_en ASC').all(),
-      plantillas:          sqliteDb.prepare('SELECT * FROM plantillas ORDER BY creado_en ASC').all(),
-      revisiones:          sqliteDb.prepare('SELECT * FROM revisiones ORDER BY creado_en ASC').all(),
-      tareas:              sqliteDb.prepare('SELECT * FROM tareas_programadas ORDER BY creado_en ASC').all(),
-      // Usuarios y roles
-      usuarios:            sqliteDb.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all(),
-      // Relaciones
+      proyectos:            sqliteDb.prepare('SELECT * FROM proyectos ORDER BY creado_en ASC').all(),
+      equipos:              sqliteDb.prepare('SELECT * FROM equipos ORDER BY creado_en ASC').all(),
+      plantillas:           sqliteDb.prepare('SELECT * FROM plantillas ORDER BY creado_en ASC').all(),
+      revisiones:           sqliteDb.prepare('SELECT * FROM revisiones ORDER BY creado_en ASC').all(),
+      tareas:               sqliteDb.prepare('SELECT * FROM tareas_programadas ORDER BY creado_en ASC').all(),
+      usuarios:             sqliteDb.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all(),
       proyectoAsignaciones: sqliteDb.prepare('SELECT * FROM proyecto_asignaciones').all(),
-      proyectoPermisos:    sqliteDb.prepare('SELECT * FROM proyecto_permisos').all(),
-      tecnicoSupervisores: sqliteDb.prepare('SELECT * FROM tecnico_supervisores').all(),
-      plantillaProyectos:  sqliteDb.prepare('SELECT * FROM plantilla_proyectos').all(),
-      // Catálogos
-      gruposElemento:      sqliteDb.prepare('SELECT * FROM grupos_elemento ORDER BY creado_en ASC').all(),
-      elementosGrupo:      sqliteDb.prepare('SELECT * FROM elementos_grupo ORDER BY creado_en ASC').all(),
-      // Permisos especiales de técnicos
-      usuarioPermisos:     sqliteDb.prepare('SELECT * FROM usuario_permisos').all(),
-      // Legado
-      tecnicos:            sqliteDb.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all(),
+      proyectoPermisos:     sqliteDb.prepare('SELECT * FROM proyecto_permisos').all(),
+      tecnicoSupervisores:  sqliteDb.prepare('SELECT * FROM tecnico_supervisores').all(),
+      plantillaProyectos:   sqliteDb.prepare('SELECT * FROM plantilla_proyectos').all(),
+      gruposElemento:       sqliteDb.prepare('SELECT * FROM grupos_elemento ORDER BY creado_en ASC').all(),
+      elementosGrupo:       sqliteDb.prepare('SELECT * FROM elementos_grupo ORDER BY creado_en ASC').all(),
+      usuarioPermisos:      sqliteDb.prepare('SELECT * FROM usuario_permisos').all(),
+      tecnicos:             sqliteDb.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all(),
     };
 
+    const zip = new JSZip();
+    zip.file('backup.json', JSON.stringify(backup, null, 2));
+
+    // Agregar archivos físicos recursivamente desde data/archivos/
+    function agregarDir(dir, zipPrefix) {
+      if (!fs.existsSync(dir)) return;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const fullPath = path.join(dir, entry.name);
+        const zipEntry = zipPrefix ? `${zipPrefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          agregarDir(fullPath, zipEntry);
+        } else {
+          zip.file(`archivos/${zipEntry}`, fs.readFileSync(fullPath));
+        }
+      }
+    }
+    agregarDir(ARCHIVOS_DIR, '');
+
     const fecha = new Date().toISOString().slice(0, 10);
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="techcheck-backup-${fecha}.json"`);
-    res.json(backup);
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="techcheck-backup-${fecha}.zip"`);
+    res.send(buffer);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// POST /api/exportar/importar-json — restaura desde un backup completo
+// POST /api/exportar/importar-json — restaura desde un backup ZIP (datos + imágenes)
 // modo=agregar (default): INSERT OR IGNORE — solo agrega lo que no existe
 // modo=reemplazar: INSERT OR REPLACE — sobreescribe registros existentes
-router.post('/importar-json', express.json({ limit: '100mb' }), (req, res) => {
+router.post('/importar-json', upload.single('archivo'), async (req, res) => {
   try {
-    const data = req.body;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Se requiere un archivo ZIP de backup' });
+    }
+
+    const zip = await JSZip.loadAsync(req.file.buffer);
+
+    const backupFile = zip.file('backup.json');
+    if (!backupFile) {
+      return res.status(400).json({ success: false, message: 'ZIP inválido: no contiene backup.json' });
+    }
+
+    const data = JSON.parse(await backupFile.async('string'));
     if (!data || !data.version) {
       return res.status(400).json({ success: false, message: 'Archivo de backup inválido o sin versión' });
     }
@@ -107,6 +138,7 @@ router.post('/importar-json', express.json({ limit: '100mb' }), (req, res) => {
       usuarios: 0, proyectoAsignaciones: 0, proyectoPermisos: 0,
       tecnicoSupervisores: 0, plantillaProyectos: 0,
       gruposElemento: 0, elementosGrupo: 0, tecnicos: 0,
+      archivos: 0,
     };
 
     // Usuarios
@@ -212,6 +244,41 @@ router.post('/importar-json', express.json({ limit: '100mb' }), (req, res) => {
     for (const t of data.tecnicos || []) {
       const r = insTec.run(t.id, t.nombre, t.email || '', t.creado_en); importados.tecnicos += r.changes;
     }
+
+    // Restaurar archivos físicos desde archivos/ del ZIP
+    const INDEX_PATH = path.join(ARCHIVOS_DIR, 'index.json');
+    let indexLocal = {};
+    try { indexLocal = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf-8')); } catch { indexLocal = {}; }
+
+    let indexZip = {};
+    const indexZipFile = zip.file('archivos/index.json');
+    if (indexZipFile) {
+      try { indexZip = JSON.parse(await indexZipFile.async('string')); } catch { indexZip = {}; }
+    }
+
+    const archivosZip = [];
+    zip.forEach((relPath, file) => {
+      if (!file.dir && relPath.startsWith('archivos/') && relPath !== 'archivos/index.json') {
+        archivosZip.push({ relPath, file });
+      }
+    });
+
+    for (const { relPath, file } of archivosZip) {
+      const subPath = relPath.slice('archivos/'.length);
+      const destPath = path.join(ARCHIVOS_DIR, subPath);
+      const destDir = path.dirname(destPath);
+      if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+      if (!fs.existsSync(destPath)) {
+        const buf = await file.async('nodebuffer');
+        fs.writeFileSync(destPath, buf);
+        importados.archivos++;
+      }
+    }
+
+    // Mergear index.json: agregar entradas del ZIP que no existan localmente
+    const indexMergeado = { ...indexZip, ...indexLocal };
+    fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
+    fs.writeFileSync(INDEX_PATH, JSON.stringify(indexMergeado, null, 2));
 
     res.json({ success: true, data: importados, modo });
   } catch (err) {

@@ -107,7 +107,7 @@ export class ExportarService {
 
   exportarJSON(): void {
     this.http.get(`${this.url}/json`, { responseType: 'blob' }).subscribe(blob => {
-      this._descargar(blob, `techcheck-backup-${this._fecha()}.json`);
+      this._descargar(blob, `techcheck-backup-${this._fecha()}.zip`);
     });
   }
 
@@ -125,25 +125,10 @@ export class ExportarService {
   }
 
   importarJSON(file: File, modo: 'agregar' | 'reemplazar' = 'agregar'): Observable<Record<string, number>> {
-    return new Observable(obs => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target!.result as string);
-          const endpoint = `${this.url}/importar-json?modo=${modo}`;
-          this.http.post<ApiResponse<any>>(endpoint, data, {
-            headers: { 'Content-Type': 'application/json' }
-          }).pipe(map(r => r.data!)).subscribe({
-            next: v => { obs.next(v); obs.complete(); },
-            error: err => obs.error(err)
-          });
-        } catch {
-          obs.error(new Error('Archivo de backup inválido'));
-        }
-      };
-      reader.onerror = () => obs.error(new Error('Error leyendo el archivo'));
-      reader.readAsText(file);
-    });
+    const formData = new FormData();
+    formData.append('archivo', file);
+    return this.http.post<ApiResponse<any>>(`${this.url}/importar-json?modo=${modo}`, formData)
+      .pipe(map(r => r.data!));
   }
 }
 

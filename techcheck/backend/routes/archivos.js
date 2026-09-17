@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const auth = require('../middleware/auth');
 
 const ARCHIVOS_DIR = path.join(__dirname, '../data/archivos');
 const INDEX_PATH = path.join(ARCHIVOS_DIR, 'index.json');
@@ -21,12 +22,13 @@ function writeIndex(data) {
   fs.writeFileSync(INDEX_PATH, JSON.stringify(data, null, 2));
 }
 
-// POST /api/archivos — sube archivo con deduplicación por hash SHA-256
+// POST /api/archivos — sube archivo con deduplicación por hash SHA-256 (requiere auth)
+// GET  /api/archivos/:id — público (hash SHA-256, no adivinable)
 // Body: { nombre, tipo, data, proyectoId? }
 // Si se proporciona proyectoId, almacena en data/archivos/{proyectoId}/{hash}
 // y devuelve url /api/archivos/{proyectoId}/{hash}.
 // Sin proyectoId (plantillas globales) almacena en data/archivos/{hash}.
-router.post('/', (req, res) => {
+router.post('/', auth, (req, res) => {
   try {
     const { nombre, tipo, data, proyectoId } = req.body;
     if (!data) return res.status(400).json({ success: false, message: 'Datos del archivo requeridos' });

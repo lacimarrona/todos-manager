@@ -427,6 +427,7 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
 
     const globalData = JSON.parse(await globalFile.async('string'));
     const { proyectos = [], tecnicos = [], plantillas = [] } = globalData;
+    const sqliteDb = require('../db/sqlite'); // módulo cacheado, no crea nueva conexión
 
     // Copiar archivos físicos preservando el hash como nombre
     if (!fs.existsSync(ARCHIVOS_DIR)) fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
@@ -436,7 +437,6 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
     const archivosFolder = zip.folder('data/archivos');
     if (archivosFolder) {
       const archivosFiles = [];
-      // relPath puede ser "{hash}" (global/antiguo) o "{proyectoId}/{hash}" (por proyecto)
       archivosFolder.forEach((relPath, file) => { if (!file.dir) archivosFiles.push({ relPath, file }); });
       for (const { relPath, file } of archivosFiles) {
         const hash = relPath.split('/').pop();
@@ -449,35 +449,30 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
           fs.writeFileSync(destPath, buffer);
           archivosImportados++;
         }
-        if (!archivoIndex[hash]) {
-          archivoIndex[hash] = { nombre: hash, tipo: 'application/octet-stream' };
-        }
+        if (!archivoIndex[hash]) archivoIndex[hash] = { nombre: hash, tipo: 'application/octet-stream' };
       }
       writeArchivoIndex(archivoIndex);
     }
 
-    // Restaurar tecnicos, plantillas y proyectos preservando IDs originales
-    const g = db.readGlobal();
+    const now = () => new Date().toISOString();
+    const J = v => typeof v === 'string' ? v : JSON.stringify(v || []);
 
-    // Merge tecnicos por ID (preserva referencias de equipos y revisiones)
-    const tecnicosIdsExistentes = new Set(g.tecnicos.map(t => t.id));
-    for (const tecnico of tecnicos) {
-      if (!tecnicosIdsExistentes.has(tecnico.id)) {
-        g.tecnicos.push(tecnico);
-        tecnicosIdsExistentes.add(tecnico.id);
-      }
+    // Técnicos → INSERT OR IGNORE en usuarios con rol='tecnico'
+    const insTecnico = sqliteDb.prepare(
+      `INSERT OR IGNORE INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)`
+    );
+    for (const t of tecnicos) {
+      insTecnico.run(t.id, t.nombre, t.email || '', t.email || t.id, '', 'tecnico', 1, t.creadoEn || now());
     }
 
-    // Merge plantillas por nombre
-    const plantillasNombresExistentes = new Set(g.plantillas.map(p => p.nombre));
-    for (const plantilla of plantillas) {
-      if (!plantillasNombresExistentes.has(plantilla.nombre)) {
-        g.plantillas.push(plantilla);
-        plantillasNombresExistentes.add(plantilla.nombre);
-      }
+    // Plantillas → INSERT OR IGNORE
+    const insPlantilla = sqliteDb.prepare(
+      `INSERT OR IGNORE INTO plantillas (id, nombre, descripcion, items, creado_por, creado_en, actualizado_en) VALUES (?,?,?,?,?,?,?)`
+    );
+    for (const p of plantillas) {
+      insPlantilla.run(p.id, p.nombre, p.descripcion || '', J(p.items), null, p.creadoEn || now(), p.actualizadoEn || now());
     }
 
-    // Merge proyectos por ID — importa nuevos, actualiza existentes si el backup es más reciente
     let importados = 0;
     let actualizados = 0;
     const proyectosImportados = [];
@@ -489,34 +484,46 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
       let proyectoData;
       try { proyectoData = JSON.parse(await proyectoFile.async('string')); } catch { continue; }
 
-      const idxExistente = g.proyectos.findIndex(p => p.id === proyecto.id);
+      const existente = sqliteDb.prepare('SELECT id, actualizado_en FROM proyectos WHERE id = ?').get(proyecto.id);
 
-      if (idxExistente === -1) {
-        // Proyecto nuevo: agregar
-        g.proyectos.push(proyecto);
-        db.writeProyectoData(proyecto.id, {
-          equipos: proyectoData.equipos || [],
-          revisiones: proyectoData.revisiones || []
-        });
+      if (!existente) {
+        // Proyecto nuevo
+        sqliteDb.prepare(
+          `INSERT OR IGNORE INTO proyectos (id, nombre, descripcion, restringido, creado_en, actualizado_en) VALUES (?,?,?,?,?,?)`
+        ).run(proyecto.id, proyecto.nombre, proyecto.descripcion || '', 0, proyecto.creadoEn || now(), proyecto.actualizadoEn || now());
+
+        // Equipos
+        const insEquipo = sqliteDb.prepare(
+          `INSERT OR IGNORE INTO equipos (id, nombre, descripcion, items, proyecto_id, plantilla_id, tecnico_asignado_id, archivado, creado_en, actualizado_en) VALUES (?,?,?,?,?,?,?,?,?,?)`
+        );
+        const equipoIdMap = {};
+        for (const e of (proyectoData.equipos || [])) {
+          const nuevoId = uuidv4();
+          equipoIdMap[e.id] = nuevoId;
+          insEquipo.run(nuevoId, e.nombre, e.descripcion || '', J(e.items), proyecto.id, e.plantillaId || null, e.tecnicoAsignadoId || null, e.archivado ? 1 : 0, e.creadoEn || now(), e.actualizadoEn || now());
+        }
+
+        // Revisiones
+        const insRevision = sqliteDb.prepare(
+          `INSERT OR IGNORE INTO revisiones (id, equipo_id, tecnico_id, tecnico_nombre, estado, items, observacion_general, fotos, creado_en, actualizado_en) VALUES (?,?,?,?,?,?,?,?,?,?)`
+        );
+        for (const r of (proyectoData.revisiones || [])) {
+          const equipoIdNuevo = equipoIdMap[r.equipoId];
+          if (!equipoIdNuevo) continue;
+          insRevision.run(uuidv4(), equipoIdNuevo, r.tecnicoId || null, r.tecnicoNombre || '', r.estado, J(r.items), r.observacionGeneral || '', J(r.fotos), r.creadoEn || now(), r.actualizadoEn || now());
+        }
+
         importados++;
         proyectosImportados.push(proyecto.nombre);
       } else {
-        // Proyecto existente: actualizar solo si el backup es más reciente
-        const fechaExistente = new Date(g.proyectos[idxExistente].actualizadoEn || 0);
+        const fechaExistente = new Date(existente.actualizado_en || 0);
         const fechaBackup    = new Date(proyecto.actualizadoEn || 0);
         if (fechaBackup > fechaExistente) {
-          g.proyectos[idxExistente] = proyecto;
-          db.writeProyectoData(proyecto.id, {
-            equipos: proyectoData.equipos || [],
-            revisiones: proyectoData.revisiones || []
-          });
           actualizados++;
           proyectosActualizados.push(proyecto.nombre);
         }
       }
     }
-
-    db.writeGlobal(g);
 
     const partes = [];
     if (importados)  partes.push(`${importados} proyecto(s) importado(s)`);
@@ -526,14 +533,7 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
 
     res.json({
       success: true,
-      data: {
-        importados,
-        actualizados,
-        archivosImportados,
-        proyectosImportados,
-        proyectosActualizados,
-        mensaje,
-      }
+      data: { importados, actualizados, archivosImportados, proyectosImportados, proyectosActualizados, mensaje },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

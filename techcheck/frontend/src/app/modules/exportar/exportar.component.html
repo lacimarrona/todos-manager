@@ -10,7 +10,7 @@
       <div class="text-2xl">💾</div>
       <div>
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Descargar backup completo</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Descarga un archivo JSON con <strong>todos los datos</strong> de la aplicación: usuarios, proyectos, equipos, plantillas, revisiones, tareas, permisos y catálogos.</p>
+        <p class="text-xs text-gray-400 mt-0.5">Descarga un archivo ZIP con <strong>todos los datos e imágenes</strong> de la aplicación: usuarios, proyectos, equipos, plantillas, revisiones, tareas, permisos, catálogos y todas las imágenes adjuntas.</p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4 bg-gray-50 dark:bg-gray-900 rounded-lg px-3 py-2">
@@ -22,6 +22,7 @@
       <span class="flex items-center gap-1">✓ Tareas</span>
       <span class="flex items-center gap-1">✓ Permisos</span>
       <span class="flex items-center gap-1">✓ Catálogos</span>
+      <span class="flex items-center gap-1">✓ Imágenes</span>
     </div>
     <button (click)="exportarBackup()"
             class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -35,7 +36,7 @@
       <div class="text-2xl">📂</div>
       <div>
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Importar backup</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Carga un archivo de backup exportado previamente desde TechCheck.</p>
+        <p class="text-xs text-gray-400 mt-0.5">Carga un archivo ZIP de backup exportado previamente desde TechCheck (incluye datos e imágenes).</p>
       </div>
     </div>
 
@@ -75,7 +76,7 @@
             [class]="importando() ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'">
         {{ importando() ? '⏳ Importando...' : '⬆ Seleccionar archivo de backup' }}
       </span>
-      <input type="file" accept=".json" class="hidden" [disabled]="importando()" (change)="onFileChange($event)">
+      <input type="file" accept=".zip" class="hidden" [disabled]="importando()" (change)="onFileChange($event)">
     </label>
 
     @if (importError()) {
@@ -111,6 +112,10 @@
           <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
             <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['tareas'] ?? 0 }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">tareas</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg py-2">
+            <div class="text-lg font-bold text-green-700 tabular-nums">{{ r['archivos'] ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">imágenes</div>
           </div>
         </div>
       </div>

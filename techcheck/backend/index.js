@@ -21,8 +21,8 @@ const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 const auth  = require('./middleware/auth');
 const roles = require('./middleware/roles');
@@ -37,7 +37,7 @@ app.use('/api/equipos',    auth, require('./routes/equipos'));
 app.use('/api/plantillas', auth, roles('admin', 'project_admin', 'tecnico'), require('./routes/plantillas'));
 app.use('/api/tecnicos',   auth, roles('admin', 'project_admin'), require('./routes/tecnicos'));
 app.use('/api/revisiones', auth, require('./routes/revisiones'));
-app.use('/api/archivos',   auth, require('./routes/archivos'));
+app.use('/api/archivos',   require('./routes/archivos')); // GET público (hashes SHA-256); POST protegido internamente
 app.use('/api/tareas',     auth, require('./routes/tareas'));
 app.use('/api/dashboard',  auth, roles('admin'), require('./routes/dashboard'));
 app.use('/api/exportar',   auth, roles('admin'), require('./routes/exportar'));
