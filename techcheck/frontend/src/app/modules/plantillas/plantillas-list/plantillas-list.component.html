@@ -83,8 +83,12 @@
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-2 max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
           <div *ngFor="let item of form.items; let i = index" class="px-3 py-2 space-y-1.5">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ item.label }}</span>
-              <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors shrink-0">X</button>
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">{{ item.label }}</span>
+                <span *ngIf="!item.tipo || item.tipo === 'checkbox'" class="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded shrink-0">☑ checkbox</span>
+                <span *ngIf="item.tipo === 'catalogo'" class="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 rounded shrink-0">📋 {{ nombreCatalogo(item.catalogoId) || 'catálogo' }}</span>
+              </div>
+              <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors shrink-0 ml-2">X</button>
             </div>
             <div
               class="rounded-lg transition-all space-y-1.5 p-1"
@@ -128,10 +132,30 @@
           </div>
           <div *ngIf="form.items.length === 0" class="px-3 py-3 text-xs text-gray-400 text-center">No hay items aun</div>
         </div>
-        <div class="flex gap-2">
-          <input type="text" [(ngModel)]="nuevoItem" placeholder="Agregar item..." (keydown.enter)="agregarItem()"
-            class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <button (click)="agregarItem()" class="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">+ Agregar</button>
+        <div class="space-y-2">
+          <div class="flex gap-2">
+            <input type="text" [(ngModel)]="nuevoItem" placeholder="Agregar item..." (keydown.enter)="agregarItem()"
+              class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button (click)="agregarItem()" class="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shrink-0">+ Agregar</button>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="text-xs text-gray-400 shrink-0">Tipo:</span>
+            <button (click)="nuevoItemTipo = 'checkbox'; nuevoItemCatalogoId = ''"
+              class="px-2.5 py-1 text-xs rounded-full border transition-all"
+              [ngClass]="nuevoItemTipo === 'checkbox' ? 'bg-gray-700 border-gray-700 text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500 hover:border-gray-400'">
+              ☑ Checkbox
+            </button>
+            <button (click)="nuevoItemTipo = 'catalogo'"
+              class="px-2.5 py-1 text-xs rounded-full border transition-all"
+              [ngClass]="nuevoItemTipo === 'catalogo' ? 'bg-purple-600 border-purple-600 text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500 hover:border-purple-400'">
+              📋 Catálogo
+            </button>
+            <select *ngIf="nuevoItemTipo === 'catalogo'" [(ngModel)]="nuevoItemCatalogoId"
+              class="flex-1 px-2.5 py-1 text-xs border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-800">
+              <option value="">— Selecciona catálogo —</option>
+              <option *ngFor="let c of catalogos()" [value]="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
         </div>
       </div>
 

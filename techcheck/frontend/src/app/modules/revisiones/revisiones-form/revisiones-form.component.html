@@ -54,13 +54,29 @@
             class="border rounded-lg p-3 transition-colors"
             [ngClass]="item.checked ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'">
             <div class="flex items-center gap-3 mb-2">
-              <button (click)="toggleItem(i)"
-                class="w-6 h-6 rounded-md border-2 flex items-center justify-center text-white text-sm shrink-0 transition-all"
-                [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white dark:bg-gray-800'">
-                <span *ngIf="item.checked">✓</span>
-              </button>
-              <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700'">{{ item.label }}</span>
-              <!-- Botones de estado por ítem -->
+              <!-- Checkbox tipo normal -->
+              <ng-container *ngIf="!item.tipo || item.tipo === 'checkbox'">
+                <button (click)="toggleItem(i)"
+                  class="w-6 h-6 rounded-md border-2 flex items-center justify-center text-white text-sm shrink-0 transition-all"
+                  [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white dark:bg-gray-800'">
+                  <span *ngIf="item.checked">✓</span>
+                </button>
+                <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
+              </ng-container>
+              <!-- Ítem de catálogo: dropdown -->
+              <ng-container *ngIf="item.tipo === 'catalogo'">
+                <span class="text-purple-500 text-base shrink-0">📋</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">{{ item.label }}</p>
+                  <select [ngModel]="item.valor" (ngModelChange)="updateValor(i, $event)"
+                    class="w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-800"
+                    [ngClass]="item.valor ? 'border-purple-300 dark:border-purple-600' : 'border-gray-200 dark:border-gray-700'">
+                    <option value="">— Seleccionar —</option>
+                    <option *ngFor="let el of elementosDeCatalogo(item.catalogoId)" [value]="el.valor">{{ el.valor }}</option>
+                  </select>
+                </div>
+              </ng-container>
+              <!-- Botones de estado (ambos tipos) -->
               <div class="flex gap-1 shrink-0">
                 <button (click)="setItemEstado(i, 'ok')" title="Sin problemas"
                   class="px-2 py-0.5 text-xs rounded-full border transition-all"

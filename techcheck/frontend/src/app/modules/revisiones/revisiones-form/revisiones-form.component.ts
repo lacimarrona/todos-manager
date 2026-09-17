@@ -1,9 +1,9 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Equipo, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem } from '../../../core/models/models';
+import { Equipo, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, GrupoElemento } from '../../../core/models/models';
 import { EquiposService } from '../../../core/services/equipos.service';
-import { TecnicosService, RevisionesService } from '../../../core/services/otros.services';
+import { TecnicosService, RevisionesService, CatalogosService } from '../../../core/services/otros.services';
 
 @Component({
   selector: 'app-revisiones-form',
@@ -27,16 +27,24 @@ export class RevisionesFormComponent implements OnInit {
   items = signal<ItemRevision[]>([]);
   notasTemp: string[][] = [];
   fotosBase64: string[] = [];
+  catalogos = signal<GrupoElemento[]>([]);
 
   constructor(
     private equiposSvc: EquiposService,
     private tecnicosSvc: TecnicosService,
-    private revisionesSvc: RevisionesService
+    private revisionesSvc: RevisionesService,
+    private catalogosSvc: CatalogosService,
   ) {}
 
   ngOnInit() {
     this.equiposSvc.getAll().subscribe({ next: d => { this.equipos.set(d); this.cargando.set(false); } });
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
+    this.catalogosSvc.getAll().subscribe({ next: d => this.catalogos.set(d) });
+  }
+
+  elementosDeCatalogo(catalogoId?: string): { valor: string }[] {
+    if (!catalogoId) return [];
+    return this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
   }
 
   onEquipoChange() {
@@ -49,7 +57,10 @@ export class RevisionesFormComponent implements OnInit {
         nota: '',
         archivos: [],
         observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
-        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || []),
+        tipo: typeof i === 'string' ? 'checkbox' : (i.tipo || 'checkbox'),
+        catalogoId: typeof i === 'string' ? undefined : i.catalogoId,
+        valor: '',
       })));
       this.notasTemp = this.items().map(() => ['']);
     } else {
@@ -100,6 +111,12 @@ export class RevisionesFormComponent implements OnInit {
   }
 
   trackByNotaIdx(index: number) { return index; }
+
+  updateValor(idx: number, valor: string) {
+    const updated = [...this.items()];
+    updated[idx] = { ...updated[idx], valor, checked: !!valor };
+    this.items.set(updated);
+  }
 
   setItemEstado(idx: number, estado: EstadoItem) {
     const updated = [...this.items()];

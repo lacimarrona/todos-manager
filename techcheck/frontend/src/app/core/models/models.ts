@@ -34,6 +34,8 @@ export interface ItemEquipo {
   label: string;
   observacionGuia: string;
   archivosGuia: (ArchivoAdjunto | string)[];
+  tipo?: 'checkbox' | 'catalogo';
+  catalogoId?: string;
 }
 
 export interface Equipo {
@@ -66,6 +68,8 @@ export interface ItemPlantilla {
   label: string;
   observacionGuia: string;
   archivosGuia: (ArchivoAdjunto | string)[];
+  tipo?: 'checkbox' | 'catalogo';
+  catalogoId?: string;
 }
 
 export interface Plantilla {
@@ -112,6 +116,9 @@ export interface ItemRevision {
   archivos: (ArchivoAdjunto | string)[];
   observacionGuia?: string;
   archivosGuia?: (ArchivoAdjunto | string)[];
+  tipo?: 'checkbox' | 'catalogo';
+  catalogoId?: string;
+  valor?: string;
 }
 
 export interface Revision {

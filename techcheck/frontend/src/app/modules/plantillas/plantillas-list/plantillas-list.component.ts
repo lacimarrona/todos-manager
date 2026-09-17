@@ -1,10 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo, Proyecto } from '../../../core/models/models';
+import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo, Proyecto, GrupoElemento } from '../../../core/models/models';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { ArchivosService } from '../../../core/services/archivos.service';
 import { ProyectosService } from '../../../core/services/proyectos.service';
+import { CatalogosService } from '../../../core/services/otros.services';
 import { AuthService } from '../../../core/services/auth.service';
 import { forkJoin } from 'rxjs';
 
@@ -23,6 +24,9 @@ export class PlantillasListComponent implements OnInit {
   modoEdicion = signal(false);
   plantillaEditandoId = '';
   nuevoItem = '';
+  nuevoItemTipo: 'checkbox' | 'catalogo' = 'checkbox';
+  nuevoItemCatalogoId = '';
+  catalogos = signal<GrupoElemento[]>([]);
   importando = signal(false);
   importandoZip = signal(false);
   sincronizando = signal<string | null>(null);
@@ -54,12 +58,19 @@ export class PlantillasListComponent implements OnInit {
     private svc: PlantillasService,
     private archivosSvc: ArchivosService,
     private proyectosSvc: ProyectosService,
+    private catalogosSvc: CatalogosService,
     public auth: AuthService,
   ) {}
 
   ngOnInit() {
     this.cargar();
     this.proyectosSvc.getAll().subscribe({ next: d => this.todosProyectos.set(d) });
+    this.catalogosSvc.getAll().subscribe({ next: d => this.catalogos.set(d) });
+  }
+
+  nombreCatalogo(catalogoId?: string): string {
+    if (!catalogoId) return '';
+    return this.catalogos().find(c => c.id === catalogoId)?.nombre || catalogoId;
   }
 
   proyectosDisponibles(): Proyecto[] {
@@ -124,6 +135,8 @@ export class PlantillasListComponent implements OnInit {
     this.modoEdicion.set(false);
     this.plantillaEditandoId = '';
     this.nuevoItem = '';
+    this.nuevoItemTipo = 'checkbox';
+    this.nuevoItemCatalogoId = '';
     this.mostrarModal.set(true);
   }
 
@@ -164,9 +177,18 @@ export class PlantillasListComponent implements OnInit {
   agregarItem() {
     const t = this.nuevoItem.trim();
     if (!t) return;
-    this.form.items = [...this.form.items, { label: t, observacionGuia: '', archivosGuia: [] }];
+    const item: ItemPlantilla = {
+      label: t,
+      observacionGuia: '',
+      archivosGuia: [],
+      tipo: this.nuevoItemTipo,
+    };
+    if (this.nuevoItemTipo === 'catalogo') item.catalogoId = this.nuevoItemCatalogoId || undefined;
+    this.form.items = [...this.form.items, item];
     this.guiasTemp = [...this.guiasTemp, ['']];
     this.nuevoItem = '';
+    this.nuevoItemTipo = 'checkbox';
+    this.nuevoItemCatalogoId = '';
   }
 
   quitarItem(i: number) {
