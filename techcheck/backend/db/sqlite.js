@@ -177,19 +177,4 @@ if (countUsuarios.c === 0) {
   }
 }
 
-// Crear admin por defecto si no existe ningún admin
-// El script scripts/crear-admin.js puede usarse para crear/recrear el admin
-const adminExiste = db.prepare("SELECT COUNT(*) as c FROM usuarios WHERE rol = 'admin'").get();
-if (adminExiste.c === 0) {
-  const { v4: uuidv4 } = require('uuid');
-  const bcrypt = require('bcryptjs');
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin1234';
-  const hash = bcrypt.hashSync(adminPassword, 12);
-  db.prepare(
-    'INSERT OR IGNORE INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)'
-  ).run(uuidv4(), 'Administrador', 'admin@techcheck.local', 'admin', hash, 'admin', 1, new Date().toISOString());
-  console.log(`  Admin creado: usuario=admin / ${adminPassword}`);
-  console.log(`  ⚠ Cambia la contraseña en el primer inicio de sesión`);
-}
-
 module.exports = db;
