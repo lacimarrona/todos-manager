@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Dark mode global: inputs, selects y textareas ─────────────
+   @tailwindcss/forms aplica un fondo blanco por defecto.
+   Estas reglas lo sobreescriben cuando la clase "dark" está en <html>.
+   ────────────────────────────────────────────────────────────── */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="range"]),
+.dark select,
+.dark textarea {
+  background-color: rgb(55 65 81);   /* gray-700  */
+  color:            rgb(243 244 246); /* gray-100  */
+  border-color:     rgb(75 85 99);   /* gray-600  */
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"])::placeholder,
+.dark textarea::placeholder {
+  color: rgb(156 163 175); /* gray-400 */
+}
+
+.dark select option {
+  background-color: rgb(55 65 81);
+  color:            rgb(243 244 246);
+}
+
+/* ── Dark mode global: botones secundarios (Cancelar, Volver…) ─
+   Se detectan por tener borde gray-200/300 o hover:bg-gray-50.
+   Aplica solo dentro de modales/formularios, NO toca la barra lateral.
+   ────────────────────────────────────────────────────────────── */
+.dark button[class*="border-gray-200"],
+.dark button[class*="border-gray-300"] {
+  color:        rgb(209 213 219); /* gray-300 */
+  border-color: rgb(75 85 99);   /* gray-600 */
+}
+
+.dark button[class*="border-gray-200"]:hover,
+.dark button[class*="border-gray-300"]:hover {
+  background-color: rgb(55 65 81); /* gray-700 */
+}
+
+/* ── Scrollbar en dark mode ────────────────────────────────────── */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: rgb(31 41 55); /* gray-800 */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99); /* gray-600 */
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128); /* gray-500 */
+}
