@@ -133,7 +133,26 @@
   border-color: rgb(161 98 7 / 0.5) !important;
 }
 
-/* ── 12. Scrollbar en dark mode ──────────────────────────────── */
+/* ── 12. Badges de estado (bg-*-100) ────────────────────────── */
+.dark .bg-green-100 {
+  background-color: rgb(22 101 52 / 0.25) !important;
+}
+.dark .text-green-700 {
+  color: rgb(134 239 172) !important;
+}
+
+.dark .bg-yellow-100 {
+  background-color: rgb(161 98 7 / 0.25) !important;
+}
+.dark .text-yellow-700 {
+  color: rgb(252 211 77) !important;
+}
+
+.dark .bg-red-100 {
+  background-color: rgb(153 27 27 / 0.25) !important;
+}
+
+/* ── 13. Scrollbar en dark mode ──────────────────────────────── */
 .dark ::-webkit-scrollbar { width: 6px; height: 6px; }
 .dark ::-webkit-scrollbar-track  { background: rgb(31 41 55); }
 .dark ::-webkit-scrollbar-thumb  { background: rgb(75 85 99); border-radius: 3px; }
