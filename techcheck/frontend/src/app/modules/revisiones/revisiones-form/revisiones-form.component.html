@@ -52,7 +52,7 @@
         <div class="space-y-2">
           <div *ngFor="let item of items(); let i = index"
             class="border rounded-lg p-3 transition-colors"
-            [ngClass]="item.checked ? 'bg-green-50 border-green-200' : 'border-gray-200'">
+            [ngClass]="item.checked ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'">
             <div class="flex items-center gap-3 mb-2">
               <button (click)="toggleItem(i)"
                 class="w-6 h-6 rounded-md border-2 flex items-center justify-center text-white text-sm shrink-0 transition-all"
