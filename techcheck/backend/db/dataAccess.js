@@ -397,8 +397,25 @@ function importarProyecto(datos) {
     }
   }
 
+  // Mapa viejo equipoId → nuevo equipoId para reasignar revisiones
+  const equipoIdMap = {};
   for (const e of (equipos || [])) {
-    createEquipo({ ...e, id: uuidv4(), proyectoIds: [nuevoId], creadoEn: now(), actualizadoEn: now() });
+    const nuevoEquipoId = uuidv4();
+    equipoIdMap[e.id] = nuevoEquipoId;
+    createEquipo({ ...e, id: nuevoEquipoId, proyectoIds: [nuevoId], creadoEn: now(), actualizadoEn: now() });
+  }
+
+  // Importar revisiones reasignando al nuevo equipoId
+  for (const r of (revisiones || [])) {
+    const equipoIdNuevo = equipoIdMap[r.equipoId || r.equipo_id];
+    if (!equipoIdNuevo) continue;
+    createRevision({
+      ...r,
+      id: uuidv4(),
+      equipoId: equipoIdNuevo,
+      creadoEn: r.creadoEn || r.creado_en || now(),
+      actualizadoEn: r.actualizadoEn || r.actualizado_en || now(),
+    });
   }
 
   return nuevo;
