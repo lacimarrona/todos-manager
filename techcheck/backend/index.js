@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 // Migrar datos JSON → SQLite si la DB está vacía
@@ -18,20 +19,29 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const APP_NAME = process.env.APP_NAME || 'TechCheck';
 const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-app.use('/api/proyectos',  require('./routes/proyectos'));
-app.use('/api/equipos',    require('./routes/equipos'));
-app.use('/api/plantillas', require('./routes/plantillas'));
-app.use('/api/tecnicos',   require('./routes/tecnicos'));
-app.use('/api/revisiones', require('./routes/revisiones'));
-app.use('/api/archivos',   require('./routes/archivos'));
-app.use('/api/tareas',     require('./routes/tareas'));
-app.use('/api/dashboard',  require('./routes/dashboard'));
-app.use('/api/exportar',   require('./routes/exportar'));
-app.use('/api/catalogos',  require('./routes/catalogos'));
+const auth  = require('./middleware/auth');
+const roles = require('./middleware/roles');
+
+// Ruta pública
+app.use('/api/auth', require('./routes/auth'));
+
+// Todas las demás rutas requieren autenticación
+app.use('/api/usuarios',   require('./routes/usuarios'));          // tiene auth+roles internamente
+app.use('/api/proyectos',  auth, require('./routes/proyectos'));   // control de roles interno por endpoint
+app.use('/api/equipos',    auth, require('./routes/equipos'));
+app.use('/api/plantillas', auth, roles('admin', 'project_admin', 'tecnico'), require('./routes/plantillas'));
+app.use('/api/tecnicos',   auth, roles('admin', 'project_admin'), require('./routes/tecnicos'));
+app.use('/api/revisiones', auth, require('./routes/revisiones'));
+app.use('/api/archivos',   auth, require('./routes/archivos'));
+app.use('/api/tareas',     auth, require('./routes/tareas'));
+app.use('/api/dashboard',  auth, roles('admin'), require('./routes/dashboard'));
+app.use('/api/exportar',   auth, roles('admin'), require('./routes/exportar'));
+app.use('/api/catalogos',  auth, roles('admin'), require('./routes/catalogos'));
 
 app.get('/api/health', (req, res) => {
   res.json({

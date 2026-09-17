@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Proyecto, ProyectoForm, ProyectoPermiso, Equipo } from '../models/models';
+import { ApiResponse, Proyecto, ProyectoForm, ProyectoPermiso, ProyectoAsignacion, Equipo } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ProyectosService {
@@ -72,5 +72,17 @@ getPermisos(id: string): Observable<{ restringido: boolean; permisos: ProyectoPe
 
 setPermisos(id: string, data: { restringido: boolean; permisos: ProyectoPermiso[] }): Observable<void> {
   return this.http.put<ApiResponse<void>>(`${this.url}/${id}/permisos`, data).pipe(map(() => void 0));
+}
+
+getAsignaciones(id: string): Observable<ProyectoAsignacion[]> {
+  return this.http.get<ApiResponse<ProyectoAsignacion[]>>(`${this.url}/${id}/asignaciones`).pipe(map(r => r.data || []));
+}
+
+asignarUsuario(id: string, usuarioId: string): Observable<void> {
+  return this.http.post<ApiResponse<void>>(`${this.url}/${id}/asignaciones`, { usuarioId }).pipe(map(() => void 0));
+}
+
+desasignarUsuario(id: string, usuarioId: string): Observable<void> {
+  return this.http.delete<ApiResponse<void>>(`${this.url}/${id}/asignaciones/${usuarioId}`).pipe(map(() => void 0));
 }
 }

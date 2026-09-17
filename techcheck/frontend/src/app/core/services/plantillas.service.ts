@@ -48,4 +48,16 @@ export class PlantillasService {
     const body = equipoIds ? { equipoIds } : {};
     return this.http.post<ApiResponse<any>>(`${this.url}/${id}/sincronizar-equipos`, body).pipe(map(r => r.data!));
   }
+
+  getByProyecto(proyectoId: string): Observable<Plantilla[]> {
+    return this.http.get<ApiResponse<Plantilla[]>>(`${this.url}/por-proyecto/${proyectoId}`).pipe(map(r => r.data || []));
+  }
+
+  getProyectosDePlantilla(id: string): Observable<string[]> {
+    return this.http.get<ApiResponse<string[]>>(`${this.url}/${id}/proyectos`).pipe(map(r => r.data || []));
+  }
+
+  setProyectosDePlantilla(id: string, proyectoIds: string[]): Observable<void> {
+    return this.http.put<ApiResponse<void>>(`${this.url}/${id}/proyectos`, { proyectoIds }).pipe(map(() => void 0));
+  }
 }

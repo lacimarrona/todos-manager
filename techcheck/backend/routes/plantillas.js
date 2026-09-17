@@ -21,9 +21,44 @@ function writeArchivoIndex(idx) {
   fs.writeFileSync(INDEX_PATH, JSON.stringify(idx, null, 2));
 }
 
+// Helpers de acceso por rol y permisos especiales
+function proyectosDelUsuario(req) {
+  if (req.user.rol === 'tecnico') {
+    // Técnico: sus proyectos están en proyecto_permisos
+    return db.getPermisosDelTecnico(req.user.sub).map(p => p.proyectoId);
+  }
+  // project_admin: sus proyectos están en proyecto_asignaciones
+  return db.getProyectosDeUsuario(req.user.sub).map(p => p.id);
+}
+function esTecnicoConPermisoEnPlantilla(req, plantillaId) {
+  // Técnico con editar_plantillas: puede editar si la plantilla está en alguno de sus proyectos
+  const susProyectos = proyectosDelUsuario(req);
+  const proyectosDePlantilla = db.getProyectosDePlantilla(plantillaId);
+  return proyectosDePlantilla.some(id => susProyectos.includes(id));
+}
+
+// GET /api/plantillas — admin ve todas; project_admin y técnico ven solo las de sus proyectos
 router.get('/', (req, res) => {
   try {
-    res.json({ success: true, data: db.getPlantillas() });
+    let plantillas;
+    if (req.user.rol === 'admin') {
+      plantillas = db.getPlantillas();
+    } else {
+      const proyectoIds = proyectosDelUsuario(req);
+      plantillas = db.getPlantillasParaProyectos(proyectoIds);
+    }
+    res.json({ success: true, data: db.augmentarPlantillasConProyectos(plantillas) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/plantillas/por-proyecto/:proyectoId — plantillas de un proyecto (para el form de equipos)
+// IMPORTANTE: esta ruta debe ir antes de /:id para no ser capturada por el parámetro
+router.get('/por-proyecto/:proyectoId', (req, res) => {
+  try {
+    const plantillas = db.getPlantillasDeProyecto(req.params.proyectoId);
+    res.json({ success: true, data: plantillas });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -39,20 +74,64 @@ router.get('/:id', (req, res) => {
   }
 });
 
+// GET /api/plantillas/:id/proyectos — proyectos asociados a una plantilla
+router.get('/:id/proyectos', (req, res) => {
+  try {
+    const p = db.getPlantillaById(req.params.id);
+    if (!p) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    const proyectoIds = db.getProyectosDePlantilla(req.params.id);
+    res.json({ success: true, data: proyectoIds });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/plantillas/:id/proyectos — establece proyectos asociados a una plantilla
+router.put('/:id/proyectos', (req, res) => {
+  try {
+    const plantilla = db.getPlantillaById(req.params.id);
+    if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    if (req.user.rol === 'project_admin' && plantilla.creadoPor !== req.user.sub) {
+      return res.status(403).json({ success: false, message: 'Solo puedes gestionar proyectos de tus propias plantillas' });
+    }
+    let proyectoIds = req.body.proyectoIds || [];
+    if (req.user.rol === 'project_admin') {
+      const susProyectos = db.getProyectosDeUsuario(req.user.sub).map(p => p.id);
+      proyectoIds = proyectoIds.filter(id => susProyectos.includes(id));
+    }
+    db.setProyectosDePlantilla(req.params.id, proyectoIds);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/', (req, res) => {
   try {
-    const { nombre, descripcion, items } = req.body;
+    const { nombre, descripcion, items, proyectoIds } = req.body;
     if (!nombre || !items?.length)
       return res.status(400).json({ success: false, message: 'Nombre e ítems son requeridos' });
+
+    let finalProyectoIds = proyectoIds || [];
+    if (req.user.rol === 'project_admin') {
+      const susProyectos = db.getProyectosDeUsuario(req.user.sub).map(p => p.id);
+      finalProyectoIds = finalProyectoIds.filter(id => susProyectos.includes(id));
+    }
+
     const nueva = {
       id: uuidv4(),
       nombre: nombre.trim(),
       descripcion: descripcion?.trim() || '',
       items,
+      creadoPor: req.user.sub,
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString()
     };
-    res.status(201).json({ success: true, data: db.createPlantilla(nueva) });
+    const creada = db.createPlantilla(nueva);
+    if (finalProyectoIds.length) {
+      db.setProyectosDePlantilla(creada.id, finalProyectoIds);
+    }
+    res.status(201).json({ success: true, data: { ...creada, proyectoIds: finalProyectoIds } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -93,12 +172,10 @@ router.post('/:id/sincronizar-equipos', (req, res) => {
       for (const itemPlantilla of plantilla.items) {
         const idx = itemsEquipo.findIndex(i => i.label === itemPlantilla.label);
         if (idx === -1) {
-          // ítem nuevo: agregar
           itemsEquipo.push({ ...itemPlantilla });
           itemsAgregados++;
           modificado = true;
         } else {
-          // ítem existente: actualizar observacionGuia y archivosGuia si cambiaron
           const itemExistente = itemsEquipo[idx];
           const guiaDistinta = itemExistente.observacionGuia !== itemPlantilla.observacionGuia;
           const archivosDistintos = JSON.stringify(itemExistente.archivosGuia) !== JSON.stringify(itemPlantilla.archivosGuia);
@@ -132,9 +209,29 @@ router.post('/:id/sincronizar-equipos', (req, res) => {
 
 router.put('/:id', (req, res) => {
   try {
-    const { nombre, descripcion, items } = req.body;
+    const plantilla = db.getPlantillaById(req.params.id);
+    if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    if (req.user.rol === 'project_admin') {
+      if (!esTecnicoConPermisoEnPlantilla(req, req.params.id)) {
+        return res.status(403).json({ success: false, message: 'No tienes acceso para editar esta plantilla' });
+      }
+    } else if (req.user.rol === 'tecnico') {
+      if (!db.tienePemisoEspecial(req.user.sub, 'editar_plantillas') || !esTecnicoConPermisoEnPlantilla(req, req.params.id)) {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para editar plantillas' });
+      }
+    }
+    const { nombre, descripcion, items, proyectoIds } = req.body;
     const actualizada = db.updatePlantilla(req.params.id, { nombre, descripcion, items });
-    if (!actualizada) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+
+    if (proyectoIds !== undefined) {
+      let finalProyectoIds = proyectoIds || [];
+      if (req.user.rol === 'project_admin') {
+        const susProyectos = db.getProyectosDeUsuario(req.user.sub).map(p => p.id);
+        finalProyectoIds = finalProyectoIds.filter(id => susProyectos.includes(id));
+      }
+      db.setProyectosDePlantilla(req.params.id, finalProyectoIds);
+    }
+
     res.json({ success: true, data: actualizada });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -143,15 +240,25 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   try {
-    const eliminada = db.deletePlantilla(req.params.id);
-    if (!eliminada) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    const plantilla = db.getPlantillaById(req.params.id);
+    if (!plantilla) return res.status(404).json({ success: false, message: 'Plantilla no encontrada' });
+    if (req.user.rol === 'project_admin') {
+      if (!esTecnicoConPermisoEnPlantilla(req, req.params.id)) {
+        return res.status(403).json({ success: false, message: 'No tienes acceso para eliminar esta plantilla' });
+      }
+    } else if (req.user.rol === 'tecnico') {
+      if (!db.tienePemisoEspecial(req.user.sub, 'eliminar_plantillas') || !esTecnicoConPermisoEnPlantilla(req, req.params.id)) {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar plantillas' });
+      }
+    }
+    db.deletePlantilla(req.params.id);
     res.json({ success: true, message: 'Plantilla eliminada' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// GET /api/plantillas/:id/exportar-zip — descarga una plantilla con sus imágenes de guía
+// GET /api/plantillas/:id/exportar-zip
 router.get('/:id/exportar-zip', async (req, res) => {
   try {
     const plantilla = db.getPlantillaById(req.params.id);
@@ -160,7 +267,6 @@ router.get('/:id/exportar-zip', async (req, res) => {
     const zip = new JSZip();
     zip.file('plantilla.json', JSON.stringify(plantilla, null, 2));
 
-    // Recoger subpaths de imágenes de guía referenciadas en los ítems
     const subpaths = db.collectArchivoHashes({ items: plantilla.items });
     const archivoIndex = readArchivoIndex();
     const indexExportado = {};
@@ -188,7 +294,7 @@ router.get('/:id/exportar-zip', async (req, res) => {
   }
 });
 
-// POST /api/plantillas/importar-zip — importa una plantilla desde ZIP con sus imágenes
+// POST /api/plantillas/importar-zip
 router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No se recibió ningún archivo' });
@@ -202,7 +308,6 @@ router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
     if (!plantilla || !plantilla.nombre || !plantilla.items)
       return res.status(400).json({ success: false, message: 'plantilla.json inválido' });
 
-    // Extraer imágenes de guía
     const archivoIndex = readArchivoIndex();
     const zipIndexFile = zip.file('archivos/index.json');
     const zipIndex = zipIndexFile ? JSON.parse(await zipIndexFile.async('string')) : {};
@@ -236,10 +341,10 @@ router.post('/importar-zip', upload.single('archivo'), async (req, res) => {
       if (indexActualizado) writeArchivoIndex(archivoIndex);
     }
 
-    // Crear la plantilla con nuevo ID para evitar conflictos
     const nueva = {
       ...plantilla,
       id: uuidv4(),
+      creadoPor: req.user.sub,
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString(),
     };

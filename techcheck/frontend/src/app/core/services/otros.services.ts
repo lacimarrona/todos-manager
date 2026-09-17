@@ -107,20 +107,21 @@ export class ExportarService {
     window.location.href = `${this.url}/json`;
   }
 
-  importarJSON(file: File): Observable<{ proyectos: number; equipos: number; plantillas: number; tecnicos: number; revisiones: number; tareas: number }> {
+  importarJSON(file: File, modo: 'agregar' | 'reemplazar' = 'agregar'): Observable<Record<string, number>> {
     return new Observable(obs => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target!.result as string);
-          this.http.post<ApiResponse<any>>(`${this.url}/importar-json`, data, {
+          const endpoint = `${this.url}/importar-json?modo=${modo}`;
+          this.http.post<ApiResponse<any>>(endpoint, data, {
             headers: { 'Content-Type': 'application/json' }
           }).pipe(map(r => r.data!)).subscribe({
             next: v => { obs.next(v); obs.complete(); },
             error: err => obs.error(err)
           });
         } catch {
-          obs.error(new Error('Archivo JSON inválido'));
+          obs.error(new Error('Archivo de backup inválido'));
         }
       };
       reader.onerror = () => obs.error(new Error('Error leyendo el archivo'));

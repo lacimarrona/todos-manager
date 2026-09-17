@@ -1415,3 +1415,291 @@ ion-menu ion-content {
   margin-left: 6px;
   vertical-align: middle;
 }
+
+/* ── Equipo list: barra de búsqueda + filtros secundarios ──────── */
+.filtros-secundarios {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0 12px;
+}
+
+.busqueda-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+.busqueda-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.busqueda-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &::placeholder { color: #cbd5e1; }
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+/* ── Badge filtros (OK / Obs / Prob) ─────────────────────────── */
+.badge-filtros {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.badge-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.15s;
+  line-height: 1.5;
+
+  &:hover { background: #f1f5f9; color: #475569; }
+  &.active { box-shadow: 0 0 0 2px currentColor inset; }
+}
+
+.badge-ok   { &.active { background: #dcfce7; color: #15803d; border-color: #22c55e; } }
+.badge-obs  { &.active { background: #fef9c3; color: #854d0e; border-color: #eab308; } }
+.badge-prob { &.active { background: #fee2e2; color: #dc2626; border-color: #ef4444; } }
+
+/* ── Orden buttons (A-Z / Z-A / % ↓ / % ↑) ──────────────────── */
+.orden-btns {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.orden-btn {
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  line-height: 1.5;
+
+  &:hover  { background: #f1f5f9; color: #475569; }
+  &.active { background: #1e293b; color: #ffffff; border-color: #1e293b; }
+}
+
+.filtro-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ── Fix: rev-item ion-item background transparency ───────────── */
+/* Ion-item's solid white background was covering the parent div's
+   estado-color. Make it transparent so the color shows through. */
+.rev-item-row {
+  --padding-start: 12px;
+  --inner-padding-end: 8px;
+  --background: transparent !important;
+  --background-activated: rgba(0,0,0,0.04) !important;
+  --background-focused: transparent !important;
+}
+
+/* ── Revision modal: items as visual cards ────────────────────── */
+.rev-item {
+  margin: 2px 0;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+
+  &:last-child { border-bottom: none; }
+
+  &.rev-item--ok {
+    border-left: 4px solid #22c55e !important;
+    background: rgba(34, 197, 94, 0.06) !important;
+  }
+  &.rev-item--observacion {
+    border-left: 4px solid #eab308 !important;
+    background: rgba(234, 179, 8, 0.06) !important;
+  }
+  &.rev-item--problema {
+    border-left: 4px solid #ef4444 !important;
+    background: rgba(239, 68, 68, 0.07) !important;
+  }
+  &.rev-item--checked:not(.rev-item--ok):not(.rev-item--observacion):not(.rev-item--problema) {
+    background: rgba(34, 197, 94, 0.04) !important;
+  }
+}
+
+/* Revision label: more legible */
+.rev-label {
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  padding: 6px 0 !important;
+}
+
+/* Estado pills in revision: slightly larger */
+.item-estado-btns {
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.estado-pill {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+}
+
+/* ── Revision modal: multi-color progress bar ─────────────────── */
+.progress-bar-wrapper {
+  height: 6px !important;
+  background: #f1f5f9;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100% !important;
+  transition: width 0.4s ease;
+}
+
+.progress-label {
+  font-size: 0.78rem !important;
+  color: #64748b !important;
+  text-align: right !important;
+  padding: 3px 16px 4px !important;
+  font-weight: 500;
+}
+
+/* ── Revision modal: footer completar button bigger ───────────── */
+.completar-btn {
+  margin: 0;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+}
+
+/* ── Revision footer calidad item ────────────────────────────── */
+.calidad-item {
+  --background: transparent;
+  --border-color: #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+/* ── Equipo import modal ──────────────────────────────────────── */
+.import-modal {
+  --border-radius: 16px;
+  --width:  min(500px, 95vw);
+  --height: auto;
+}
+
+/* ── Form modal equipo ────────────────────────────────────────── */
+.equipo-form-modal {
+  --border-radius: 16px;
+  --width:  min(560px, 95vw);
+  --height: min(640px, 90vh);
+}
+
+/* ── Tecnico item en lista de técnicos ────────────────────────── */
+.tecnico-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  padding-bottom: 24px;
+}
+
+/* ── Dashboard cards ──────────────────────────────────────────── */
+.dashboard-stat {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.dashboard-stat-label {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* ── Grupo list cards ─────────────────────────────────────────── */
+.grupo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-color: #93c5fd;
+  }
+}
+
+/* ── Ionic modal backdrop: subtle blur ────────────────────────── */
+ion-modal {
+  --backdrop-opacity: 0.45;
+}
+
+/* ── ion-back-button desktop fix ─────────────────────────────── */
+@media (min-width: 768px) {
+  ion-back-button {
+    --color: #64748b;
+    --icon-font-size: 1.1rem;
+  }
+  ion-back-button::part(text) {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+}
+
+/* ── Revision modal header toolbar (not primary color on desktop) */
+@media (min-width: 768px) {
+  .revision-modal ion-header ion-toolbar[color="primary"],
+  .revision-modal ion-header ion-toolbar[color="success"] {
+    --color: #ffffff;
+  }
+}
+
+/* ── Scrollbar cosmetics (webkit) ─────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
