@@ -41,7 +41,7 @@ app.use('/api/archivos',   require('./routes/archivos')); // GET público (hashe
 app.use('/api/tareas',     auth, require('./routes/tareas'));
 app.use('/api/dashboard',  auth, roles('admin'), require('./routes/dashboard'));
 app.use('/api/exportar',   auth, roles('admin'), require('./routes/exportar'));
-app.use('/api/catalogos',  auth, roles('admin'), require('./routes/catalogos'));
+app.use('/api/catalogos',  auth, require('./routes/catalogos')); // GET: todos los roles; write: admin (ver router)
 
 app.get('/api/health', (req, res) => {
   res.json({

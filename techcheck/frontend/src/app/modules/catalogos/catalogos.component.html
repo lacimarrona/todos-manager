@@ -1,16 +1,18 @@
-<div class="p-6">
+<div class="p-4 lg:p-6">
 
   <!-- ── Vista: lista de grupos ─────────────────────────────────────────── -->
   @if (!grupoActivo()) {
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Catálogos</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Grupos de valores reutilizables en el sistema</p>
       </div>
-      <button (click)="abrirNuevoGrupo()"
-              class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-        + Nuevo grupo
-      </button>
+      @if (esAdmin() || esProjectAdmin()) {
+        <button (click)="abrirNuevoGrupo()"
+                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          + Nuevo grupo
+        </button>
+      }
     </div>
 
     @if (cargando()) {
@@ -20,7 +22,7 @@
     @if (!cargando() && grupos().length === 0) {
       <div class="text-center py-16 text-gray-400">
         <div class="text-4xl mb-3">🗂</div>
-        <p class="text-sm">No hay grupos. Crea el primero.</p>
+        <p class="text-sm">No hay grupos disponibles.</p>
       </div>
     }
 
@@ -39,20 +41,38 @@
               {{ g.activo ? 'Activo' : 'Inactivo' }}
             </span>
           </div>
-          <p class="text-xs text-gray-400 mb-4">{{ g.elementos.length }} elemento{{ g.elementos.length !== 1 ? 's' : '' }}</p>
+          <p class="text-xs text-gray-400 mb-2">{{ g.elementos.length }} elemento{{ g.elementos.length !== 1 ? 's' : '' }}</p>
+
+          <!-- Proyectos asignados -->
+          @if (g.proyectos && g.proyectos.length > 0) {
+            <div class="flex flex-wrap gap-1 mb-3">
+              @for (pid of g.proyectos; track pid) {
+                <span class="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded">
+                  {{ nombreProyecto(pid) }}
+                </span>
+              }
+            </div>
+          } @else {
+            @if (esAdmin()) {
+              <p class="text-xs text-amber-500 mb-3">Sin proyectos asignados</p>
+            }
+          }
+
           <div class="flex gap-2">
             <button (click)="verGrupo(g)"
                     class="flex-1 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
               Ver elementos
             </button>
-            <button (click)="abrirEditarGrupo(g)"
-                    class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              Editar
-            </button>
-            <button (click)="eliminarGrupo(g)"
-                    class="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors">
-              Eliminar
-            </button>
+            @if (esAdmin() || esProjectAdmin()) {
+              <button (click)="abrirEditarGrupo(g)"
+                      class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Editar
+              </button>
+              <button (click)="eliminarGrupo(g)"
+                      class="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors">
+                Eliminar
+              </button>
+            }
           </div>
         </div>
       }
@@ -68,10 +88,12 @@
       </button>
       <span class="text-gray-300">/</span>
       <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ g.nombre }}</h1>
-      <button (click)="abrirNuevoElemento()"
-              class="ml-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-        + Nuevo elemento
-      </button>
+      @if (esAdmin() || esProjectAdmin()) {
+        <button (click)="abrirNuevoElemento()"
+                class="ml-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          + Nuevo elemento
+        </button>
+      }
     </div>
 
     @if (g.descripcion) {
@@ -98,16 +120,18 @@
                 [class]="e.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'">
             {{ e.activo ? 'Activo' : 'Inactivo' }}
           </span>
-          <div class="flex gap-2 shrink-0">
-            <button (click)="abrirEditarElemento(e)"
-                    class="px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              Editar
-            </button>
-            <button (click)="eliminarElemento(e)"
-                    class="px-3 py-1 text-xs font-medium text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors">
-              Eliminar
-            </button>
-          </div>
+          @if (esAdmin() || esProjectAdmin()) {
+            <div class="flex gap-2 shrink-0">
+              <button (click)="abrirEditarElemento(e)"
+                      class="px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Editar
+              </button>
+              <button (click)="eliminarElemento(e)"
+                      class="px-3 py-1 text-xs font-medium text-red-600 border border-red-100 rounded-lg hover:bg-red-50 transition-colors">
+                Eliminar
+              </button>
+            </div>
+          }
         </div>
       }
     </div>
@@ -116,7 +140,7 @@
   <!-- ── Modal: crear/editar grupo ──────────────────────────────────────── -->
   @if (modalGrupo()) {
     <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" (click)="cerrarModalGrupo()">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <h2 class="font-semibold text-gray-900 dark:text-white">{{ editandoGrupoId() ? 'Editar grupo' : 'Nuevo grupo' }}</h2>
           <button (click)="cerrarModalGrupo()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
@@ -125,13 +149,35 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Nombre *</label>
             <input [(ngModel)]="formGrupo.nombre" type="text" placeholder="Ej: Tipos de falla"
-                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descripción</label>
             <input [(ngModel)]="formGrupo.descripcion" type="text" placeholder="Descripción opcional"
-                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white">
           </div>
+
+          <!-- Asignación de proyectos (admin ve todos; project_admin ve los suyos) -->
+          @if (proyectos().length > 0) {
+            <div>
+              <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                Proyectos que pueden usar este catálogo
+                @if (esProjectAdmin()) {
+                  <span class="text-gray-400 font-normal ml-1">(tus proyectos)</span>
+                }
+              </label>
+              <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                @for (p of proyectos(); track p.id) {
+                  <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" [checked]="tieneProyecto(p.id)" (change)="toggleProyecto(p.id)"
+                           class="w-4 h-4 text-blue-600 rounded border-gray-300">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ p.nombre }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
           @if (errorMsg()) {
             <p class="text-xs text-red-600">{{ errorMsg() }}</p>
           }
@@ -161,12 +207,12 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Valor *</label>
             <input [(ngModel)]="formElemento.valor" type="text" placeholder="Ej: Eléctrico"
-                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descripción</label>
             <input [(ngModel)]="formElemento.descripcion" type="text" placeholder="Descripción opcional"
-                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white">
           </div>
           @if (errorMsg()) {
             <p class="text-xs text-red-600">{{ errorMsg() }}</p>

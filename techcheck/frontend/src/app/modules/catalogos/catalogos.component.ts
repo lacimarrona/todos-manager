@@ -1,10 +1,12 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GrupoElemento, ElementoGrupo } from '../../core/models/models';
+import { GrupoElemento, ElementoGrupo, Proyecto } from '../../core/models/models';
 import { CatalogosService } from '../../core/services/otros.services';
+import { ProyectosService } from '../../core/services/proyectos.service';
+import { AuthService } from '../../core/services/auth.service';
 
-interface GrupoForm { nombre: string; descripcion: string; }
+interface GrupoForm { nombre: string; descripcion: string; proyectos: string[]; }
 interface ElementoForm { valor: string; descripcion: string; }
 
 @Component({
@@ -15,6 +17,7 @@ interface ElementoForm { valor: string; descripcion: string; }
 })
 export class CatalogosComponent implements OnInit {
   grupos = signal<GrupoElemento[]>([]);
+  proyectos = signal<Proyecto[]>([]);
   cargando = signal(true);
 
   // Navegación: null = lista de grupos, non-null = detalle de grupo
@@ -23,7 +26,7 @@ export class CatalogosComponent implements OnInit {
   // Modal grupo
   modalGrupo = signal(false);
   editandoGrupoId = signal<string | null>(null);
-  formGrupo: GrupoForm = { nombre: '', descripcion: '' };
+  formGrupo: GrupoForm = { nombre: '', descripcion: '', proyectos: [] };
 
   // Modal elemento
   modalElemento = signal(false);
@@ -33,16 +36,28 @@ export class CatalogosComponent implements OnInit {
   guardando = signal(false);
   errorMsg = signal('');
 
-  constructor(private svc: CatalogosService) {}
+  readonly esAdmin = computed(() => this.auth.isAdmin());
+  readonly esProjectAdmin = computed(() => this.auth.isProjectAdmin());
 
-  ngOnInit() { this.cargar(); }
+  constructor(
+    private svc: CatalogosService,
+    private proyectosSvc: ProyectosService,
+    public auth: AuthService,
+  ) {}
+
+  ngOnInit() {
+    this.cargar();
+    // Solo admin y project_admin necesitan la lista de proyectos (para asignar)
+    if (this.auth.canManage()) {
+      this.proyectosSvc.getAll().subscribe({ next: p => this.proyectos.set(p) });
+    }
+  }
 
   cargar() {
     this.cargando.set(true);
     this.svc.getAll().subscribe({
       next: data => {
         this.grupos.set(data);
-        // Si hay un grupo activo, actualizar su instancia
         const activo = this.grupoActivo();
         if (activo) {
           const actualizado = data.find(g => g.id === activo.id);
@@ -54,6 +69,21 @@ export class CatalogosComponent implements OnInit {
     });
   }
 
+  nombreProyecto(id: string): string {
+    return this.proyectos().find(p => p.id === id)?.nombre ?? id;
+  }
+
+  toggleProyecto(proyectoId: string) {
+    const lista = this.formGrupo.proyectos;
+    const idx = lista.indexOf(proyectoId);
+    if (idx >= 0) lista.splice(idx, 1);
+    else lista.push(proyectoId);
+  }
+
+  tieneProyecto(proyectoId: string): boolean {
+    return this.formGrupo.proyectos.includes(proyectoId);
+  }
+
   // ── Grupos ──────────────────────────────────────────────────────────────
 
   verGrupo(g: GrupoElemento) { this.grupoActivo.set(g); }
@@ -61,14 +91,14 @@ export class CatalogosComponent implements OnInit {
 
   abrirNuevoGrupo() {
     this.editandoGrupoId.set(null);
-    this.formGrupo = { nombre: '', descripcion: '' };
+    this.formGrupo = { nombre: '', descripcion: '', proyectos: [] };
     this.errorMsg.set('');
     this.modalGrupo.set(true);
   }
 
   abrirEditarGrupo(g: GrupoElemento) {
     this.editandoGrupoId.set(g.id);
-    this.formGrupo = { nombre: g.nombre, descripcion: g.descripcion };
+    this.formGrupo = { nombre: g.nombre, descripcion: g.descripcion, proyectos: [...(g.proyectos || [])] };
     this.errorMsg.set('');
     this.modalGrupo.set(true);
   }
@@ -77,9 +107,14 @@ export class CatalogosComponent implements OnInit {
     if (!this.formGrupo.nombre.trim()) { this.errorMsg.set('El nombre es requerido'); return; }
     this.guardando.set(true);
     const id = this.editandoGrupoId();
+    const payload = {
+      nombre: this.formGrupo.nombre,
+      descripcion: this.formGrupo.descripcion,
+      proyectos: this.formGrupo.proyectos,
+    };
     const obs = id
-      ? this.svc.updateGrupo(id, this.formGrupo)
-      : this.svc.createGrupo(this.formGrupo);
+      ? this.svc.updateGrupo(id, payload)
+      : this.svc.createGrupo(payload);
     obs.subscribe({
       next: () => { this.modalGrupo.set(false); this.guardando.set(false); this.cargar(); },
       error: () => { this.errorMsg.set('Error al guardar'); this.guardando.set(false); },

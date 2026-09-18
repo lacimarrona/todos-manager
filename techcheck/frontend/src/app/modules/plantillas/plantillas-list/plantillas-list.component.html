@@ -1,21 +1,21 @@
-<div class="p-7 max-w-6xl">
-  <div class="flex items-start justify-between mb-6">
+<div class="p-4 lg:p-7 max-w-6xl">
+  <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
     <div>
       <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Plantillas de checklist</h1>
       <p class="text-sm text-gray-400 mt-1">Crea plantillas reutilizables para distintos tipos de equipos</p>
     </div>
-    <div class="flex gap-2">
-      <button (click)="descargarPlantillaExcel()" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">📥 Plantilla Excel</button>
-      <label class="flex items-center gap-2 px-4 py-2 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors cursor-pointer">
+    <div class="flex flex-wrap gap-2">
+      <button (click)="descargarPlantillaExcel()" class="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">📥 Plantilla Excel</button>
+      <label class="flex items-center gap-2 px-3 py-2 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors cursor-pointer">
         📂 {{ importando() ? 'Importando...' : 'Importar Excel' }}
         <input type="file" accept=".xlsx,.xls" (change)="onImportarExcel($event)" class="hidden">
       </label>
-      <label class="flex items-center gap-2 px-4 py-2 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 text-sm rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer" title="Importa una plantilla exportada como ZIP">
+      <label class="flex items-center gap-2 px-3 py-2 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 text-sm rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer" title="Importa una plantilla exportada como ZIP">
         📦 {{ importandoZip() ? 'Importando...' : 'Importar ZIP' }}
         <input type="file" accept=".zip" (change)="onImportarZip($event)" class="hidden">
       </label>
       @if (puedeCrear()) {
-        <button (click)="abrirModalNueva()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nueva plantilla</button>
+        <button (click)="abrirModalNueva()" class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">+ Nueva plantilla</button>
       }
     </div>
   </div>
@@ -114,9 +114,16 @@
                   class="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-xs leading-none px-1"
                   title="Eliminar línea">✕</button>
               </div>
-              <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple
-                (change)="onArchivoPlantillaItemChange(i, $event)"
-                class="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200">
+              <div class="flex gap-2 flex-wrap mt-1">
+                <label class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md cursor-pointer transition-colors">
+                  📷 Cámara
+                  <input type="file" accept="image/*" capture="environment" (change)="onArchivoPlantillaItemChange(i, $event)" class="hidden">
+                </label>
+                <label class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md cursor-pointer transition-colors">
+                  📎 Adjuntar
+                  <input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" multiple (change)="onArchivoPlantillaItemChange(i, $event)" class="hidden">
+                </label>
+              </div>
               <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2">
                 <div *ngFor="let archivo of item.archivosGuia; let ai = index" class="relative group">
                   <img *ngIf="esImagenArchivo(archivo)" [src]="archivoData(archivo)" class="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-700">
@@ -150,11 +157,14 @@
               [ngClass]="nuevoItemTipo === 'catalogo' ? 'bg-purple-600 border-purple-600 text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500 hover:border-purple-400'">
               📋 Catálogo
             </button>
-            <select *ngIf="nuevoItemTipo === 'catalogo'" [(ngModel)]="nuevoItemCatalogoId"
-              class="flex-1 px-2.5 py-1 text-xs border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-800">
-              <option value="">— Selecciona catálogo —</option>
-              <option *ngFor="let c of catalogos()" [value]="c.id">{{ c.nombre }}</option>
-            </select>
+            <ng-container *ngIf="nuevoItemTipo === 'catalogo'">
+              <select *ngIf="catalogos().length > 0" [(ngModel)]="nuevoItemCatalogoId" (ngModelChange)="onCatalogoSelect($event)"
+                class="flex-1 px-2.5 py-1 text-xs border border-purple-200 dark:border-purple-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-800">
+                <option value="">— Selecciona catálogo —</option>
+                <option *ngFor="let c of catalogos()" [value]="c.id">{{ c.nombre }}</option>
+              </select>
+              <span *ngIf="catalogos().length === 0" class="text-xs text-orange-500 italic">No hay catálogos creados. Ve a Catálogos y crea uno primero.</span>
+            </ng-container>
           </div>
         </div>
       </div>

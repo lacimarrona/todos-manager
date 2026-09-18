@@ -174,16 +174,35 @@ export class PlantillasListComponent implements OnInit {
     }
   }
 
+  onCatalogoSelect(catalogoId: string) {
+    if (!this.nuevoItem.trim() && catalogoId) {
+      const cat = this.catalogos().find(c => c.id === catalogoId);
+      if (cat) this.nuevoItem = cat.nombre;
+    }
+  }
+
   agregarItem() {
     const t = this.nuevoItem.trim();
-    if (!t) return;
+    if (this.nuevoItemTipo === 'catalogo' && !this.nuevoItemCatalogoId) {
+      this.error.set('Selecciona un catálogo para el ítem de tipo catálogo');
+      setTimeout(() => this.error.set(''), 3000);
+      return;
+    }
+    if (!t) {
+      if (this.nuevoItemTipo === 'catalogo') {
+        this.error.set('Escribe un nombre para el ítem de catálogo');
+        setTimeout(() => this.error.set(''), 3000);
+      }
+      return;
+    }
+    this.error.set('');
     const item: ItemPlantilla = {
       label: t,
       observacionGuia: '',
       archivosGuia: [],
       tipo: this.nuevoItemTipo,
     };
-    if (this.nuevoItemTipo === 'catalogo') item.catalogoId = this.nuevoItemCatalogoId || undefined;
+    if (this.nuevoItemTipo === 'catalogo') item.catalogoId = this.nuevoItemCatalogoId;
     this.form.items = [...this.form.items, item];
     this.guiasTemp = [...this.guiasTemp, ['']];
     this.nuevoItem = '';
@@ -325,6 +344,14 @@ export class PlantillasListComponent implements OnInit {
 
   guardar() {
     if (!this.form.nombre || !this.form.items.length) return;
+    if (this.nuevoItemTipo === 'catalogo' && this.nuevoItemCatalogoId) {
+      const catNombre = this.catalogos().find(c => c.id === this.nuevoItemCatalogoId)?.nombre || 'catálogo';
+      const continuar = confirm(`Tienes seleccionado el catálogo "${catNombre}" pero no lo agregaste al checklist con "+ Agregar".\n\n¿Deseas guardarlo como ítem antes de continuar?\n\nAcepta = Sí, agrégalo ahora\nCancela = Guardar sin el ítem de catálogo`);
+      if (continuar) {
+        if (!this.nuevoItem.trim()) this.nuevoItem = catNombre;
+        this.agregarItem();
+      }
+    }
     this.form.items = this.form.items.map((item, idx) => ({
       ...item,
       observacionGuia: (this.guiasTemp[idx] || []).filter(g => g.trim()).join('\n') || (item.observacionGuia || ''),

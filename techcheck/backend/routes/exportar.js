@@ -64,6 +64,8 @@ router.get('/revisiones-csv', (req, res) => {
 // GET /api/exportar/json — backup COMPLETO en ZIP (datos SQLite + archivos físicos)
 router.get('/json', async (req, res) => {
   try {
+    // Solo incluir el usuario que exporta, no todos los usuarios del sistema
+    const usuarioExportador = sqliteDb.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.user.sub);
     const backup = {
       version: '2.0',
       exportadoEn: new Date().toISOString(),
@@ -72,14 +74,14 @@ router.get('/json', async (req, res) => {
       plantillas:           sqliteDb.prepare('SELECT * FROM plantillas ORDER BY creado_en ASC').all(),
       revisiones:           sqliteDb.prepare('SELECT * FROM revisiones ORDER BY creado_en ASC').all(),
       tareas:               sqliteDb.prepare('SELECT * FROM tareas_programadas ORDER BY creado_en ASC').all(),
-      usuarios:             sqliteDb.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all(),
-      proyectoAsignaciones: sqliteDb.prepare('SELECT * FROM proyecto_asignaciones').all(),
-      proyectoPermisos:     sqliteDb.prepare('SELECT * FROM proyecto_permisos').all(),
-      tecnicoSupervisores:  sqliteDb.prepare('SELECT * FROM tecnico_supervisores').all(),
+      usuarios:             usuarioExportador ? [usuarioExportador] : [],
+      proyectoAsignaciones: sqliteDb.prepare('SELECT * FROM proyecto_asignaciones WHERE usuario_id = ?').all(req.user.sub),
+      proyectoPermisos:     sqliteDb.prepare('SELECT * FROM proyecto_permisos WHERE tecnico_id = ?').all(req.user.sub),
+      tecnicoSupervisores:  sqliteDb.prepare('SELECT * FROM tecnico_supervisores WHERE tecnico_id = ? OR supervisor_id = ?').all(req.user.sub, req.user.sub),
       plantillaProyectos:   sqliteDb.prepare('SELECT * FROM plantilla_proyectos').all(),
       gruposElemento:       sqliteDb.prepare('SELECT * FROM grupos_elemento ORDER BY creado_en ASC').all(),
       elementosGrupo:       sqliteDb.prepare('SELECT * FROM elementos_grupo ORDER BY creado_en ASC').all(),
-      usuarioPermisos:      sqliteDb.prepare('SELECT * FROM usuario_permisos').all(),
+      usuarioPermisos:      sqliteDb.prepare('SELECT * FROM usuario_permisos WHERE usuario_id = ?').all(req.user.sub),
       tecnicos:             sqliteDb.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all(),
     };
 

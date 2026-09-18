@@ -179,8 +179,16 @@ router.post('/:id/sincronizar-equipos', (req, res) => {
           const itemExistente = itemsEquipo[idx];
           const guiaDistinta = itemExistente.observacionGuia !== itemPlantilla.observacionGuia;
           const archivosDistintos = JSON.stringify(itemExistente.archivosGuia) !== JSON.stringify(itemPlantilla.archivosGuia);
-          if (guiaDistinta || archivosDistintos) {
-            itemsEquipo[idx] = { ...itemExistente, observacionGuia: itemPlantilla.observacionGuia, archivosGuia: itemPlantilla.archivosGuia };
+          const tipoDistinto = (itemExistente.tipo || 'checkbox') !== (itemPlantilla.tipo || 'checkbox');
+          const catalogoDistinto = (itemExistente.catalogoId || '') !== (itemPlantilla.catalogoId || '');
+          if (guiaDistinta || archivosDistintos || tipoDistinto || catalogoDistinto) {
+            itemsEquipo[idx] = {
+              ...itemExistente,
+              observacionGuia: itemPlantilla.observacionGuia,
+              archivosGuia: itemPlantilla.archivosGuia,
+              tipo: itemPlantilla.tipo || 'checkbox',
+              catalogoId: itemPlantilla.catalogoId,
+            };
             itemsActualizados++;
             modificado = true;
           }

@@ -154,6 +154,34 @@ db.exec(`
   );
 `);
 
+// Registro de tareas programadas que no se ejecutaron (servidor apagado u otra causa)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tareas_no_cumplidas (
+    id             TEXT PRIMARY KEY,
+    tarea_id       TEXT NOT NULL,
+    equipo_id      TEXT NOT NULL,
+    equipo_nombre  TEXT NOT NULL DEFAULT '',
+    proyecto_id    TEXT NOT NULL DEFAULT '',
+    fecha          TEXT NOT NULL,
+    hora           TEXT NOT NULL,
+    tecnico_id     TEXT,
+    tecnico_nombre TEXT NOT NULL DEFAULT '',
+    registrado_en  TEXT NOT NULL,
+    UNIQUE(tarea_id, fecha)
+  );
+`);
+
+// Tabla de asociación catálogo ↔ proyecto (como plantilla_proyectos)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS catalogo_proyectos (
+    catalogo_id TEXT NOT NULL,
+    proyecto_id TEXT NOT NULL,
+    PRIMARY KEY (catalogo_id, proyecto_id),
+    FOREIGN KEY (catalogo_id) REFERENCES grupos_elemento(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id)  ON DELETE CASCADE
+  );
+`);
+
 // Agregar columna restringido a proyectos si no existe (migración incremental)
 try { db.exec('ALTER TABLE proyectos ADD COLUMN restringido INTEGER NOT NULL DEFAULT 0'); } catch {}
 // Agregar creado_por a plantillas (quién la creó, para control de acceso por rol)

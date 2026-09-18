@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const JSZip = require('jszip');
 const db = require('../db/dataAccess');
+const sqliteDb = require('../db/sqlite');
 const { soloAdmin, adminOProjectAdmin, verificarAccesoProyecto, inyectarProyectosVisibles } = require('../middleware/proyectoAccess');
 
 const ARCHIVOS_DIR = path.join(__dirname, '../data/archivos');
@@ -73,9 +74,21 @@ router.get('/:id/equipos', (req, res) => {
     } else if (filtro === 'pendiente') {
       resultado = enriquecidos.filter(e => !e.archivado && !e.ultimaRevision);
     } else if (filtro === 'en_proceso') {
+      // Equipos ya registrados como no cumplidos (no mostrar en "En proceso")
+      const noCumplidas = sqliteDb.prepare(
+        'SELECT equipo_id, fecha FROM tareas_no_cumplidas WHERE proyecto_id = ?'
+      ).all(req.params.id);
+      const noCumplidasKey = new Set(noCumplidas.map(r => `${r.equipo_id}|${r.fecha}`));
+
       resultado = enriquecidos.filter(e => {
         if (e.archivado) return false;
         if (!e.ultimaRevision) return false;
+        if (e.ultimaRevision.estado === 'en_proceso') {
+          const fechaRev = e.ultimaRevision.creadoEn.slice(0, 10);
+          // Si ya está registrada como no cumplida para esa fecha, no mostrar aquí
+          if (noCumplidasKey.has(`${e.id}|${fechaRev}`)) return false;
+          return true;
+        }
         const total = e.items.length;
         if (total === 0) return false;
         const completados = e.ultimaRevision.items.filter(i => i.checked).length;
@@ -427,7 +440,6 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
 
     const globalData = JSON.parse(await globalFile.async('string'));
     const { proyectos = [], tecnicos = [], plantillas = [] } = globalData;
-    const sqliteDb = require('../db/sqlite'); // módulo cacheado, no crea nueva conexión
 
     // Copiar archivos físicos preservando el hash como nombre
     if (!fs.existsSync(ARCHIVOS_DIR)) fs.mkdirSync(ARCHIVOS_DIR, { recursive: true });
@@ -535,6 +547,29 @@ router.post('/restaurar-backup', upload.single('archivo'), async (req, res) => {
       success: true,
       data: { importados, actualizados, archivosImportados, proyectosImportados, proyectosActualizados, mensaje },
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/proyectos/:id/tareas-no-cumplidas
+router.get('/:id/tareas-no-cumplidas', (req, res) => {
+  try {
+    const rows = sqliteDb.prepare(
+      `SELECT * FROM tareas_no_cumplidas WHERE proyecto_id = ? ORDER BY fecha DESC, hora DESC`
+    ).all(req.params.id);
+    res.json({ success: true, data: rows.map(r => ({
+      id: r.id,
+      tareaId: r.tarea_id,
+      equipoId: r.equipo_id,
+      equipoNombre: r.equipo_nombre,
+      proyectoId: r.proyecto_id,
+      fecha: r.fecha,
+      hora: r.hora,
+      tecnicoId: r.tecnico_id,
+      tecnicoNombre: r.tecnico_nombre,
+      registradoEn: r.registrado_en,
+    })) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

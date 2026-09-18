@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Proyecto, ProyectoForm, ProyectoPermiso, ProyectoAsignacion, Equipo } from '../models/models';
+import { ApiResponse, Proyecto, ProyectoForm, ProyectoPermiso, ProyectoAsignacion, Equipo, TareaNoCumplida } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ProyectosService {
@@ -84,5 +84,9 @@ asignarUsuario(id: string, usuarioId: string): Observable<void> {
 
 desasignarUsuario(id: string, usuarioId: string): Observable<void> {
   return this.http.delete<ApiResponse<void>>(`${this.url}/${id}/asignaciones/${usuarioId}`).pipe(map(() => void 0));
+}
+
+getTareasNoCumplidas(proyectoId: string): Observable<TareaNoCumplida[]> {
+  return this.http.get<ApiResponse<TareaNoCumplida[]>>(`${this.url}/${proyectoId}/tareas-no-cumplidas`).pipe(map(r => r.data || []));
 }
 }

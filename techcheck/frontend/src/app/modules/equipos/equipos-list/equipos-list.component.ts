@@ -2,14 +2,14 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto, GrupoElemento, TareaNoCumplida } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
-import { TecnicosService, RevisionesService } from '../../../core/services/otros.services';
+import { TecnicosService, RevisionesService, CatalogosService } from '../../../core/services/otros.services';
 import { ArchivosService } from '../../../core/services/archivos.service';
 
-type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado';
+type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'no_cumplidas';
 
 @Component({
   selector: 'app-equipos-list',
@@ -81,6 +81,18 @@ export class EquiposListComponent implements OnInit {
   notasTemp: string[][] = [];
   fotosBase64: (ArchivoAdjunto | string)[] = [];
   revisionRetomadaId = '';
+  catalogos = signal<GrupoElemento[]>([]);
+  tareasNoCumplidas = signal<TareaNoCumplida[]>([]);
+
+  readonly tareasNoCumplidasFiltradas = computed(() => {
+    let lista = [...this.tareasNoCumplidas()];
+    const busq = this.busquedaEquipo().toLowerCase().trim();
+    if (busq) lista = lista.filter(t => t.equipoNombre.toLowerCase().includes(busq));
+    const orden = this.ordenAlfa();
+    if (orden === 'asc') lista.sort((a, b) => a.equipoNombre.localeCompare(b.equipoNombre));
+    else if (orden === 'desc') lista.sort((a, b) => b.equipoNombre.localeCompare(a.equipoNombre));
+    return lista;
+  });
 
   mostrarModalExportarEquipo = signal(false);
   equipoExportando: Equipo | null = null;
@@ -126,6 +138,7 @@ export class EquiposListComponent implements OnInit {
     private tecnicosSvc: TecnicosService,
     private revisionesSvc: RevisionesService,
     private archivosSvc: ArchivosService,
+    private catalogosSvc: CatalogosService,
     private router: Router,
     private route: ActivatedRoute,
   ) {}
@@ -133,6 +146,7 @@ export class EquiposListComponent implements OnInit {
   ngOnInit() {
     this.cargarProyectos();
     this.tecnicosSvc.getAll().subscribe({ next: d => this.tecnicos.set(d) });
+    this.catalogosSvc.getAll().subscribe({ next: d => this.catalogos.set(d) });
     // Si se volvió desde historial con ?proyecto=id, entrar directamente al proyecto
     const proyectoId = this.route.snapshot.queryParamMap.get('proyecto');
     if (proyectoId) {
@@ -183,7 +197,19 @@ export class EquiposListComponent implements OnInit {
     this.busquedaEquipo.set('');
     this.filtroEstadoBadge.set('');
     this.ordenAlfa.set('');
-    this.cargarEquiposFiltrados(filtro);
+    if (filtro === 'no_cumplidas') {
+      this.cargarTareasNoCumplidas();
+    } else {
+      this.cargarEquiposFiltrados(filtro);
+    }
+  }
+
+  cargarTareasNoCumplidas() {
+    this.cargando.set(true);
+    this.proyectosSvc.getTareasNoCumplidas(this.proyectoActual()!.id).subscribe({
+      next: d => { this.tareasNoCumplidas.set(d); this.cargando.set(false); },
+      error: () => { this.cargando.set(false); },
+    });
   }
 
   cargarEquiposFiltrados(filtro: FiltroEstado) {
@@ -506,12 +532,14 @@ export class EquiposListComponent implements OnInit {
           const label = typeof equipoItem === 'string' ? equipoItem : equipoItem.label;
           const guia = typeof equipoItem === 'string' ? '' : (equipoItem.observacionGuia || '');
           const guiaArchivos = typeof equipoItem === 'string' ? [] : (equipoItem.archivosGuia || []);
+          const tipo = typeof equipoItem === 'string' ? 'checkbox' : (equipoItem.tipo || 'checkbox');
+          const catalogoId = typeof equipoItem === 'string' ? undefined : equipoItem.catalogoId;
           const revItem = revisionMap.get(label);
           if (revItem) {
             const notaStr = revItem.nota || '';
-            return { ...revItem, nota: notaStr, notas: notaStr ? notaStr.split('\n') : [''], archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
+            return { ...revItem, tipo, catalogoId, nota: notaStr, notas: notaStr ? notaStr.split('\n') : [''], archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
           }
-          return { label, checked: false, nota: '', notas: [''], estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos };
+          return { label, tipo, catalogoId, checked: false, nota: '', notas: [''], estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos, valor: '' };
         }));
         this.tecnicoId = ultima.tecnicoId || '';
         this.estado = ultima.estado;
@@ -521,24 +549,30 @@ export class EquiposListComponent implements OnInit {
       } else {
         this.itemsRevision.set(equipo.items.map(i => ({
           label: typeof i === 'string' ? i : i.label,
+          tipo: typeof i === 'string' ? 'checkbox' : (i.tipo || 'checkbox'),
+          catalogoId: typeof i === 'string' ? undefined : i.catalogoId,
           checked: false,
           nota: '',
           notas: [''],
           archivos: [],
           observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
-          archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+          archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || []),
+          valor: '',
         })));
         this.revisionRetomadaId = '';
       }
     } else {
       this.itemsRevision.set(equipo.items.map(i => ({
         label: typeof i === 'string' ? i : i.label,
+        tipo: typeof i === 'string' ? 'checkbox' : (i.tipo || 'checkbox'),
+        catalogoId: typeof i === 'string' ? undefined : i.catalogoId,
         checked: false,
         nota: '',
         notas: [''],
         archivos: [],
         observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
-        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || [])
+        archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || []),
+        valor: '',
       })));
       this.revisionRetomadaId = '';
     }
@@ -569,6 +603,17 @@ export class EquiposListComponent implements OnInit {
     if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
       this.mostrarModalProyecto.set(false);
     }
+  }
+
+  elementosDeCatalogo(catalogoId?: string): { valor: string }[] {
+    if (!catalogoId) return [];
+    return this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
+  }
+
+  updateValor(idx: number, valor: string) {
+    const updated = [...this.itemsRevision()];
+    updated[idx] = { ...updated[idx], valor, checked: !!valor };
+    this.itemsRevision.set(updated);
   }
 
   toggleItem(idx: number) {
@@ -851,7 +896,7 @@ export class EquiposListComponent implements OnInit {
 
   estadoLabel(equipo: Equipo): string {
     if (!equipo.ultimaRevision) return 'Sin revisiones';
-    const map: any = { ok: 'OK', observacion: 'Observaciones', problema: 'Problemas' };
+    const map: any = { ok: 'OK', observacion: 'Observaciones', problema: 'Problemas', en_proceso: 'En proceso' };
     return map[equipo.ultimaRevision.estado] || equipo.ultimaRevision.estado;
   }
 

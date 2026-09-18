@@ -141,11 +141,11 @@ export class CatalogosService {
     return this.http.get<ApiResponse<GrupoElemento[]>>(this.url).pipe(map(r => r.data || []));
   }
 
-  createGrupo(data: { nombre: string; descripcion?: string }): Observable<GrupoElemento> {
+  createGrupo(data: { nombre: string; descripcion?: string; proyectos?: string[] }): Observable<GrupoElemento> {
     return this.http.post<ApiResponse<GrupoElemento>>(this.url, data).pipe(map(r => r.data!));
   }
 
-  updateGrupo(id: string, data: Partial<{ nombre: string; descripcion: string; activo: boolean }>): Observable<GrupoElemento> {
+  updateGrupo(id: string, data: Partial<{ nombre: string; descripcion: string; activo: boolean; proyectos: string[] }>): Observable<GrupoElemento> {
     return this.http.put<ApiResponse<GrupoElemento>>(`${this.url}/${id}`, data).pipe(map(r => r.data!));
   }
 
@@ -163,5 +163,13 @@ export class CatalogosService {
 
   deleteElemento(grupoId: string, id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.url}/${grupoId}/elementos/${id}`).pipe(map(() => void 0));
+  }
+
+  getProyectosDeCatalogo(catalogoId: string): Observable<string[]> {
+    return this.http.get<ApiResponse<string[]>>(`${this.url}/${catalogoId}/proyectos`).pipe(map(r => r.data || []));
+  }
+
+  setProyectosDeCatalogo(catalogoId: string, proyectoIds: string[]): Observable<string[]> {
+    return this.http.put<ApiResponse<string[]>>(`${this.url}/${catalogoId}/proyectos`, { proyectos: proyectoIds }).pipe(map(r => r.data || []));
   }
 }

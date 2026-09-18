@@ -213,6 +213,21 @@ export interface GrupoElemento {
   activo: boolean;
   creadoEn: string;
   elementos: ElementoGrupo[];
+  proyectos?: string[];
+}
+
+// ─── TAREA NO CUMPLIDA ───────────────────────────────────────
+export interface TareaNoCumplida {
+  id: string;
+  tareaId: string;
+  equipoId: string;
+  equipoNombre: string;
+  proyectoId: string;
+  fecha: string;
+  hora: string;
+  tecnicoId: string | null;
+  tecnicoNombre: string;
+  registradoEn: string;
 }
 
 // ─── USUARIO ─────────────────────────────────────────────────
