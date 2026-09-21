@@ -52,6 +52,7 @@ export interface Equipo {
   tecnicoAsignadoId: string | null;
   tecnicoAsignadoNombre?: string;
   archivado?: boolean;
+  tarea?: TareaProgramada | null;
 }
 
 export interface EquipoForm {
@@ -146,6 +147,8 @@ export interface RevisionForm {
 }
 
 // ─── TAREAS PROGRAMADAS ──────────────────────────────────────
+export type TipoTarea = 'recurrente' | 'fecha_especifica';
+
 export interface TareaProgramada {
   id: string;
   equipoId: string;
@@ -156,6 +159,8 @@ export interface TareaProgramada {
   diasSemana: number[]; // 0=domingo … 6=sábado
   activa: boolean;
   fechaFin: string | null;
+  tipo: TipoTarea;
+  fechaEspecifica: string | null; // YYYY-MM-DD para tipo fecha_especifica
   creadoEn: string;
 }
 
@@ -166,6 +171,8 @@ export interface TareaForm {
   diasSemana: number[];
   activa?: boolean;
   fechaFin?: string;
+  tipo?: TipoTarea;
+  fechaEspecifica?: string;
 }
 
 // ─── DASHBOARD ───────────────────────────────────────────────

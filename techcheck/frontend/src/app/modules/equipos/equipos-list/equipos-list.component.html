@@ -88,6 +88,20 @@
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
 
+  <!-- Navegación por fecha -->
+  <div *ngIf="filtroActivo() !== 'no_cumplidas'" class="flex items-center gap-2 mb-4 flex-wrap">
+    <button (click)="navFecha(-1)" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors text-sm leading-none">←</button>
+    <div class="relative flex items-center gap-2 min-w-[90px] justify-center">
+      <button (click)="abrirDatePicker()" class="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline-offset-2 hover:underline cursor-pointer" title="Ir a fecha específica">{{ formatFechaNav() }}</button>
+      <input #datePicker type="date" [value]="toDateStr(fechaNavegacion())" (change)="irAFecha($event)" class="absolute opacity-0 pointer-events-none w-0 h-0" tabindex="-1">
+    </div>
+    <button (click)="navFecha(1)" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors text-sm leading-none">→</button>
+    <button *ngIf="!esFechaHoy()" (click)="irAHoy()" class="px-3 py-1.5 text-xs rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-500/40 dark:text-blue-400 transition-colors">Ir a hoy</button>
+    <span *ngIf="!esFechaHoy()" class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
+      Mostrando tareas programadas para {{ formatFechaNav() }}
+    </span>
+  </div>
+
   <!-- Barra de acciones bulk (aparece cuando hay seleccionados) -->
   <div *ngIf="algunoSeleccionado() && filtroActivo() !== 'no_cumplidas'" class="flex items-center gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
     <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos()" class="w-4 h-4 rounded accent-blue-600">
@@ -126,10 +140,10 @@
       <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-desc' ? '' : 'prog-desc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-desc' ? 'bg-white dark:bg-gray-800 shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Mayor progreso primero">% ↓</button>
       <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-asc' ? '' : 'prog-asc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-asc' ? 'bg-white dark:bg-gray-800 shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Menor progreso primero">% ↑</button>
     </div>
-    <span *ngIf="equiposMostrados().length !== equipos().length" class="text-xs text-gray-400 ml-1">{{ equiposMostrados().length }} de {{ equipos().length }}</span>
+    <span *ngIf="equiposConFiltroFecha().length !== equipos().length" class="text-xs text-gray-400 ml-1">{{ equiposConFiltroFecha().length }} de {{ equipos().length }}</span>
   </div>
 
-  <div *ngIf="!cargando() && equiposMostrados().length === 0 && filtroActivo() !== 'no_cumplidas'" class="text-center py-16 text-gray-400">
+  <div *ngIf="!cargando() && equiposConFiltroFecha().length === 0 && filtroActivo() !== 'no_cumplidas'" class="text-center py-16 text-gray-400">
     <div class="text-5xl mb-4">💻</div>
     <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">No hay equipos en este filtro</h3>
   </div>
@@ -182,8 +196,8 @@
   </div>
 
   <!-- Vista Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposMostrados().length > 0 && filtroActivo() !== 'no_cumplidas'">
-    <div *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-sm transition-shadow" [class.ring-2]="seleccionados().has(equipo.id)" [class.ring-blue-400]="seleccionados().has(equipo.id)">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposConFiltroFecha().length > 0 && filtroActivo() !== 'no_cumplidas'">
+    <div *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-sm transition-shadow" [class.ring-2]="seleccionados().has(equipo.id)" [class.ring-blue-400]="seleccionados().has(equipo.id)">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div class="flex items-start gap-2 min-w-0">
           <input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="mt-0.5 w-4 h-4 rounded accent-blue-600 shrink-0 cursor-pointer">
@@ -198,6 +212,8 @@
         <span class="text-xs text-gray-500 dark:text-gray-400">📋 {{ equipo.items.length }} items</span>
         <span *ngIf="equipo.tecnicoAsignadoNombre" class="text-xs text-gray-500 dark:text-gray-400">👤 {{ equipo.tecnicoAsignadoNombre }}</span>
         <span *ngIf="equipo.ultimaRevision" class="text-xs text-gray-500 dark:text-gray-400">🕐 {{ equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm' }}</span>
+        <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-1.5 py-0.5 rounded" title="Tarea recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰ Recurrente</span>
+        <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}">📅 {{ equipo.tarea!.fechaEspecifica }}</span>
       </div>
       <div *ngIf="equipo.ultimaRevision && itemStats(equipo).total > 0" class="mb-3">
         <div class="flex rounded-full overflow-hidden h-2 gap-px">
@@ -217,6 +233,7 @@
           <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
           <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
         </ng-container>
+        <button (click)="abrirModalTarea(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar tarea' }}">⏰</button>
         <button (click)="abrirModalConvertir(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors" title="Guardar ítems de este checklist como plantilla reutilizable">📋 Plantilla</button>
         <button (click)="abrirModalExportarEquipo(equipo, $event)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
         <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
@@ -227,17 +244,19 @@
   </div>
 
   <!-- Vista Tabla -->
-  <ng-container *ngIf="!cargando() && vistaEquipos() === 'tabla' && equiposMostrados().length > 0 && filtroActivo() !== 'no_cumplidas'">
+  <ng-container *ngIf="!cargando() && vistaEquipos() === 'tabla' && equiposConFiltroFecha().length > 0 && filtroActivo() !== 'no_cumplidas'">
 
     <!-- Móvil: registros apilados con todas las columnas como etiqueta-valor -->
     <div class="sm:hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
-      <div *ngFor="let equipo of equiposMostrados(); trackBy: trackById"
+      <div *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById"
         class="p-3 transition-colors"
         [class.bg-blue-50]="seleccionados().has(equipo.id)">
         <!-- Fila 1: checkbox + nombre + estado -->
         <div class="flex items-center gap-2 mb-2">
           <input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="w-4 h-4 rounded accent-blue-600 cursor-pointer shrink-0">
           <span class="font-medium text-sm text-gray-800 dark:text-gray-100 flex-1 min-w-0 truncate">{{ equipo.nombre }}</span>
+          <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded shrink-0">⏰</span>
+          <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded shrink-0">📅</span>
           <span class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
             [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-blue-100 text-blue-700': estadoBadge(equipo) === 'en_proceso', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">
             {{ estadoLabel(equipo) }}
@@ -264,6 +283,7 @@
             <button (click)="abrirModalRevision(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
             <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
           </ng-container>
+          <button (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
           <button (click)="abrirModalConvertir(equipo)" class="px-2.5 py-1 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">📋 Plantilla</button>
           <button (click)="abrirModalExportarEquipo(equipo, $event)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
           <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
@@ -289,10 +309,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let equipo of equiposMostrados(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors" [class.bg-blue-50]="seleccionados().has(equipo.id)">
+          <tr *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors" [class.bg-blue-50]="seleccionados().has(equipo.id)">
             <td class="px-4 py-3"><input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="w-4 h-4 rounded accent-blue-600 cursor-pointer"></td>
             <td class="px-4 py-3">
-              <div class="font-medium text-gray-800 dark:text-gray-100">{{ equipo.nombre }}</div>
+              <div class="font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+                {{ equipo.nombre }}
+                <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded" title="Recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰</span>
+                <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}">📅</span>
+              </div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
             </td>
             <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ equipo.tecnicoAsignadoNombre || '—' }}</td>
@@ -323,6 +347,7 @@
                   <button (click)="abrirModalRevision(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
                   <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
                 </ng-container>
+                <button (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
                 <button (click)="abrirModalConvertir(equipo)" class="px-2.5 py-1 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors" title="Convertir en plantilla">📋</button>
                 <button (click)="abrirModalExportarEquipo(equipo, $event)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
                 <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦</button>
@@ -331,7 +356,7 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="equiposMostrados().length === 0">
+          <tr *ngIf="equiposConFiltroFecha().length === 0">
             <td colspan="8" class="px-4 py-10 text-center text-gray-400 text-sm">No hay equipos en este filtro</td>
           </tr>
         </tbody>
@@ -927,6 +952,97 @@
       <button (click)="confirmarConversion()" [disabled]="guardandoConversion()"
         class="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition-colors">
         {{ guardandoConversion() ? 'Creando...' : '📋 Crear plantilla' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROGRAMAR TAREA -->
+<div *ngIf="mostrarModalTarea()" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" (click)="mostrarModalTarea.set(false)">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <div>
+        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">⏰ Programar tarea</h2>
+        <p class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ equipoConTarea?.nombre }}</p>
+      </div>
+      <button (click)="mostrarModalTarea.set(false)" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div class="p-6 space-y-4">
+
+      <!-- Tipo de tarea -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Tipo de programación</label>
+        <div class="flex gap-2">
+          <button type="button" (click)="formTarea = { ...formTarea, tipo: 'recurrente' }"
+            class="flex-1 py-2 text-sm rounded-lg border transition-colors"
+            [ngClass]="formTarea.tipo === 'recurrente' ? 'bg-violet-600 text-white border-violet-600' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50'">
+            ⏰ Recurrente
+          </button>
+          <button type="button" (click)="formTarea = { ...formTarea, tipo: 'fecha_especifica' }"
+            class="flex-1 py-2 text-sm rounded-lg border transition-colors"
+            [ngClass]="formTarea.tipo === 'fecha_especifica' ? 'bg-teal-600 text-white border-teal-600' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50'">
+            📅 Fecha específica
+          </button>
+        </div>
+      </div>
+
+      <!-- Hora -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Hora</label>
+        <input type="time" [(ngModel)]="formTarea.hora"
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+      </div>
+
+      <!-- Días de la semana (solo para recurrente) -->
+      <div *ngIf="formTarea.tipo === 'recurrente'">
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Días de la semana</label>
+        <div class="flex gap-1.5 flex-wrap">
+          <button *ngFor="let d of [['Dom',0],['Lun',1],['Mar',2],['Mié',3],['Jue',4],['Vie',5],['Sáb',6]]" type="button"
+            (click)="toggleDiaSemana(+d[1])"
+            class="px-2.5 py-1.5 text-xs rounded-lg border transition-colors"
+            [ngClass]="(formTarea.diasSemana || []).includes(+d[1]) ? 'bg-violet-600 text-white border-violet-600' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50'">
+            {{ d[0] }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Fecha específica -->
+      <div *ngIf="formTarea.tipo === 'fecha_especifica'">
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha</label>
+        <input type="date" [(ngModel)]="formTarea.fechaEspecifica"
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+      </div>
+
+      <!-- Técnico -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Técnico asignado (opcional)</label>
+        <select [(ngModel)]="formTarea.tecnicoId"
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+          <option value="">— Sin asignar —</option>
+          <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
+        </select>
+      </div>
+
+      <!-- Activa -->
+      <div class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="formTarea.activa" id="tareaActiva" class="w-4 h-4 rounded accent-violet-600">
+        <label for="tareaActiva" class="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">Tarea activa</label>
+      </div>
+
+      <p *ngIf="errorTarea()" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{{ errorTarea() }}</p>
+    </div>
+    <div class="flex gap-2 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button *ngIf="equipoConTarea?.tarea" (click)="eliminarTareaDeEquipo(equipoConTarea!)"
+        class="px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+        Eliminar
+      </button>
+      <button (click)="mostrarModalTarea.set(false)"
+        class="flex-1 px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        Cancelar
+      </button>
+      <button (click)="guardarTarea()" [disabled]="guardandoTarea()"
+        class="flex-1 px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg transition-colors">
+        {{ guardandoTarea() ? 'Guardando...' : (equipoConTarea?.tarea ? 'Actualizar' : 'Programar') }}
       </button>
     </div>
   </div>

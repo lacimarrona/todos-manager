@@ -50,15 +50,6 @@ import { ThemeService } from './core/services/theme.service';
               </a>
             </li>
 
-            @if (auth.canManage() || (auth.isTecnico() && auth.tienePermiso('asignar_tareas'))) {
-              <li>
-                <a routerLink="/tareas" routerLinkActive="bg-blue-600 !text-white"
-                   (click)="sidebarAbierto.set(false)"
-                   class="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all text-sm">
-                  <span>⏰</span> Tareas
-                </a>
-              </li>
-            }
 
             @if (auth.puedeGestionarPlantillas()) {
               <li>

@@ -455,6 +455,8 @@ function rowToTarea(r) {
     diasSemana: P(r.dias_semana),
     activa: r.activa === 1,
     fechaFin: r.fecha_fin || null,
+    tipo: r.tipo || 'recurrente',
+    fechaEspecifica: r.fecha_especifica || null,
     creadoEn: r.creado_en,
   };
 }
@@ -468,6 +470,11 @@ function getTareaById(id) {
   return r ? rowToTarea(r) : null;
 }
 
+function getTareaByEquipoId(equipoId) {
+  const r = db.prepare('SELECT * FROM tareas_programadas WHERE equipo_id = ? LIMIT 1').get(equipoId);
+  return r ? rowToTarea(r) : null;
+}
+
 function getTareasActivas() {
   return db.prepare('SELECT * FROM tareas_programadas WHERE activa = 1').all().map(rowToTarea);
 }
@@ -475,13 +482,16 @@ function getTareasActivas() {
 function createTarea(data) {
   const now = new Date().toISOString();
   db.prepare(
-    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_fin, creado_en)
-     VALUES (?,?,?,?,?,?,?,?)`
+    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_fin, tipo, fecha_especifica, creado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`
   ).run(
     data.id, data.equipoId, data.tecnicoId || null,
     data.hora, J(data.diasSemana || []),
     data.activa !== false ? 1 : 0,
-    data.fechaFin || null, now
+    data.fechaFin || null,
+    data.tipo || 'recurrente',
+    data.fechaEspecifica || null,
+    now
   );
   return getTareaById(data.id);
 }
@@ -494,6 +504,8 @@ function updateTarea(id, patch) {
   if (patch.tecnicoId !== undefined) { campos.push('tecnico_id = ?'); vals.push(patch.tecnicoId || null); }
   if (patch.activa !== undefined) { campos.push('activa = ?'); vals.push(patch.activa ? 1 : 0); }
   if (patch.fechaFin !== undefined) { campos.push('fecha_fin = ?'); vals.push(patch.fechaFin || null); }
+  if (patch.tipo !== undefined) { campos.push('tipo = ?'); vals.push(patch.tipo); }
+  if (patch.fechaEspecifica !== undefined) { campos.push('fecha_especifica = ?'); vals.push(patch.fechaEspecifica || null); }
   if (!campos.length) return getTareaById(id);
   vals.push(id);
   db.prepare(`UPDATE tareas_programadas SET ${campos.join(', ')} WHERE id = ?`).run(...vals);
@@ -711,7 +723,7 @@ module.exports = {
   getRevisiones, getRevisionesByProyecto, getRevisionById, createRevision, updateRevision, deleteRevision,
   exportarProyecto, importarProyecto, collectArchivoHashes,
   readGlobal, writeGlobal, readProyectoData, writeProyectoData,
-  getTareas, getTareaById, getTareasActivas, createTarea, updateTarea, deleteTarea,
+  getTareas, getTareaById, getTareaByEquipoId, getTareasActivas, createTarea, updateTarea, deleteTarea,
   getPermisosProyecto, setPermisosProyecto,
   getProyectosDeUsuario, getUsuariosDeProyecto, asignarProyecto, desasignarProyecto, tieneAccesoAProyecto,
   getPermisosElevadosTecnico,

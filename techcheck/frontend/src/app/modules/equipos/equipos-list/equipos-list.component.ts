@@ -1,12 +1,12 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto, GrupoElemento, TareaNoCumplida } from '../../../core/models/models';
+import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto, GrupoElemento, TareaNoCumplida, TareaProgramada, TareaForm, TipoTarea } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
-import { TecnicosService, RevisionesService, CatalogosService } from '../../../core/services/otros.services';
+import { TecnicosService, RevisionesService, CatalogosService, TareasService } from '../../../core/services/otros.services';
 import { ArchivosService } from '../../../core/services/archivos.service';
 
 type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'no_cumplidas';
@@ -157,6 +157,7 @@ export class EquiposListComponent implements OnInit {
     private revisionesSvc: RevisionesService,
     private archivosSvc: ArchivosService,
     private catalogosSvc: CatalogosService,
+    private tareasSvc: TareasService,
     private router: Router,
     private route: ActivatedRoute,
   ) {}
@@ -1342,7 +1343,154 @@ onImportarProyecto(event: Event) {
   input.value = '';
 }
 
-abrirModalConvertir(equipo: Equipo) {
+// ── Navegación por fecha ─────────────────────────────────────
+  @ViewChild('datePicker') datePickerRef!: ElementRef<HTMLInputElement>;
+  fechaNavegacion = signal(new Date());
+
+  readonly equiposConFiltroFecha = computed(() => {
+    const fecha = this.fechaNavegacion();
+    const diaSemana = fecha.getDay();
+    const fechaStr = this.toDateStr(fecha);
+    const esHoy = fechaStr === this.toDateStr(new Date());
+
+    return this.equiposMostrados().filter(e => {
+      if (esHoy) return true;
+      const tarea = e.tarea;
+      if (!tarea) return true;
+      if (!tarea.activa) return false;
+      if (tarea.tipo === 'recurrente') {
+        if (!tarea.diasSemana.includes(diaSemana)) return false;
+        if (tarea.fechaFin && tarea.fechaFin < fechaStr) return false;
+        return true;
+      }
+      if (tarea.tipo === 'fecha_especifica') {
+        return tarea.fechaEspecifica === fechaStr;
+      }
+      return true;
+    });
+  });
+
+  toDateStr(d: Date): string {
+    return d.toISOString().slice(0, 10);
+  }
+
+  navFecha(dias: number) {
+    const d = new Date(this.fechaNavegacion());
+    d.setDate(d.getDate() + dias);
+    this.fechaNavegacion.set(d);
+  }
+
+  irAHoy() {
+    this.fechaNavegacion.set(new Date());
+  }
+
+  abrirDatePicker() {
+    this.datePickerRef?.nativeElement.showPicker?.();
+    this.datePickerRef?.nativeElement.click();
+  }
+
+  irAFecha(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    if (val) {
+      const [y, m, d] = val.split('-').map(Number);
+      this.fechaNavegacion.set(new Date(y, m - 1, d));
+    }
+  }
+
+  esFechaHoy(): boolean {
+    return this.toDateStr(this.fechaNavegacion()) === this.toDateStr(new Date());
+  }
+
+  formatFechaNav(): string {
+    const f = this.fechaNavegacion();
+    const hoy = new Date();
+    const ayer = new Date(); ayer.setDate(hoy.getDate() - 1);
+    const manana = new Date(); manana.setDate(hoy.getDate() + 1);
+    if (this.toDateStr(f) === this.toDateStr(hoy)) return 'Hoy';
+    if (this.toDateStr(f) === this.toDateStr(ayer)) return 'Ayer';
+    if (this.toDateStr(f) === this.toDateStr(manana)) return 'Mañana';
+    return f.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  diasSemanaLabel(dias: number[]): string {
+    const n = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    return dias.map(d => n[d] || '').join(', ');
+  }
+
+  // ── Gestión de tareas por equipo ─────────────────────────────
+  mostrarModalTarea = signal(false);
+  equipoConTarea: Equipo | null = null;
+  formTarea: TareaForm = { equipoId: '', hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaEspecifica: '' };
+  guardandoTarea = signal(false);
+  errorTarea = signal('');
+
+  abrirModalTarea(equipo: Equipo) {
+    this.equipoConTarea = equipo;
+    this.errorTarea.set('');
+    const t = equipo.tarea;
+    if (t) {
+      this.formTarea = {
+        equipoId: equipo.id,
+        hora: t.hora || '08:00',
+        diasSemana: [...t.diasSemana],
+        tipo: t.tipo || 'recurrente',
+        fechaEspecifica: t.fechaEspecifica || '',
+        activa: t.activa,
+        tecnicoId: t.tecnicoId || '',
+      };
+    } else {
+      this.formTarea = { equipoId: equipo.id, hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaEspecifica: '', activa: true };
+    }
+    this.mostrarModalTarea.set(true);
+  }
+
+  toggleDiaSemana(dia: number) {
+    const dias = [...(this.formTarea.diasSemana || [])];
+    const idx = dias.indexOf(dia);
+    if (idx >= 0) dias.splice(idx, 1); else dias.push(dia);
+    this.formTarea = { ...this.formTarea, diasSemana: dias.sort((a, b) => a - b) };
+  }
+
+  guardarTarea() {
+    if (!this.equipoConTarea) return;
+    this.guardandoTarea.set(true);
+    this.errorTarea.set('');
+    const form: TareaForm = { ...this.formTarea };
+    const existente = this.equipoConTarea.tarea;
+
+    const ok = () => {
+      this.guardandoTarea.set(false);
+      this.mostrarModalTarea.set(false);
+      this.cargarEquiposFiltrados(this.filtroActivo());
+    };
+    const err = (e: any) => {
+      this.guardandoTarea.set(false);
+      this.errorTarea.set(e?.error?.message || 'Error al guardar la programación');
+    };
+
+    if (existente) {
+      this.tareasSvc.update(existente.id, form).subscribe({ next: ok, error: err });
+    } else {
+      this.tareasSvc.create(form).subscribe({ next: ok, error: err });
+    }
+  }
+
+  eliminarTareaDeEquipo(equipo: Equipo) {
+    if (!equipo.tarea) return;
+    if (!confirm('¿Eliminar la programación de este equipo?')) return;
+    this.tareasSvc.deleteTarea(equipo.tarea.id).subscribe({
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
+    });
+  }
+
+  tipoTareaLabel(equipo: Equipo): string {
+    if (!equipo.tarea) return '';
+    if (equipo.tarea.tipo === 'recurrente') return 'Recurrente';
+    if (equipo.tarea.tipo === 'fecha_especifica') return 'Fecha específica';
+    return '';
+  }
+
+  abrirModalConvertir(equipo: Equipo) {
   this.equipoConvirtiendo = equipo;
   this.nombreNuevaPlantilla = equipo.nombre;
   this.descripcionNuevaPlantilla = equipo.descripcion || '';
