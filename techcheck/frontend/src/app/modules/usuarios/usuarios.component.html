@@ -30,10 +30,82 @@
   @if (cargando()) {
     <div class="text-center py-12 text-gray-400">Cargando...</div>
   } @else {
-    <!-- Tabla de usuarios -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div class="overflow-x-auto">
-      <table class="w-full text-sm min-w-[560px]">
+
+    <!-- Vista móvil: tarjetas (hasta sm) -->
+    <div class="sm:hidden space-y-3">
+      @for (u of usuarios(); track u.id) {
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="min-w-0">
+              <div class="font-medium text-gray-900 dark:text-white text-sm truncate">
+                {{ u.nombre }}
+                @if (u.id === auth.user()?.id) {
+                  <span class="ml-1 text-xs text-blue-500">(tú)</span>
+                }
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ u.username }}</div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                [class]="u.rol === 'admin'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                  : u.rol === 'project_admin'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'">
+                {{ u.rol === 'admin' ? 'Admin' : u.rol === 'project_admin' ? 'Adm. Proy.' : 'Técnico' }}
+              </span>
+              <button
+                (click)="toggleActivo(u)"
+                [title]="u.activo ? 'Clic para desactivar' : 'Clic para activar'"
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors"
+                [class]="u.activo
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 hover:bg-red-100 hover:text-red-700'
+                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-green-100 hover:text-green-700'">
+                {{ u.activo ? 'Activo' : 'Inactivo' }}
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700 flex-wrap">
+            @if (auth.isAdmin() && u.rol === 'project_admin') {
+              <button (click)="abrirAsignaciones(u)"
+                class="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Gestionar proyectos asignados">📁</button>
+            }
+            @if (auth.canManage() && u.rol === 'tecnico') {
+              <button (click)="abrirHorario(u)"
+                class="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Gestionar horario semanal de tareas">📅</button>
+            }
+            @if (auth.isAdmin() && u.rol === 'tecnico') {
+              <button (click)="abrirSupervisores(u)"
+                class="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Gestionar a qué administradores pertenece">👥</button>
+            }
+            @if (auth.canManage() && u.rol === 'tecnico') {
+              <button (click)="abrirPermisosEspeciales(u)"
+                class="p-2 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Gestionar permisos especiales">🔑</button>
+            }
+            @if (auth.isAdmin() || (auth.isProjectAdmin() && u.rol === 'tecnico')) {
+              <button (click)="abrirEditar(u)"
+                class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Editar">✏️</button>
+            }
+            @if (auth.isAdmin() && u.id !== auth.user()?.id) {
+              <button (click)="eliminar(u)"
+                class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Eliminar">🗑️</button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="py-8 text-center text-gray-400 dark:text-gray-500">No hay usuarios registrados</div>
+      }
+    </div>
+
+    <!-- Vista desktop: tabla (sm en adelante) -->
+    <div class="hidden sm:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <table class="w-full text-sm">
         <thead class="bg-gray-50 dark:bg-gray-700/50">
           <tr>
             <th class="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Nombre</th>
@@ -77,37 +149,31 @@
               </td>
               <td class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <!-- Solo admin: gestionar proyectos de un project_admin -->
                   @if (auth.isAdmin() && u.rol === 'project_admin') {
                     <button (click)="abrirAsignaciones(u)"
                       class="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       title="Gestionar proyectos asignados">📁</button>
                   }
-                  <!-- Admin + project_admin: horario de técnicos -->
                   @if (auth.canManage() && u.rol === 'tecnico') {
                     <button (click)="abrirHorario(u)"
                       class="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       title="Gestionar horario semanal de tareas">📅</button>
                   }
-                  <!-- Solo admin: gestionar supervisores de un técnico -->
                   @if (auth.isAdmin() && u.rol === 'tecnico') {
                     <button (click)="abrirSupervisores(u)"
                       class="p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       title="Gestionar a qué administradores pertenece">👥</button>
                   }
-                  <!-- Admin y project_admin: gestionar permisos especiales de técnicos -->
                   @if (auth.canManage() && u.rol === 'tecnico') {
                     <button (click)="abrirPermisosEspeciales(u)"
                       class="p-1.5 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       title="Gestionar permisos especiales">🔑</button>
                   }
-                  <!-- Editar: admin puede editar cualquiera; project_admin solo sus técnicos -->
                   @if (auth.isAdmin() || (auth.isProjectAdmin() && u.rol === 'tecnico')) {
                     <button (click)="abrirEditar(u)"
                       class="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       title="Editar">✏️</button>
                   }
-                  <!-- Solo admin: eliminar (no a sí mismo) -->
                   @if (auth.isAdmin() && u.id !== auth.user()?.id) {
                     <button (click)="eliminar(u)"
                       class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -123,7 +189,6 @@
           }
         </tbody>
       </table>
-      </div>
     </div>
   }
 </div>

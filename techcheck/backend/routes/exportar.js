@@ -64,8 +64,6 @@ router.get('/revisiones-csv', (req, res) => {
 // GET /api/exportar/json — backup COMPLETO en ZIP (datos SQLite + archivos físicos)
 router.get('/json', async (req, res) => {
   try {
-    // Solo incluir el usuario que exporta, no todos los usuarios del sistema
-    const usuarioExportador = sqliteDb.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.user.sub);
     const backup = {
       version: '2.0',
       exportadoEn: new Date().toISOString(),
@@ -74,15 +72,16 @@ router.get('/json', async (req, res) => {
       plantillas:           sqliteDb.prepare('SELECT * FROM plantillas ORDER BY creado_en ASC').all(),
       revisiones:           sqliteDb.prepare('SELECT * FROM revisiones ORDER BY creado_en ASC').all(),
       tareas:               sqliteDb.prepare('SELECT * FROM tareas_programadas ORDER BY creado_en ASC').all(),
-      usuarios:             usuarioExportador ? [usuarioExportador] : [],
-      proyectoAsignaciones: sqliteDb.prepare('SELECT * FROM proyecto_asignaciones WHERE usuario_id = ?').all(req.user.sub),
-      proyectoPermisos:     sqliteDb.prepare('SELECT * FROM proyecto_permisos WHERE tecnico_id = ?').all(req.user.sub),
-      tecnicoSupervisores:  sqliteDb.prepare('SELECT * FROM tecnico_supervisores WHERE tecnico_id = ? OR supervisor_id = ?').all(req.user.sub, req.user.sub),
+      usuarios:             sqliteDb.prepare('SELECT * FROM usuarios ORDER BY creado_en ASC').all(),
+      proyectoAsignaciones: sqliteDb.prepare('SELECT * FROM proyecto_asignaciones').all(),
+      proyectoPermisos:     sqliteDb.prepare('SELECT * FROM proyecto_permisos').all(),
+      tecnicoSupervisores:  sqliteDb.prepare('SELECT * FROM tecnico_supervisores').all(),
       plantillaProyectos:   sqliteDb.prepare('SELECT * FROM plantilla_proyectos').all(),
       gruposElemento:       sqliteDb.prepare('SELECT * FROM grupos_elemento ORDER BY creado_en ASC').all(),
       elementosGrupo:       sqliteDb.prepare('SELECT * FROM elementos_grupo ORDER BY creado_en ASC').all(),
-      usuarioPermisos:      sqliteDb.prepare('SELECT * FROM usuario_permisos WHERE usuario_id = ?').all(req.user.sub),
+      usuarioPermisos:      sqliteDb.prepare('SELECT * FROM usuario_permisos').all(),
       tecnicos:             sqliteDb.prepare('SELECT * FROM tecnicos ORDER BY creado_en ASC').all(),
+      catalogoProyectos:    sqliteDb.prepare('SELECT * FROM catalogo_proyectos').all(),
     };
 
     const zip = new JSZip();
@@ -245,6 +244,12 @@ router.post('/importar-json', upload.single('archivo'), async (req, res) => {
     const insTec = sqliteDb.prepare(`INSERT ${modo} INTO tecnicos (id, nombre, email, creado_en) VALUES (?,?,?,?)`);
     for (const t of data.tecnicos || []) {
       const r = insTec.run(t.id, t.nombre, t.email || '', t.creado_en); importados.tecnicos += r.changes;
+    }
+
+    // Asignaciones catálogo ↔ proyecto
+    const insCatProy = sqliteDb.prepare(`INSERT ${modo} INTO catalogo_proyectos (catalogo_id, proyecto_id) VALUES (?,?)`);
+    for (const cp of data.catalogoProyectos || []) {
+      insCatProy.run(cp.catalogo_id, cp.proyecto_id);
     }
 
     // Restaurar archivos físicos desde archivos/ del ZIP

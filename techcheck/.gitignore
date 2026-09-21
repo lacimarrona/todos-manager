@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build frontend (generado por Docker o build local)
+frontend/dist/
+frontend/.angular/
+backend/public/
+
+# Variables de entorno
+.env
+backend/.env
+
+# Datos locales (montados como volumen en producción)
+backend/data/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Archivos temporales de test
+*.zip
+*.bak

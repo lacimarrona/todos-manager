@@ -84,6 +84,12 @@ export class EquiposListComponent implements OnInit {
   catalogos = signal<GrupoElemento[]>([]);
   tareasNoCumplidas = signal<TareaNoCumplida[]>([]);
 
+  readonly catalogosDelProyecto = computed(() => {
+    const pid = this.proyectoActual()?.id;
+    if (!pid) return [];
+    return this.catalogos().filter(g => g.proyectos && g.proyectos.includes(pid));
+  });
+
   readonly tareasNoCumplidasFiltradas = computed(() => {
     let lista = [...this.tareasNoCumplidas()];
     const busq = this.busquedaEquipo().toLowerCase().trim();
@@ -99,6 +105,18 @@ export class EquiposListComponent implements OnInit {
 
   mostrarModalExportarProyecto = signal(false);
   proyectoExportando: Proyecto | null = null;
+
+  // Panel catálogo en modal equipo
+  mostrarPanelCatalogo = false;
+  catalogoExpandido: string | null = null;
+
+  // Convertir equipo en plantilla
+  mostrarModalConvertir = signal(false);
+  equipoConvirtiendo: Equipo | null = null;
+  nombreNuevaPlantilla = '';
+  descripcionNuevaPlantilla = '';
+  guardandoConversion = signal(false);
+  errorConversion = signal('');
 
   // Modal permisos
   mostrarModalPermisos = signal(false);
@@ -423,6 +441,22 @@ export class EquiposListComponent implements OnInit {
     this.nuevoItem = '';
   }
 
+  grupoCatalogoYaAgregado(grupoId: string): boolean {
+    return this.formEquipo.items.some(i => i.catalogoId === grupoId && i.tipo === 'catalogo');
+  }
+
+  agregarGrupoCatalogo(grupo: GrupoElemento) {
+    if (this.grupoCatalogoYaAgregado(grupo.id)) return;
+    this.formEquipo.items = [...this.formEquipo.items, {
+      label: grupo.nombre,
+      tipo: 'catalogo' as any,
+      catalogoId: grupo.id,
+      observacionGuia: grupo.descripcion || '',
+      archivosGuia: [],
+    }];
+    this.guiasEquipoTemp = [...this.guiasEquipoTemp, [grupo.descripcion || '']];
+  }
+
   quitarItem(idx: number) {
     this.formEquipo.items = this.formEquipo.items.filter((_, i) => i !== idx);
     this.guiasEquipoTemp = this.guiasEquipoTemp.filter((_, i) => i !== idx);
@@ -596,6 +630,8 @@ export class EquiposListComponent implements OnInit {
   cerrarModalEquipo() {
     if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
       this.mostrarModalEquipo.set(false);
+      this.mostrarPanelCatalogo = false;
+      this.catalogoExpandido = null;
     }
   }
 
@@ -1304,6 +1340,47 @@ onImportarProyecto(event: Event) {
     reader.readAsText(file);
   }
   input.value = '';
+}
+
+abrirModalConvertir(equipo: Equipo) {
+  this.equipoConvirtiendo = equipo;
+  this.nombreNuevaPlantilla = equipo.nombre;
+  this.descripcionNuevaPlantilla = equipo.descripcion || '';
+  this.errorConversion.set('');
+  this.mostrarModalConvertir.set(true);
+}
+
+confirmarConversion() {
+  if (!this.equipoConvirtiendo) return;
+  const nombre = this.nombreNuevaPlantilla.trim();
+  if (!nombre) { this.errorConversion.set('El nombre es obligatorio'); return; }
+
+  this.guardandoConversion.set(true);
+  this.errorConversion.set('');
+
+  const items = this.equipoConvirtiendo.items.map(item => ({
+    label: item.label,
+    tipo: item.tipo || 'checkbox',
+    catalogoId: item.catalogoId,
+    observacionGuia: item.observacionGuia || '',
+    archivosGuia: item.archivosGuia || [],
+  }));
+
+  this.plantillasSvc.create({
+    nombre,
+    descripcion: this.descripcionNuevaPlantilla.trim(),
+    items,
+    proyectoIds: this.proyectoActual()?.id ? [this.proyectoActual()!.id] : [],
+  } as any).subscribe({
+    next: () => {
+      this.guardandoConversion.set(false);
+      this.mostrarModalConvertir.set(false);
+    },
+    error: (e: any) => {
+      this.guardandoConversion.set(false);
+      this.errorConversion.set(e?.error?.message || 'Error al crear la plantilla');
+    }
+  });
 }
 
 }
