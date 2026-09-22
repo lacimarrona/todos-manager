@@ -189,10 +189,10 @@ router.post('/importar-json', upload.single('archivo'), async (req, res) => {
 
     // Tareas programadas
     const insTarea = sqliteDb.prepare(
-      `INSERT ${modo} INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_fin, tipo, fecha_especifica, creado_en) VALUES (?,?,?,?,?,?,?,?,?,?)`
+      `INSERT ${modo} INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_inicio, fecha_fin, tipo, fecha_especifica, creado_en) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
     );
     for (const t of data.tareas || []) {
-      const r = insTarea.run(t.id, t.equipo_id, t.tecnico_id ?? null, t.hora, t.dias_semana, t.activa ?? 1, t.fecha_fin ?? null, t.tipo || 'recurrente', t.fecha_especifica ?? null, t.creado_en);
+      const r = insTarea.run(t.id, t.equipo_id, t.tecnico_id ?? null, t.hora, t.dias_semana, t.activa ?? 1, t.fecha_inicio ?? null, t.fecha_fin ?? null, t.tipo || 'recurrente', t.fecha_especifica ?? null, t.creado_en);
       importados.tareas += r.changes;
     }
 

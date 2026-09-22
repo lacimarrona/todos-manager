@@ -454,6 +454,7 @@ function rowToTarea(r) {
     hora: r.hora,
     diasSemana: P(r.dias_semana),
     activa: r.activa === 1,
+    fechaInicio: r.fecha_inicio || null,
     fechaFin: r.fecha_fin || null,
     tipo: r.tipo || 'recurrente',
     fechaEspecifica: r.fecha_especifica || null,
@@ -482,12 +483,13 @@ function getTareasActivas() {
 function createTarea(data) {
   const now = new Date().toISOString();
   db.prepare(
-    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_fin, tipo, fecha_especifica, creado_en)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_inicio, fecha_fin, tipo, fecha_especifica, creado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
   ).run(
     data.id, data.equipoId, data.tecnicoId || null,
     data.hora, J(data.diasSemana || []),
     data.activa !== false ? 1 : 0,
+    data.fechaInicio || null,
     data.fechaFin || null,
     data.tipo || 'recurrente',
     data.fechaEspecifica || null,
@@ -503,6 +505,7 @@ function updateTarea(id, patch) {
   if (patch.diasSemana !== undefined) { campos.push('dias_semana = ?'); vals.push(J(patch.diasSemana)); }
   if (patch.tecnicoId !== undefined) { campos.push('tecnico_id = ?'); vals.push(patch.tecnicoId || null); }
   if (patch.activa !== undefined) { campos.push('activa = ?'); vals.push(patch.activa ? 1 : 0); }
+  if (patch.fechaInicio !== undefined) { campos.push('fecha_inicio = ?'); vals.push(patch.fechaInicio || null); }
   if (patch.fechaFin !== undefined) { campos.push('fecha_fin = ?'); vals.push(patch.fechaFin || null); }
   if (patch.tipo !== undefined) { campos.push('tipo = ?'); vals.push(patch.tipo); }
   if (patch.fechaEspecifica !== undefined) { campos.push('fecha_especifica = ?'); vals.push(patch.fechaEspecifica || null); }

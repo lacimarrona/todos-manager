@@ -1360,9 +1360,10 @@ onImportarProyecto(event: Event) {
       if (!tarea) return true;
       // Tarea inactiva → no visible
       if (!tarea.activa) return false;
-      // Recurrente → visible si el día de la semana coincide y no pasó fechaFin
+      // Recurrente → visible si el día de la semana coincide, ya comenzó y no pasó fechaFin
       if (tarea.tipo === 'recurrente') {
         if (!tarea.diasSemana.includes(diaSemana)) return false;
+        if (tarea.fechaInicio && fechaStr < tarea.fechaInicio) return false;
         if (tarea.fechaFin && tarea.fechaFin < fechaStr) return false;
         return true;
       }
@@ -1424,7 +1425,7 @@ onImportarProyecto(event: Event) {
   // ── Gestión de tareas por equipo ─────────────────────────────
   mostrarModalTarea = signal(false);
   equipoConTarea: Equipo | null = null;
-  formTarea: TareaForm = { equipoId: '', hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaEspecifica: '' };
+  formTarea: TareaForm = { equipoId: '', hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaInicio: '', fechaEspecifica: '' };
   guardandoTarea = signal(false);
   errorTarea = signal('');
 
@@ -1438,12 +1439,13 @@ onImportarProyecto(event: Event) {
         hora: t.hora || '08:00',
         diasSemana: [...t.diasSemana],
         tipo: t.tipo || 'recurrente',
+        fechaInicio: t.fechaInicio || '',
         fechaEspecifica: t.fechaEspecifica || '',
         activa: t.activa,
         tecnicoId: t.tecnicoId || '',
       };
     } else {
-      this.formTarea = { equipoId: equipo.id, hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaEspecifica: '', activa: true };
+      this.formTarea = { equipoId: equipo.id, hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaInicio: '', fechaEspecifica: '', activa: true };
     }
     this.mostrarModalTarea.set(true);
   }

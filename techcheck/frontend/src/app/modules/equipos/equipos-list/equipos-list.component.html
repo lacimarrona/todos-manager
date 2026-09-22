@@ -1013,6 +1013,21 @@
           class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
       </div>
 
+      <!-- Fecha inicio (solo recurrente) -->
+      <div *ngIf="formTarea.tipo === 'recurrente'" class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha de inicio <span class="text-gray-400 font-normal">(opcional)</span></label>
+          <input type="date" [(ngModel)]="formTarea.fechaInicio"
+            class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900"
+            placeholder="Desde hoy">
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha de fin <span class="text-gray-400 font-normal">(opcional)</span></label>
+          <input type="date" [(ngModel)]="formTarea.fechaFin"
+            class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+        </div>
+      </div>
+
       <!-- Técnico -->
       <div>
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Técnico asignado (opcional)</label>

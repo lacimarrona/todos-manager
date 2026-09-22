@@ -185,6 +185,7 @@ db.exec(`
 // Columnas nuevas en tareas_programadas (unificación de tareas)
 try { db.exec("ALTER TABLE tareas_programadas ADD COLUMN tipo TEXT NOT NULL DEFAULT 'recurrente'"); } catch {}
 try { db.exec('ALTER TABLE tareas_programadas ADD COLUMN fecha_especifica TEXT'); } catch {}
+try { db.exec('ALTER TABLE tareas_programadas ADD COLUMN fecha_inicio TEXT'); } catch {}
 
 // Agregar columna restringido a proyectos si no existe (migración incremental)
 try { db.exec('ALTER TABLE proyectos ADD COLUMN restringido INTEGER NOT NULL DEFAULT 0'); } catch {}

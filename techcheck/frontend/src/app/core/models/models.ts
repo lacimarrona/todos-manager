@@ -158,6 +158,7 @@ export interface TareaProgramada {
   hora: string;        // HH:MM
   diasSemana: number[]; // 0=domingo … 6=sábado
   activa: boolean;
+  fechaInicio: string | null;
   fechaFin: string | null;
   tipo: TipoTarea;
   fechaEspecifica: string | null; // YYYY-MM-DD para tipo fecha_especifica
@@ -170,6 +171,7 @@ export interface TareaForm {
   hora: string;
   diasSemana: number[];
   activa?: boolean;
+  fechaInicio?: string;
   fechaFin?: string;
   tipo?: TipoTarea;
   fechaEspecifica?: string;

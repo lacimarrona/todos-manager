@@ -48,7 +48,7 @@ router.post('/', (req, res) => {
     if (req.user.rol === 'tecnico' && !db.tienePemisoEspecial(req.user.sub, 'asignar_tareas')) {
       return res.status(403).json({ success: false, message: 'Sin permiso para programar tareas' });
     }
-    const { equipoId, tecnicoId, hora, diasSemana, activa, fechaFin, tipo, fechaEspecifica } = req.body;
+    const { equipoId, tecnicoId, hora, diasSemana, activa, fechaInicio, fechaFin, tipo, fechaEspecifica } = req.body;
     if (!equipoId) return res.status(400).json({ success: false, message: 'equipoId es requerido' });
 
     const tipoValido = tipo || 'recurrente';
@@ -69,6 +69,7 @@ router.post('/', (req, res) => {
       hora: hora || '',
       diasSemana: diasSemana || [],
       activa: activa !== false,
+      fechaInicio: fechaInicio || null,
       fechaFin: fechaFin || null,
       tipo: tipoValido,
       fechaEspecifica: fechaEspecifica || null,
@@ -84,8 +85,8 @@ router.put('/:id', (req, res) => {
   try {
     const tarea = db.getTareaById(req.params.id);
     if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
-    const { hora, diasSemana, tecnicoId, activa, fechaFin, tipo, fechaEspecifica } = req.body;
-    const actualizada = db.updateTarea(req.params.id, { hora, diasSemana, tecnicoId, activa, fechaFin, tipo, fechaEspecifica });
+    const { hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica } = req.body;
+    const actualizada = db.updateTarea(req.params.id, { hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica });
     res.json({ success: true, data: actualizada });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
