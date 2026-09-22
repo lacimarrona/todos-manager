@@ -8,6 +8,7 @@ import { EquiposService } from '../../../core/services/equipos.service';
 import { PlantillasService } from '../../../core/services/plantillas.service';
 import { TecnicosService, RevisionesService, CatalogosService, TareasService } from '../../../core/services/otros.services';
 import { ArchivosService } from '../../../core/services/archivos.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'no_cumplidas';
 
@@ -150,6 +151,7 @@ export class EquiposListComponent implements OnInit {
   });
 
   constructor(
+    public auth: AuthService,
     private proyectosSvc: ProyectosService,
     private equiposSvc: EquiposService,
     private plantillasSvc: PlantillasService,
@@ -1351,18 +1353,20 @@ onImportarProyecto(event: Event) {
     const fecha = this.fechaNavegacion();
     const diaSemana = fecha.getDay();
     const fechaStr = this.toDateStr(fecha);
-    const esHoy = fechaStr === this.toDateStr(new Date());
 
     return this.equiposMostrados().filter(e => {
-      if (esHoy) return true;
       const tarea = e.tarea;
+      // Sin tarea programada → siempre visible
       if (!tarea) return true;
+      // Tarea inactiva → no visible
       if (!tarea.activa) return false;
+      // Recurrente → visible si el día de la semana coincide y no pasó fechaFin
       if (tarea.tipo === 'recurrente') {
         if (!tarea.diasSemana.includes(diaSemana)) return false;
         if (tarea.fechaFin && tarea.fechaFin < fechaStr) return false;
         return true;
       }
+      // Fecha específica → visible SOLO en esa fecha exacta
       if (tarea.tipo === 'fecha_especifica') {
         return tarea.fechaEspecifica === fechaStr;
       }
