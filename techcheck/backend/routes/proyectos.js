@@ -70,10 +70,42 @@ router.get('/:id/equipos', (req, res) => {
     const filtro = req.query.estado;
     let resultado = enriquecidos;
 
-    if (filtro === 'archivado') {
+    if (filtro === 'tareas_programadas') {
+      const hoy = new Date().toISOString().slice(0, 10);
+      resultado = enriquecidos.filter(e => {
+        if (e.archivado || !e.tarea) return false;
+        if (e.tarea.tipo === 'fecha_especifica') {
+          const fe = e.tarea.fechaEspecifica;
+          const plazo = e.tarea.plazo ?? 1;
+          if (!fe) return false;
+          const vd = new Date(fe + 'T00:00:00'); vd.setDate(vd.getDate() + plazo - 1);
+          if (vd.toISOString().slice(0, 10) < hoy) return false;
+        }
+        return true;
+      });
+    } else if (filtro === 'archivado') {
       resultado = enriquecidos.filter(e => e.archivado === true);
     } else if (filtro === 'pendiente') {
-      resultado = enriquecidos.filter(e => !e.archivado && !e.ultimaRevision);
+      const hoyPend = new Date().toISOString().slice(0, 10);
+      const noCumplidasPend = sqliteDb.prepare(
+        'SELECT DISTINCT equipo_id FROM tareas_no_cumplidas WHERE proyecto_id = ?'
+      ).all(req.params.id);
+      const noCumplidasEquipos = new Set(noCumplidasPend.map(r => r.equipo_id));
+
+      resultado = enriquecidos.filter(e => {
+        if (e.archivado) return false;
+        // Si tiene no_cumplida Y su tarea es fecha_especifica → va a "no ejecutadas", no a pendientes
+        if (noCumplidasEquipos.has(e.id) && e.tarea?.tipo === 'fecha_especifica') return false;
+        // Si tiene fecha de vencimiento vencida → va a "no ejecutadas"
+        if (e.fechaVencimiento && e.fechaVencimiento < hoyPend) return false;
+        if (!e.ultimaRevision) return true;
+        // Revisión automática sin items tocados → sigue en pendiente
+        if (e.ultimaRevision.estado === 'en_proceso') {
+          const tocados = e.ultimaRevision.items.filter(i => i.checked).length;
+          return tocados === 0;
+        }
+        return false;
+      });
     } else if (filtro === 'en_proceso') {
       // Equipos ya registrados como no cumplidos (no mostrar en "En proceso")
       const noCumplidas = sqliteDb.prepare(
@@ -85,8 +117,10 @@ router.get('/:id/equipos', (req, res) => {
         if (e.archivado) return false;
         if (!e.ultimaRevision) return false;
         if (e.ultimaRevision.estado === 'en_proceso') {
+          // Sin items tocados → pertenece a pendiente, no a en_proceso
+          const tocados = e.ultimaRevision.items.filter(i => i.checked).length;
+          if (tocados === 0) return false;
           const fechaRev = e.ultimaRevision.creadoEn.slice(0, 10);
-          // Si ya está registrada como no cumplida para esa fecha, no mostrar aquí
           if (noCumplidasKey.has(`${e.id}|${fechaRev}`)) return false;
           return true;
         }
@@ -559,18 +593,45 @@ router.get('/:id/tareas-no-cumplidas', (req, res) => {
     const rows = sqliteDb.prepare(
       `SELECT * FROM tareas_no_cumplidas WHERE proyecto_id = ? ORDER BY fecha DESC, hora DESC`
     ).all(req.params.id);
-    res.json({ success: true, data: rows.map(r => ({
-      id: r.id,
-      tareaId: r.tarea_id,
-      equipoId: r.equipo_id,
-      equipoNombre: r.equipo_nombre,
-      proyectoId: r.proyecto_id,
-      fecha: r.fecha,
-      hora: r.hora,
-      tecnicoId: r.tecnico_id,
-      tecnicoNombre: r.tecnico_nombre,
-      registradoEn: r.registrado_en,
-    })) });
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    const equipos = db.getEquiposByProyecto(req.params.id);
+    const vencidos = [];
+    for (const equipo of equipos) {
+      if (!equipo.fechaVencimiento || equipo.fechaVencimiento >= hoy || equipo.archivado) continue;
+      const revisiones = db.getRevisiones({ equipoId: equipo.id });
+      const tieneRevCompleta = revisiones.some(r =>
+        ['ok', 'observacion', 'problema'].includes(r.estado) &&
+        r.creadoEn.slice(0, 10) <= equipo.fechaVencimiento
+      );
+      if (tieneRevCompleta) continue;
+      vencidos.push({
+        id: `venc_${equipo.id}`,
+        tareaId: '',
+        equipoId: equipo.id,
+        equipoNombre: equipo.nombre,
+        proyectoId: req.params.id,
+        fecha: equipo.fechaVencimiento,
+        hora: '',
+        tecnicoId: equipo.tecnicoAsignadoId || null,
+        tecnicoNombre: '',
+        registradoEn: equipo.fechaVencimiento,
+        esVencimiento: true,
+      });
+    }
+
+    const data = [
+      ...rows.map(r => ({
+        id: r.id, tareaId: r.tarea_id, equipoId: r.equipo_id,
+        equipoNombre: r.equipo_nombre, proyectoId: r.proyecto_id,
+        fecha: r.fecha, hora: r.hora, tecnicoId: r.tecnico_id,
+        tecnicoNombre: r.tecnico_nombre, registradoEn: r.registrado_en,
+        esVencimiento: false,
+      })),
+      ...vencidos,
+    ].sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

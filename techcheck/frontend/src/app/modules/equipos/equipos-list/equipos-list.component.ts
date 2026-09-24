@@ -10,7 +10,7 @@ import { TecnicosService, RevisionesService, CatalogosService, TareasService } f
 import { ArchivosService } from '../../../core/services/archivos.service';
 import { AuthService } from '../../../core/services/auth.service';
 
-type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'no_cumplidas';
+type FiltroEstado = 'pendiente' | 'en_proceso' | 'terminado' | 'archivado' | 'no_cumplidas' | 'tareas_programadas';
 
 @Component({
   selector: 'app-equipos-list',
@@ -69,7 +69,7 @@ export class EquiposListComponent implements OnInit {
   modoEdicionEquipo = signal(false);
   equipoEditandoId = '';
   nuevoItem = '';
-  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: '' };
+  formEquipo: EquipoForm = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [], tecnicoAsignadoId: '', fechaVencimiento: '' };
   guiasEquipoTemp: string[][] = [];
 
   mostrarModalRevision = signal(false);
@@ -391,7 +391,7 @@ export class EquiposListComponent implements OnInit {
   }
 
   abrirModalNuevoEquipo() {
-    this.formEquipo = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [this.proyectoActual()!.id], tecnicoAsignadoId: '' };
+    this.formEquipo = { nombre: '', descripcion: '', items: [], plantillaId: '', proyectoIds: [this.proyectoActual()!.id], tecnicoAsignadoId: '', fechaVencimiento: '' };
     this.guiasEquipoTemp = [];
     this.modoEdicionEquipo.set(false);
     this.equipoEditandoId = '';
@@ -408,7 +408,8 @@ export class EquiposListComponent implements OnInit {
         : { ...i, archivosGuia: i.archivosGuia || [] }),
       plantillaId: equipo.plantillaId || '',
       proyectoIds: equipo.proyectoIds || [],
-      tecnicoAsignadoId: equipo.tecnicoAsignadoId || ''
+      tecnicoAsignadoId: equipo.tecnicoAsignadoId || '',
+      fechaVencimiento: equipo.fechaVencimiento || '',
     };
     this.guiasEquipoTemp = this.formEquipo.items.map(item => {
       const g = item.observacionGuia || '';
@@ -867,8 +868,11 @@ export class EquiposListComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  get itemsCompletados(): number { return this.itemsRevision().filter(i => i.checked).length; }
-  get totalItemsRevision(): number { return this.itemsRevision().length; }
+  readonly hayCatalogosEnRevision = computed(() => this.itemsRevision().some(i => i.tipo === 'catalogo'));
+  get itemsCompletados(): number { return this.itemsRevision().filter(i => i.tipo !== 'catalogo' && i.checked).length; }
+  get totalItemsRevision(): number { return this.itemsRevision().filter(i => i.tipo !== 'catalogo').length; }
+  get tieneAlgunCatalogoEnForm(): boolean { return this.formEquipo.items.some(i => i.tipo === 'catalogo'); }
+  get tieneItemsChecklistEnForm(): boolean { return this.formEquipo.items.some(i => i.tipo !== 'catalogo'); }
   get revisionCompleta(): boolean { return this.totalItemsRevision > 0 && this.itemsCompletados === this.totalItemsRevision; }
 
   guardarRevision() {
@@ -1348,6 +1352,41 @@ onImportarProyecto(event: Event) {
 // ── Navegación por fecha ─────────────────────────────────────
   @ViewChild('datePicker') datePickerRef!: ElementRef<HTMLInputElement>;
   fechaNavegacion = signal(new Date());
+  modoFecha = signal(true);
+
+  readonly equiposVista = computed(() => {
+    if (this.modoFecha()) {
+      // Terminados: filtrar por fecha en que se completó la revisión
+      if (this.filtroActivo() === 'terminado') {
+        const fechaStr = this.toDateStr(this.fechaNavegacion());
+        return this.equiposMostrados().filter(e =>
+          e.ultimaRevision && e.ultimaRevision.creadoEn.slice(0, 10) === fechaStr
+        );
+      }
+      // Archivados: filtrar por fecha en que se archivó
+      if (this.filtroActivo() === 'archivado') {
+        const fechaStr = this.toDateStr(this.fechaNavegacion());
+        return this.equiposMostrados().filter(e =>
+          e.archivadoEn && e.archivadoEn.slice(0, 10) === fechaStr
+        );
+      }
+      return this.equiposConFiltroFecha();
+    }
+    // Sin fechas: en pendientes mostrar equipos sin tarea + los que tienen tarea en los próximos 7 días
+    if (this.filtroActivo() === 'pendiente') {
+      const hoy = new Date();
+      const limite = new Date(hoy); limite.setDate(hoy.getDate() + 6);
+      const limiteStr = this.toDateStr(limite);
+      return this.equiposMostrados().filter(e => {
+        if (!e.tarea) return true;
+        if (!e.tarea.activa) return false;
+        const proxima = this.proximaFechaDate(e.tarea);
+        if (proxima === null) return false;
+        return proxima <= limiteStr;
+      });
+    }
+    return this.equiposMostrados();
+  });
 
   readonly equiposConFiltroFecha = computed(() => {
     const fecha = this.fechaNavegacion();
@@ -1367,9 +1406,11 @@ onImportarProyecto(event: Event) {
         if (tarea.fechaFin && tarea.fechaFin < fechaStr) return false;
         return true;
       }
-      // Fecha específica → visible SOLO en esa fecha exacta
+      // Fecha específica → visible desde fechaEspecifica hasta fechaVencimiento
       if (tarea.tipo === 'fecha_especifica') {
-        return tarea.fechaEspecifica === fechaStr;
+        if (!tarea.fechaEspecifica || fechaStr < tarea.fechaEspecifica) return false;
+        const venc = this.fechaVencimientoTarea(tarea);
+        return venc !== null && fechaStr <= venc;
       }
       return true;
     });
@@ -1406,6 +1447,104 @@ onImportarProyecto(event: Event) {
     return this.toDateStr(this.fechaNavegacion()) === this.toDateStr(new Date());
   }
 
+  esFechaFutura(): boolean {
+    return this.toDateStr(this.fechaNavegacion()) > this.toDateStr(new Date());
+  }
+
+  proximasFechas7Dias(tarea: TareaProgramada | null | undefined): string[] {
+    if (!tarea || !tarea.activa) return [];
+    const hoy = new Date();
+    const hoyStr = this.toDateStr(hoy);
+    const mañana = new Date(hoy); mañana.setDate(hoy.getDate() + 1);
+    const mañanaStr = this.toDateStr(mañana);
+    const limite = new Date(hoy); limite.setDate(hoy.getDate() + 6);
+    const limiteStr = this.toDateStr(limite);
+    const resultado: string[] = [];
+
+    if (tarea.tipo === 'fecha_especifica') {
+      const fe = tarea.fechaEspecifica;
+      if (!fe || fe < hoyStr || fe > limiteStr) return [];
+      if (fe === hoyStr) return ['hoy'];
+      if (fe === mañanaStr) return ['mañana'];
+      const d = new Date(fe + 'T00:00:00');
+      return [d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })];
+    }
+
+    if (tarea.tipo === 'recurrente') {
+      if (!tarea.diasSemana?.length) return [];
+      for (let i = 0; i <= 6; i++) {
+        const d = new Date(hoy);
+        d.setDate(d.getDate() + i);
+        const dStr = this.toDateStr(d);
+        if (tarea.fechaInicio && dStr < tarea.fechaInicio) continue;
+        if (tarea.fechaFin && dStr > tarea.fechaFin) break;
+        if (tarea.diasSemana.includes(d.getDay())) {
+          if (dStr === hoyStr) resultado.push('hoy');
+          else if (dStr === mañanaStr) resultado.push('mañana');
+          else resultado.push(d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }));
+        }
+      }
+    }
+    return resultado;
+  }
+
+  fechaVencimientoTarea(tarea: TareaProgramada | null | undefined): string | null {
+    if (!tarea || tarea.tipo !== 'fecha_especifica' || !tarea.fechaEspecifica) return null;
+    const plazo = tarea.plazo ?? 1;
+    const d = new Date(tarea.fechaEspecifica + 'T00:00:00');
+    d.setDate(d.getDate() + plazo - 1);
+    return this.toDateStr(d);
+  }
+
+  fechaVencimientoForm(): string | null {
+    if (this.formTarea.tipo !== 'fecha_especifica' || !this.formTarea.fechaEspecifica) return null;
+    const plazo = this.formTarea.plazo ?? 1;
+    const d = new Date(this.formTarea.fechaEspecifica + 'T00:00:00');
+    d.setDate(d.getDate() + plazo - 1);
+    return this.toDateStr(d);
+  }
+
+  proximaFechaDate(tarea: TareaProgramada | null | undefined): string | null {
+    if (!tarea || !tarea.activa) return null;
+    const hoy = new Date();
+    const hoyStr = this.toDateStr(hoy);
+    if (tarea.tipo === 'fecha_especifica') {
+      if (!tarea.fechaEspecifica) return null;
+      const venc = this.fechaVencimientoTarea(tarea);
+      if (!venc || venc < hoyStr) return null;
+      return tarea.fechaEspecifica;
+    }
+    if (tarea.tipo === 'recurrente') {
+      if (!tarea.diasSemana?.length) return null;
+      for (let i = 0; i <= 6; i++) {
+        const d = new Date(hoy);
+        d.setDate(d.getDate() + i);
+        const dStr = this.toDateStr(d);
+        if (tarea.fechaInicio && dStr < tarea.fechaInicio) continue;
+        if (tarea.fechaFin && dStr > tarea.fechaFin) return null;
+        if (tarea.diasSemana.includes(d.getDay())) return dStr;
+      }
+      return null;
+    }
+    return null;
+  }
+
+  tareaEsFutura(equipo: Equipo): boolean {
+    const tarea = equipo.tarea;
+    if (!tarea || !tarea.activa) return false;
+    const hoy = this.toDateStr(new Date());
+    if (tarea.tipo === 'fecha_especifica') {
+      return !!tarea.fechaEspecifica && tarea.fechaEspecifica > hoy;
+    }
+    if (tarea.tipo === 'recurrente') {
+      if (!tarea.diasSemana?.length) return false;
+      if (tarea.fechaInicio && hoy < tarea.fechaInicio) return true;
+      if (tarea.fechaFin && hoy > tarea.fechaFin) return false;
+      return !tarea.diasSemana.includes(new Date().getDay());
+    }
+    return false;
+  }
+
   formatFechaNav(): string {
     const f = this.fechaNavegacion();
     const hoy = new Date();
@@ -1420,6 +1559,39 @@ onImportarProyecto(event: Event) {
   diasSemanaLabel(dias: number[]): string {
     const n = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     return dias.map(d => n[d] || '').join(', ');
+  }
+
+  proximaFechaTarea(tarea: TareaProgramada | null | undefined): string {
+    if (!tarea || !tarea.activa) return '';
+    const hoy = new Date();
+    const hoyStr = this.toDateStr(hoy);
+
+    if (tarea.tipo === 'fecha_especifica') {
+      if (!tarea.fechaEspecifica) return '';
+      if (tarea.fechaEspecifica < hoyStr) return 'ya pasó';
+      if (tarea.fechaEspecifica === hoyStr) return 'hoy';
+      const d = new Date(tarea.fechaEspecifica + 'T00:00:00');
+      return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    if (tarea.tipo === 'recurrente') {
+      if (!tarea.diasSemana?.length) return '';
+      for (let i = 0; i <= 13; i++) {
+        const d = new Date(hoy);
+        d.setDate(d.getDate() + i);
+        const dStr = this.toDateStr(d);
+        if (tarea.fechaInicio && dStr < tarea.fechaInicio) continue;
+        if (tarea.fechaFin && dStr > tarea.fechaFin) return 'período terminado';
+        if (tarea.diasSemana.includes(d.getDay())) {
+          if (dStr === hoyStr) return 'hoy';
+          const mañana = new Date(hoy); mañana.setDate(hoy.getDate() + 1);
+          if (dStr === this.toDateStr(mañana)) return 'mañana';
+          return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+      }
+      return '';
+    }
+    return '';
   }
 
   // ── Gestión de tareas por equipo ─────────────────────────────
@@ -1441,11 +1613,12 @@ onImportarProyecto(event: Event) {
         tipo: t.tipo || 'recurrente',
         fechaInicio: t.fechaInicio || '',
         fechaEspecifica: t.fechaEspecifica || '',
+        plazo: t.plazo ?? 1,
         activa: t.activa,
         tecnicoId: t.tecnicoId || '',
       };
     } else {
-      this.formTarea = { equipoId: equipo.id, hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaInicio: '', fechaEspecifica: '', activa: true };
+      this.formTarea = { equipoId: equipo.id, hora: '08:00', diasSemana: [], tipo: 'recurrente', fechaInicio: '', fechaEspecifica: '', plazo: 1, activa: true };
     }
     this.mostrarModalTarea.set(true);
   }
@@ -1484,6 +1657,35 @@ onImportarProyecto(event: Event) {
   eliminarTareaDeEquipo(equipo: Equipo) {
     if (!equipo.tarea) return;
     if (!confirm('¿Eliminar la programación de este equipo?')) return;
+    this.tareasSvc.deleteTarea(equipo.tarea.id).subscribe({
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
+    });
+  }
+
+  toggleActivarTarea(equipo: Equipo) {
+    if (!equipo.tarea) return;
+    const activa = !equipo.tarea.activa;
+    if (activa) {
+      const hoy = this.toDateStr(new Date());
+      const vencida =
+        (equipo.tarea.tipo === 'recurrente' && !!equipo.tarea.fechaFin && equipo.tarea.fechaFin < hoy) ||
+        (equipo.tarea.tipo === 'fecha_especifica' && (() => { const v = this.fechaVencimientoTarea(equipo.tarea); return !!v && v < hoy; })());
+      if (vencida) {
+        const editar = confirm(
+          `La fecha de esta tarea ya pasó.\n\nSi la activas no aparecerá en ningún lado.\n\n¿Quieres actualizar la programación para que funcione?`
+        );
+        if (editar) this.abrirModalTarea(equipo);
+        return;
+      }
+    }
+    this.tareasSvc.update(equipo.tarea.id, { ...equipo.tarea, activa } as any).subscribe({
+      next: () => this.cargarEquiposFiltrados(this.filtroActivo())
+    });
+  }
+
+  quitarProgramacion(equipo: Equipo) {
+    if (!equipo.tarea) return;
+    if (!confirm(`¿Quitar la programación de "${equipo.nombre}"? El equipo quedará sin tarea programada.`)) return;
     this.tareasSvc.deleteTarea(equipo.tarea.id).subscribe({
       next: () => this.cargarEquiposFiltrados(this.filtroActivo())
     });

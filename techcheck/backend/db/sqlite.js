@@ -186,6 +186,9 @@ db.exec(`
 try { db.exec("ALTER TABLE tareas_programadas ADD COLUMN tipo TEXT NOT NULL DEFAULT 'recurrente'"); } catch {}
 try { db.exec('ALTER TABLE tareas_programadas ADD COLUMN fecha_especifica TEXT'); } catch {}
 try { db.exec('ALTER TABLE tareas_programadas ADD COLUMN fecha_inicio TEXT'); } catch {}
+try { db.exec('ALTER TABLE equipos ADD COLUMN archivado_en TEXT'); } catch {}
+try { db.exec('ALTER TABLE tareas_programadas ADD COLUMN plazo INTEGER NOT NULL DEFAULT 1'); } catch {}
+try { db.exec('ALTER TABLE equipos ADD COLUMN fecha_vencimiento TEXT'); } catch {}
 
 // Agregar columna restringido a proyectos si no existe (migración incremental)
 try { db.exec('ALTER TABLE proyectos ADD COLUMN restringido INTEGER NOT NULL DEFAULT 0'); } catch {}

@@ -41,6 +41,8 @@ function rowToEquipo(r) {
     plantillaId: r.plantilla_id || null,
     tecnicoAsignadoId: r.tecnico_asignado_id || null,
     archivado: r.archivado === 1,
+    archivadoEn: r.archivado_en || null,
+    fechaVencimiento: r.fecha_vencimiento || null,
     creadoEn: r.creado_en, actualizadoEn: r.actualizado_en,
   };
 }
@@ -113,14 +115,15 @@ function getEquiposByProyecto(proyectoId) {
 function createEquipo(equipo) {
   const proyectoId = Array.isArray(equipo.proyectoIds) ? equipo.proyectoIds[0] : equipo.proyectoId;
   db.prepare(
-    `INSERT INTO equipos (id, nombre, descripcion, items, proyecto_id, plantilla_id, tecnico_asignado_id, archivado, creado_en, actualizado_en)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO equipos (id, nombre, descripcion, items, proyecto_id, plantilla_id, tecnico_asignado_id, archivado, fecha_vencimiento, creado_en, actualizado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
   ).run(
     equipo.id, equipo.nombre, equipo.descripcion || '',
     J(equipo.items), proyectoId,
     equipo.plantillaId || null,
     equipo.tecnicoAsignadoId || null,
     equipo.archivado ? 1 : 0,
+    equipo.fechaVencimiento || null,
     equipo.creadoEn || now(), equipo.actualizadoEn || now()
   );
   return getEquipoById(equipo.id);
@@ -137,7 +140,12 @@ function updateEquipo(id, datos) {
   if (datos.items !== undefined)              { fields.push('items=?');                 vals.push(J(datos.items)); }
   if (datos.plantillaId !== undefined)        { fields.push('plantilla_id=?');          vals.push(datos.plantillaId); }
   if (datos.tecnicoAsignadoId !== undefined)  { fields.push('tecnico_asignado_id=?');   vals.push(datos.tecnicoAsignadoId); }
-  if (datos.archivado !== undefined)          { fields.push('archivado=?');             vals.push(datos.archivado ? 1 : 0); }
+  if (datos.archivado !== undefined) {
+    fields.push('archivado=?'); vals.push(datos.archivado ? 1 : 0);
+    if (datos.archivado) { fields.push('archivado_en=?'); vals.push(now()); }
+    else { fields.push('archivado_en=?'); vals.push(null); }
+  }
+  if (datos.fechaVencimiento !== undefined) { fields.push('fecha_vencimiento=?'); vals.push(datos.fechaVencimiento || null); }
 
   if (fields.length === 0) return e;
   fields.push('actualizado_en=?');
@@ -458,6 +466,7 @@ function rowToTarea(r) {
     fechaFin: r.fecha_fin || null,
     tipo: r.tipo || 'recurrente',
     fechaEspecifica: r.fecha_especifica || null,
+    plazo: r.plazo ?? 1,
     creadoEn: r.creado_en,
   };
 }
@@ -483,8 +492,8 @@ function getTareasActivas() {
 function createTarea(data) {
   const now = new Date().toISOString();
   db.prepare(
-    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_inicio, fecha_fin, tipo, fecha_especifica, creado_en)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO tareas_programadas (id, equipo_id, tecnico_id, hora, dias_semana, activa, fecha_inicio, fecha_fin, tipo, fecha_especifica, plazo, creado_en)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(
     data.id, data.equipoId, data.tecnicoId || null,
     data.hora, J(data.diasSemana || []),
@@ -493,6 +502,7 @@ function createTarea(data) {
     data.fechaFin || null,
     data.tipo || 'recurrente',
     data.fechaEspecifica || null,
+    data.plazo ?? 1,
     now
   );
   return getTareaById(data.id);
@@ -509,6 +519,7 @@ function updateTarea(id, patch) {
   if (patch.fechaFin !== undefined) { campos.push('fecha_fin = ?'); vals.push(patch.fechaFin || null); }
   if (patch.tipo !== undefined) { campos.push('tipo = ?'); vals.push(patch.tipo); }
   if (patch.fechaEspecifica !== undefined) { campos.push('fecha_especifica = ?'); vals.push(patch.fechaEspecifica || null); }
+  if (patch.plazo !== undefined) { campos.push('plazo = ?'); vals.push(patch.plazo ?? 1); }
   if (!campos.length) return getTareaById(id);
   vals.push(id);
   db.prepare(`UPDATE tareas_programadas SET ${campos.join(', ')} WHERE id = ?`).run(...vals);

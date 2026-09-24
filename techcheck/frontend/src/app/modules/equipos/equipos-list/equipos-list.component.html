@@ -74,22 +74,24 @@
   </div>
   <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
     <div class="flex flex-wrap gap-1.5 overflow-x-auto">
-      <button (click)="cambiarFiltro('pendiente')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">Pendientes</button>
+      <button (click)="cambiarFiltro('pendiente')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'pendiente' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">Tareas no iniciadas</button>
       <button (click)="cambiarFiltro('en_proceso')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'en_proceso' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">En proceso</button>
       <button (click)="cambiarFiltro('terminado')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'terminado' ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">Terminados</button>
       <button (click)="cambiarFiltro('archivado')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'archivado' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">📦 Archivados</button>
       <button (click)="cambiarFiltro('no_cumplidas')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'no_cumplidas' ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">⚠️ No ejecutadas</button>
+      <button (click)="cambiarFiltro('tareas_programadas')" class="px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap" [ngClass]="filtroActivo() === 'tareas_programadas' ? 'bg-violet-600 text-white border-violet-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">🗓️ Tareas programadas</button>
     </div>
     <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg shrink-0">
       <button (click)="vistaEquipos.set('cards')" class="px-3 py-1.5 text-sm rounded-md transition-colors" [ngClass]="vistaEquipos() === 'cards' ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700'" title="Vista cards">⊞</button>
       <button (click)="vistaEquipos.set('tabla')" class="px-3 py-1.5 text-sm rounded-md transition-colors" [ngClass]="vistaEquipos() === 'tabla' ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700'" title="Vista tabla">☰</button>
+      <button (click)="modoFecha.set(!modoFecha())" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="modoFecha() ? 'bg-white dark:bg-gray-800 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'" title="Activar/desactivar filtro por fecha">📅</button>
     </div>
   </div>
   <div *ngIf="error()" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error() }}</div>
   <div *ngIf="cargando()" class="text-center py-12 text-gray-400 text-sm">Cargando equipos...</div>
 
   <!-- Navegación por fecha -->
-  <div *ngIf="filtroActivo() !== 'no_cumplidas'" class="flex items-center gap-2 mb-4 flex-wrap">
+  <div *ngIf="filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas' && filtroActivo() !== 'en_proceso' && modoFecha()" class="flex items-center gap-2 mb-4 flex-wrap">
     <button (click)="navFecha(-1)" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors text-sm leading-none">←</button>
     <div class="relative flex items-center gap-2 min-w-[90px] justify-center">
       <button (click)="abrirDatePicker()" class="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline-offset-2 hover:underline cursor-pointer" title="Ir a fecha específica">{{ formatFechaNav() }}</button>
@@ -97,13 +99,10 @@
     </div>
     <button (click)="navFecha(1)" class="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors text-sm leading-none">→</button>
     <button *ngIf="!esFechaHoy()" (click)="irAHoy()" class="px-3 py-1.5 text-xs rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-500/40 dark:text-blue-400 transition-colors">Ir a hoy</button>
-    <span *ngIf="!esFechaHoy()" class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
-      Mostrando tareas programadas para {{ formatFechaNav() }}
-    </span>
   </div>
 
   <!-- Barra de acciones bulk (aparece cuando hay seleccionados) -->
-  <div *ngIf="algunoSeleccionado() && filtroActivo() !== 'no_cumplidas'" class="flex items-center gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+  <div *ngIf="algunoSeleccionado() && filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas'" class="flex items-center gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
     <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos()" class="w-4 h-4 rounded accent-blue-600">
     <span class="text-sm font-medium text-blue-700">{{ seleccionados().size }} seleccionado(s)</span>
     <div class="flex gap-2 ml-2">
@@ -126,7 +125,7 @@
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
       <input type="text" [ngModel]="busquedaEquipo()" (ngModelChange)="busquedaEquipo.set($event)" placeholder="Buscar equipo..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800">
     </div>
-    <div *ngIf="filtroActivo() !== 'pendiente' && filtroActivo() !== 'no_cumplidas'" class="flex gap-1">
+    <div *ngIf="filtroActivo() !== 'pendiente' && filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas'" class="flex gap-1">
       <button (click)="filtroEstadoBadge.set('')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === '' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">Todos</button>
       <button (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'ok' ? '' : 'ok')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === 'ok' ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">✓ OK</button>
       <button (click)="filtroEstadoBadge.set(filtroEstadoBadge() === 'observacion' ? '' : 'observacion')" class="px-3 py-2 text-xs rounded-lg border transition-colors" [ngClass]="filtroEstadoBadge() === 'observacion' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'">⚠ Obs</button>
@@ -140,10 +139,10 @@
       <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-desc' ? '' : 'prog-desc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-desc' ? 'bg-white dark:bg-gray-800 shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Mayor progreso primero">% ↓</button>
       <button (click)="ordenAlfa.set(ordenAlfa() === 'prog-asc' ? '' : 'prog-asc')" class="px-3 py-1.5 text-xs rounded-md transition-colors" [ngClass]="ordenAlfa() === 'prog-asc' ? 'bg-white dark:bg-gray-800 shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'" title="Menor progreso primero">% ↑</button>
     </div>
-    <span *ngIf="equiposConFiltroFecha().length !== equipos().length" class="text-xs text-gray-400 ml-1">{{ equiposConFiltroFecha().length }} de {{ equipos().length }}</span>
+    <span *ngIf="equiposVista().length !== equipos().length" class="text-xs text-gray-400 ml-1">{{ equiposVista().length }} de {{ equipos().length }}</span>
   </div>
 
-  <div *ngIf="!cargando() && equiposConFiltroFecha().length === 0 && filtroActivo() !== 'no_cumplidas'" class="text-center py-16 text-gray-400">
+  <div *ngIf="!cargando() && equiposVista().length === 0 && filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas'" class="text-center py-16 text-gray-400">
     <div class="text-5xl mb-4">💻</div>
     <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">No hay equipos en este filtro</h3>
   </div>
@@ -164,7 +163,9 @@
       <!-- Móvil: tarjetas -->
       <div class="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
         <div *ngFor="let t of tareasNoCumplidasFiltradas()" class="px-4 py-3">
-          <div class="font-medium text-gray-800 dark:text-gray-100 text-sm mb-1">{{ t.equipoNombre }}</div>
+          <div class="font-medium text-gray-800 dark:text-gray-100 text-sm mb-1">{{ t.equipoNombre }}
+            <span *ngIf="t.esVencimiento" class="ml-1 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Vencimiento</span>
+          </div>
           <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
             <span>{{ t.fecha }}</span>
             <span class="font-mono">{{ t.hora }}</span>
@@ -185,7 +186,10 @@
         <tbody>
           <tr *ngFor="let t of tareasNoCumplidasFiltradas(); let i = index"
               class="border-t border-gray-50 dark:border-gray-700/50">
-            <td class="px-5 py-3 font-medium text-gray-800 dark:text-gray-100">{{ t.equipoNombre }}</td>
+            <td class="px-5 py-3 font-medium text-gray-800 dark:text-gray-100">
+              {{ t.equipoNombre }}
+              <span *ngIf="t.esVencimiento" class="ml-1 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Vencimiento</span>
+            </td>
             <td class="px-5 py-3 text-gray-600 dark:text-gray-400">{{ t.fecha }}</td>
             <td class="px-5 py-3 text-gray-600 dark:text-gray-400">{{ t.hora }}</td>
             <td class="px-5 py-3 text-gray-500 dark:text-gray-400">{{ t.tecnicoNombre || '—' }}</td>
@@ -195,9 +199,91 @@
     </div>
   </div>
 
+  <!-- ── Vista: Tareas programadas ─────────────────────────────────────── -->
+  <div *ngIf="filtroActivo() === 'tareas_programadas'">
+    <div *ngIf="cargando()" class="text-center py-16 text-gray-400 text-sm">Cargando...</div>
+    <div *ngIf="!cargando() && equipos().length === 0" class="text-center py-16 text-gray-400">
+      <div class="text-5xl mb-4">🗓️</div>
+      <h3 class="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">Sin tareas programadas</h3>
+      <p class="text-xs">Ningún checklist tiene una tarea programada en este proyecto.</p>
+    </div>
+    <div *ngIf="!cargando() && equipos().length > 0" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+        <span class="text-sm font-medium text-violet-600">🗓️ {{ equipos().length }} tarea{{ equipos().length !== 1 ? 's' : '' }} programada{{ equipos().length !== 1 ? 's' : '' }}</span>
+      </div>
+      <!-- Móvil: tarjetas -->
+      <div class="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+        <div *ngFor="let equipo of equipos()" class="px-4 py-4">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <div class="font-medium text-gray-800 dark:text-gray-100 text-sm">{{ equipo.nombre }}</div>
+              <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
+            </div>
+            <span *ngIf="!equipo.tarea!.activa" class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full shrink-0">Inactiva</span>
+            <span *ngIf="equipo.tarea!.activa" class="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-600 px-2 py-0.5 rounded-full shrink-0">Activa</span>
+          </div>
+          <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <span *ngIf="equipo.tarea!.tipo === 'recurrente'">⏰ Recurrente · {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}</span>
+            <span *ngIf="equipo.tarea!.tipo === 'fecha_especifica'">📅 Fecha específica · {{ equipo.tarea!.fechaEspecifica }}<ng-container *ngIf="(equipo.tarea!.plazo ?? 1) > 1"> → Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
+            <span>🕐 {{ equipo.tarea!.hora }}</span>
+            <span *ngIf="equipo.tarea!.tecnicoNombre">👤 {{ equipo.tarea!.tecnicoNombre }}</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">Editar</button>
+            <button (click)="toggleActivarTarea(equipo)" class="px-2.5 py-1 text-xs rounded-lg border transition-colors" [ngClass]="equipo.tarea!.activa ? 'border-gray-300 text-gray-600 hover:bg-gray-50' : 'border-green-500 text-green-600 hover:bg-green-50'">{{ equipo.tarea!.activa ? 'Desactivar' : 'Activar' }}</button>
+            <button (click)="quitarProgramacion(equipo)" class="px-2.5 py-1 text-xs border border-orange-400 text-orange-600 rounded-lg hover:bg-orange-50">Quitar programación</button>
+            <button (click)="eliminarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-red-400 text-red-600 rounded-lg hover:bg-red-50">Eliminar</button>
+          </div>
+        </div>
+      </div>
+      <!-- Desktop: tabla -->
+      <table class="hidden sm:table w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+            <th class="px-5 py-2.5 text-left font-medium">Checklist</th>
+            <th class="px-5 py-2.5 text-left font-medium">Tipo</th>
+            <th class="px-5 py-2.5 text-left font-medium">Programación</th>
+            <th class="px-5 py-2.5 text-left font-medium">Hora</th>
+            <th class="px-5 py-2.5 text-left font-medium">Estado</th>
+            <th class="px-5 py-2.5 text-left font-medium">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let equipo of equipos()" class="border-t border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+            <td class="px-5 py-3">
+              <div class="font-medium text-gray-800 dark:text-gray-100">{{ equipo.nombre }}</div>
+              <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ equipo.descripcion }}</div>
+            </td>
+            <td class="px-5 py-3 text-gray-600 dark:text-gray-400">
+              <span *ngIf="equipo.tarea!.tipo === 'recurrente'" class="text-xs bg-violet-50 dark:bg-violet-900/20 text-violet-600 px-2 py-0.5 rounded">⏰ Recurrente</span>
+              <span *ngIf="equipo.tarea!.tipo === 'fecha_especifica'" class="text-xs bg-teal-50 dark:bg-teal-900/20 text-teal-600 px-2 py-0.5 rounded">📅 Fecha específica</span>
+            </td>
+            <td class="px-5 py-3 text-gray-600 dark:text-gray-400 text-xs">
+              <span *ngIf="equipo.tarea!.tipo === 'recurrente'">{{ diasSemanaLabel(equipo.tarea!.diasSemana) }}</span>
+              <span *ngIf="equipo.tarea!.tipo === 'fecha_especifica'">{{ equipo.tarea!.fechaEspecifica }}<ng-container *ngIf="(equipo.tarea!.plazo ?? 1) > 1"> → Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
+            </td>
+            <td class="px-5 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{{ equipo.tarea!.hora }}</td>
+            <td class="px-5 py-3">
+              <span *ngIf="equipo.tarea!.activa" class="text-xs bg-green-100 dark:bg-green-900/20 text-green-700 px-2 py-0.5 rounded-full">Activa</span>
+              <span *ngIf="!equipo.tarea!.activa" class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full">Inactiva</span>
+            </td>
+            <td class="px-5 py-3">
+              <div class="flex gap-1.5 flex-wrap">
+                <button (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Editar</button>
+                <button (click)="toggleActivarTarea(equipo)" class="px-2.5 py-1 text-xs rounded-lg border transition-colors" [ngClass]="equipo.tarea!.activa ? 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700' : 'border-green-500 text-green-600 hover:bg-green-50'">{{ equipo.tarea!.activa ? 'Desactivar' : 'Activar' }}</button>
+                <button (click)="quitarProgramacion(equipo)" class="px-2.5 py-1 text-xs border border-orange-400 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors">Quitar prog.</button>
+                <button (click)="eliminarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-red-400 text-red-600 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Vista Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposConFiltroFecha().length > 0 && filtroActivo() !== 'no_cumplidas'">
-    <div *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-sm transition-shadow" [class.ring-2]="seleccionados().has(equipo.id)" [class.ring-blue-400]="seleccionados().has(equipo.id)">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" *ngIf="!cargando() && vistaEquipos() === 'cards' && equiposVista().length > 0 && filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas'">
+    <div *ngFor="let equipo of equiposVista(); trackBy: trackById" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-sm transition-shadow" [class.ring-2]="seleccionados().has(equipo.id)" [class.ring-blue-400]="seleccionados().has(equipo.id)">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div class="flex items-start gap-2 min-w-0">
           <input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="mt-0.5 w-4 h-4 rounded accent-blue-600 shrink-0 cursor-pointer">
@@ -212,8 +298,9 @@
         <span class="text-xs text-gray-500 dark:text-gray-400">📋 {{ equipo.items.length }} items</span>
         <span *ngIf="equipo.tecnicoAsignadoNombre" class="text-xs text-gray-500 dark:text-gray-400">👤 {{ equipo.tecnicoAsignadoNombre }}</span>
         <span *ngIf="equipo.ultimaRevision" class="text-xs text-gray-500 dark:text-gray-400">🕐 {{ equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm' }}</span>
-        <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-1.5 py-0.5 rounded" title="Tarea recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰ Recurrente</span>
-        <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}">📅 {{ equipo.tarea!.fechaEspecifica }}</span>
+        <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-1.5 py-0.5 rounded" title="Tarea recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰ Recurrente<ng-container *ngIf="!modoFecha() && proximasFechas7Dias(equipo.tarea).length"> · {{ proximasFechas7Dias(equipo.tarea).join(' · ') }}</ng-container></span>
+        <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}{{ (equipo.tarea!.plazo ?? 1) > 1 ? ' · Vence: ' + fechaVencimientoTarea(equipo.tarea) : '' }}">📅 {{ modoFecha() ? equipo.tarea!.fechaEspecifica : proximaFechaTarea(equipo.tarea) || equipo.tarea!.fechaEspecifica }}<ng-container *ngIf="(equipo.tarea!.plazo ?? 1) > 1"> · Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
+        <span *ngIf="equipo.fechaVencimiento" class="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">⏳ Vence {{ equipo.fechaVencimiento }}</span>
       </div>
       <div *ngIf="equipo.ultimaRevision && itemStats(equipo).total > 0" class="mb-3">
         <div class="flex rounded-full overflow-hidden h-2 gap-px">
@@ -230,7 +317,7 @@
       </div>
       <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 flex-wrap">
         <ng-container *ngIf="!equipo.archivado">
-          <button (click)="abrirModalRevision(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+          <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
           <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
         </ng-container>
         <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar tarea' }}">⏰</button>
@@ -244,19 +331,20 @@
   </div>
 
   <!-- Vista Tabla -->
-  <ng-container *ngIf="!cargando() && vistaEquipos() === 'tabla' && equiposConFiltroFecha().length > 0 && filtroActivo() !== 'no_cumplidas'">
+  <ng-container *ngIf="!cargando() && vistaEquipos() === 'tabla' && equiposVista().length > 0 && filtroActivo() !== 'no_cumplidas' && filtroActivo() !== 'tareas_programadas'">
 
     <!-- Móvil: registros apilados con todas las columnas como etiqueta-valor -->
     <div class="sm:hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
-      <div *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById"
+      <div *ngFor="let equipo of equiposVista(); trackBy: trackById"
         class="p-3 transition-colors"
         [class.bg-blue-50]="seleccionados().has(equipo.id)">
         <!-- Fila 1: checkbox + nombre + estado -->
         <div class="flex items-center gap-2 mb-2">
           <input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="w-4 h-4 rounded accent-blue-600 cursor-pointer shrink-0">
           <span class="font-medium text-sm text-gray-800 dark:text-gray-100 flex-1 min-w-0 truncate">{{ equipo.nombre }}</span>
-          <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded shrink-0">⏰</span>
-          <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded shrink-0">📅</span>
+          <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded shrink-0" title="Tarea recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰<ng-container *ngIf="!modoFecha() && proximasFechas7Dias(equipo.tarea).length"> {{ proximasFechas7Dias(equipo.tarea).join(' · ') }}</ng-container></span>
+          <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded shrink-0">📅 {{ proximaFechaTarea(equipo.tarea) || equipo.tarea!.fechaEspecifica }}<span *ngIf="(equipo.tarea!.plazo ?? 1) > 1" class="hidden sm:inline"> · Vence {{ fechaVencimientoTarea(equipo.tarea) }}</span></span>
+          <span *ngIf="equipo.fechaVencimiento" class="text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded shrink-0">⏳ <span class="hidden sm:inline">Vence </span>{{ equipo.fechaVencimiento }}</span>
           <span class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
             [ngClass]="{'bg-green-100 text-green-700': estadoBadge(equipo) === 'ok', 'bg-yellow-100 text-yellow-700': estadoBadge(equipo) === 'observacion', 'bg-red-100 text-red-700': estadoBadge(equipo) === 'problema', 'bg-blue-100 text-blue-700': estadoBadge(equipo) === 'en_proceso', 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400': estadoBadge(equipo) === 'sin-revision'}">
             {{ estadoLabel(equipo) }}
@@ -280,7 +368,7 @@
         <!-- Fila 3: acciones -->
         <div class="flex gap-1.5 pl-6 flex-wrap">
           <ng-container *ngIf="!equipo.archivado">
-            <button (click)="abrirModalRevision(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+            <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
             <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
           </ng-container>
           <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
@@ -309,13 +397,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let equipo of equiposConFiltroFecha(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors" [class.bg-blue-50]="seleccionados().has(equipo.id)">
+          <tr *ngFor="let equipo of equiposVista(); trackBy: trackById" class="border-b border-gray-50 hover:bg-gray-50 transition-colors" [class.bg-blue-50]="seleccionados().has(equipo.id)">
             <td class="px-4 py-3"><input type="checkbox" [checked]="seleccionados().has(equipo.id)" (change)="toggleSeleccion(equipo.id, $event)" class="w-4 h-4 rounded accent-blue-600 cursor-pointer"></td>
             <td class="px-4 py-3">
               <div class="font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
                 {{ equipo.nombre }}
-                <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded" title="Recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰</span>
-                <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}">📅</span>
+                <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded" title="Recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰<ng-container *ngIf="!modoFecha() && proximasFechas7Dias(equipo.tarea).length"> {{ proximasFechas7Dias(equipo.tarea).join(' · ') }}</ng-container></span>
+                <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}{{ (equipo.tarea!.plazo ?? 1) > 1 ? ' · Vence: ' + fechaVencimientoTarea(equipo.tarea) : '' }}">📅 {{ modoFecha() ? '' : (proximaFechaTarea(equipo.tarea) || equipo.tarea!.fechaEspecifica) }}<ng-container *ngIf="!modoFecha() && (equipo.tarea!.plazo ?? 1) > 1"> · Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
               </div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
             </td>
@@ -344,7 +432,7 @@
             <td class="px-4 py-3">
               <div class="flex gap-1.5 justify-end flex-wrap">
                 <ng-container *ngIf="!equipo.archivado">
-                  <button (click)="abrirModalRevision(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Revisar</button>
+                  <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
                   <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
                 </ng-container>
                 <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
@@ -356,7 +444,7 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="equiposConFiltroFecha().length === 0">
+          <tr *ngIf="equiposVista().length === 0">
             <td colspan="8" class="px-4 py-10 text-center text-gray-400 text-sm">No hay equipos en este filtro</td>
           </tr>
         </tbody>
@@ -451,7 +539,7 @@
     </div>
     <div class="p-6 space-y-4">
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nombre del equipo *</label>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nombre *</label>
         <input type="text" [(ngModel)]="formEquipo.nombre" placeholder="Ej: PC-Recepcion, Servidor-Principal" class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
@@ -465,6 +553,12 @@
         <option *ngFor="let t of tecnicos()" [value]="t.id">{{ t.nombre }}</option>
       </select>
     </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha de vencimiento <span class="text-gray-400 font-normal">(opcional)</span></label>
+        <input type="date" [(ngModel)]="formEquipo.fechaVencimiento"
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+        <p class="text-xs text-gray-400 mt-1">Si no se completa antes de esta fecha pasará a "No ejecutadas".</p>
+      </div>
       <div *ngIf="!modoEdicionEquipo() && plantillas().length">
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Aplicar plantilla</label>
         <select [(ngModel)]="formEquipo.plantillaId" (change)="onPlantillaChange()" class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -472,10 +566,49 @@
           <option *ngFor="let p of plantillas()" [value]="p.id">{{ p.nombre }}</option>
         </select>
       </div>
+      <!-- Catálogos asociados -->
+      <div *ngIf="catalogosDelProyecto().length > 0">
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">📚 Catálogos</label>
+        <div class="border border-indigo-100 dark:border-indigo-800 rounded-lg mb-2 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
+          <ng-container *ngFor="let item of formEquipo.items; let i = index">
+            <div *ngIf="item.tipo === 'catalogo'" class="flex items-center justify-between px-3 py-2">
+              <span class="text-sm text-indigo-700 dark:text-indigo-300 font-medium">{{ item.label }}</span>
+              <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors text-xs">✕</button>
+            </div>
+          </ng-container>
+          <div *ngIf="!tieneAlgunCatalogoEnForm" class="px-3 py-2 text-xs text-gray-400 text-center">Sin catálogos asociados</div>
+        </div>
+        <!-- Panel para añadir catálogos -->
+        <div *ngIf="mostrarPanelCatalogo"
+          class="mb-2 border border-indigo-100 dark:border-indigo-800 rounded-lg overflow-hidden">
+          <div class="max-h-52 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+            <div *ngFor="let grupo of catalogosDelProyecto()"
+              class="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{{ grupo.nombre }}</p>
+                <p class="text-xs text-gray-400">{{ grupo.elementos.length }} opciones</p>
+              </div>
+              <button (click)="agregarGrupoCatalogo(grupo)"
+                [disabled]="grupoCatalogoYaAgregado(grupo.id)"
+                class="text-xs px-2.5 py-1 rounded-md border transition-colors shrink-0 ml-2"
+                [ngClass]="grupoCatalogoYaAgregado(grupo.id) ? 'text-green-600 border-green-300 bg-green-50' : 'text-indigo-600 border-indigo-200 hover:bg-indigo-50'">
+                {{ grupoCatalogoYaAgregado(grupo.id) ? '✓ añadido' : '+ Añadir' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <button (click)="mostrarPanelCatalogo = !mostrarPanelCatalogo"
+          class="w-full py-1.5 text-xs rounded-lg transition-colors border"
+          [ngClass]="mostrarPanelCatalogo ? 'bg-indigo-600 text-white border-indigo-600' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'">
+          {{ mostrarPanelCatalogo ? 'Cerrar' : '+ Asociar catálogo' }}
+        </button>
+      </div>
+
       <div>
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Items del checklist</label>
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg mb-2 max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-          <div *ngFor="let item of formEquipo.items; let i = index" class="px-3 py-2 space-y-1.5">
+          <ng-container *ngFor="let item of formEquipo.items; let i = index">
+          <div *ngIf="item.tipo !== 'catalogo'" class="px-3 py-2 space-y-1.5">
   <div class="flex items-center justify-between">
     <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ item.label }}</span>
     <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors">X</button>
@@ -520,40 +653,12 @@
     </div>
   </div>
 </div>
-          <div *ngIf="formEquipo.items.length === 0" class="px-3 py-3 text-xs text-gray-400 text-center">No hay items aun</div>
+          </ng-container>
+          <div *ngIf="!tieneItemsChecklistEnForm" class="px-3 py-3 text-xs text-gray-400 text-center">No hay items aun</div>
         </div>
         <div class="flex gap-2">
           <input type="text" [(ngModel)]="nuevoItem" placeholder="Agregar item..." (keydown.enter)="agregarItem()" class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <button (click)="agregarItem()" class="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">+ Agregar</button>
-          <button *ngIf="catalogosDelProyecto().length > 0" (click)="mostrarPanelCatalogo = !mostrarPanelCatalogo"
-            class="px-3 py-2 text-sm rounded-lg transition-colors border"
-            [ngClass]="mostrarPanelCatalogo ? 'bg-indigo-600 text-white border-indigo-600' : 'border-indigo-200 text-indigo-700 dark:border-indigo-500/40 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'"
-            title="Agregar desde catálogo">📚</button>
-        </div>
-
-        <!-- Panel catálogo -->
-        <div *ngIf="mostrarPanelCatalogo && catalogosDelProyecto().length > 0"
-          class="mt-2 border border-indigo-100 dark:border-indigo-800 rounded-lg overflow-hidden">
-          <div class="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-            📚 Agregar catálogo como ítem — el técnico seleccionará el valor al revisar
-          </div>
-          <div class="max-h-52 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-            <div *ngFor="let grupo of catalogosDelProyecto()"
-              class="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{{ grupo.nombre }}</p>
-                <p class="text-xs text-gray-400">{{ grupo.elementos.length }} opciones</p>
-              </div>
-              <button type="button" (click)="agregarGrupoCatalogo(grupo)"
-                [disabled]="grupoCatalogoYaAgregado(grupo.id)"
-                class="ml-3 shrink-0 px-3 py-1.5 text-xs rounded-lg border transition-colors"
-                [ngClass]="grupoCatalogoYaAgregado(grupo.id)
-                  ? 'border-green-200 text-green-600 bg-green-50 dark:bg-green-900/20 cursor-default'
-                  : 'border-indigo-200 text-indigo-700 dark:border-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'">
-                {{ grupoCatalogoYaAgregado(grupo.id) ? '✓ añadido' : '+ Agregar' }}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -752,15 +857,32 @@
           </select>
         </div>
       </div>
+      <!-- Sección catálogos -->
+      <div *ngIf="hayCatalogosEnRevision()" class="border border-purple-100 dark:border-purple-800 rounded-xl p-4 space-y-3 bg-purple-50/40 dark:bg-purple-900/10">
+        <h3 class="text-sm font-semibold text-purple-700 dark:text-purple-300">📋 Catálogos</h3>
+        <ng-container *ngFor="let item of itemsRevision(); let i = index">
+          <div *ngIf="item.tipo === 'catalogo'" class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ item.label }}</label>
+            <select [ngModel]="item.valor" (ngModelChange)="updateValor(i, $event)"
+              class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-800"
+              [ngClass]="item.valor ? 'border-purple-300 dark:border-purple-600' : 'border-gray-200 dark:border-gray-700'">
+              <option value="">— Seleccionar —</option>
+              <option *ngFor="let el of elementosDeCatalogo(item.catalogoId)" [value]="el.valor">{{ el.valor }}</option>
+            </select>
+          </div>
+        </ng-container>
+      </div>
+
       <div>
         <div class="flex items-center gap-3 mb-3">
           <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-400">Checklist</h3>
           <span class="bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded-full">{{ itemsCompletados }}/{{ totalItemsRevision }}</span>
           <span *ngIf="revisionCompleta" class="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">Completa</span>
         </div>
-        <div *ngIf="itemsRevision().length === 0" class="text-center py-6 text-gray-400 text-sm bg-gray-50 dark:bg-gray-900 rounded-lg">Sin items</div>
+        <div *ngIf="totalItemsRevision === 0" class="text-center py-6 text-gray-400 text-sm bg-gray-50 dark:bg-gray-900 rounded-lg">Sin items</div>
         <div class="space-y-2">
-          <div *ngFor="let item of itemsRevision(); let i = index" class="border rounded-lg p-3 transition-colors"
+          <ng-container *ngFor="let item of itemsRevision(); let i = index">
+          <div *ngIf="item.tipo !== 'catalogo'" class="border rounded-lg p-3 transition-colors"
             [ngClass]="{
               'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800': item.estado === 'problema',
               'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800': item.estado === 'observacion',
@@ -774,19 +896,6 @@
                   <span *ngIf="item.checked">✓</span>
                 </button>
                 <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
-              </ng-container>
-              <!-- Ítem de catálogo: dropdown -->
-              <ng-container *ngIf="item.tipo === 'catalogo'">
-                <span class="text-purple-500 text-base shrink-0">📋</span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">{{ item.label }}</p>
-                  <select [ngModel]="item.valor" (ngModelChange)="updateValor(i, $event)"
-                    class="w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-800"
-                    [ngClass]="item.valor ? 'border-purple-300 dark:border-purple-600' : 'border-gray-200 dark:border-gray-700'">
-                    <option value="">— Seleccionar —</option>
-                    <option *ngFor="let el of elementosDeCatalogo(item.catalogoId)" [value]="el.valor">{{ el.valor }}</option>
-                  </select>
-                </div>
               </ng-container>
               <div class="flex gap-1 shrink-0">
                 <button (click)="setItemEstado(i, 'ok')" title="Sin problemas"
@@ -868,6 +977,7 @@
               </div>
             </div>
           </div>
+          </ng-container>
         </div>
       </div>
       <div>
@@ -1007,10 +1117,20 @@
       </div>
 
       <!-- Fecha específica -->
-      <div *ngIf="formTarea.tipo === 'fecha_especifica'">
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha</label>
-        <input type="date" [(ngModel)]="formTarea.fechaEspecifica"
-          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+      <div *ngIf="formTarea.tipo === 'fecha_especifica'" class="flex flex-wrap gap-3">
+        <div class="flex-1 min-w-0" style="min-width:150px">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Fecha de inicio</label>
+          <input type="date" [(ngModel)]="formTarea.fechaEspecifica"
+            class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+        </div>
+        <div class="w-28 shrink-0">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Plazo (días)</label>
+          <input type="number" [(ngModel)]="formTarea.plazo" min="1" max="365"
+            class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900">
+        </div>
+      </div>
+      <div *ngIf="formTarea.tipo === 'fecha_especifica' && formTarea.fechaEspecifica && (formTarea.plazo ?? 1) > 1" class="text-xs text-teal-600 dark:text-teal-400">
+        Vence: {{ fechaVencimientoForm() }}
       </div>
 
       <!-- Fecha inicio (solo recurrente) -->

@@ -52,6 +52,8 @@ export interface Equipo {
   tecnicoAsignadoId: string | null;
   tecnicoAsignadoNombre?: string;
   archivado?: boolean;
+  archivadoEn?: string | null;
+  fechaVencimiento?: string | null;
   tarea?: TareaProgramada | null;
 }
 
@@ -62,6 +64,7 @@ export interface EquipoForm {
   plantillaId?: string;
   proyectoIds?: string[];
   tecnicoAsignadoId?: string;
+  fechaVencimiento?: string;
 }
 
 // ─── PLANTILLA ──────────────────────────────────────────────
@@ -162,6 +165,7 @@ export interface TareaProgramada {
   fechaFin: string | null;
   tipo: TipoTarea;
   fechaEspecifica: string | null; // YYYY-MM-DD para tipo fecha_especifica
+  plazo: number;                  // días de plazo para completar (fecha_especifica)
   creadoEn: string;
 }
 
@@ -175,6 +179,7 @@ export interface TareaForm {
   fechaFin?: string;
   tipo?: TipoTarea;
   fechaEspecifica?: string;
+  plazo?: number;
 }
 
 // ─── DASHBOARD ───────────────────────────────────────────────
@@ -237,6 +242,7 @@ export interface TareaNoCumplida {
   tecnicoId: string | null;
   tecnicoNombre: string;
   registradoEn: string;
+  esVencimiento?: boolean;
 }
 
 // ─── USUARIO ─────────────────────────────────────────────────
