@@ -312,8 +312,10 @@ function getUsuarioByUsername(username) {
 }
 
 function createUsuario(u) {
+  // La columna email es UNIQUE NOT NULL (heredada); el login usa username y la UI ya no pide email,
+  // así que sin email se guarda el id para que dos usuarios sin email no choquen.
   db.prepare('INSERT INTO usuarios (id, nombre, email, username, password_hash, rol, activo, creado_en) VALUES (?,?,?,?,?,?,?,?)')
-    .run(u.id, u.nombre, u.email || '', u.username || u.email || '', u.passwordHash, u.rol, u.activo ? 1 : 0, u.creadoEn || now());
+    .run(u.id, u.nombre, u.email || u.id, u.username || u.email || '', u.passwordHash, u.rol, u.activo ? 1 : 0, u.creadoEn || now());
   return getUsuarioById(u.id);
 }
 
