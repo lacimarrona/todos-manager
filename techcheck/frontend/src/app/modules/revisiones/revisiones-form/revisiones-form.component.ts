@@ -42,9 +42,10 @@ export class RevisionesFormComponent implements OnInit {
     this.catalogosSvc.getAll().subscribe({ next: d => this.catalogos.set(d) });
   }
 
-  elementosDeCatalogo(catalogoId?: string): { valor: string }[] {
+  elementosDeCatalogo(catalogoId?: string, valorActual?: string): { valor: string; activo: boolean }[] {
     if (!catalogoId) return [];
-    return this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
+    const elementos = this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
+    return elementos.filter(e => e.activo || e.valor === valorActual);
   }
 
   onEquipoChange() {

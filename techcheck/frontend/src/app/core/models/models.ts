@@ -36,6 +36,7 @@ export interface ItemEquipo {
   archivosGuia: (ArchivoAdjunto | string)[];
   tipo?: 'checkbox' | 'catalogo';
   catalogoId?: string;
+  valor?: string;
 }
 
 export interface Equipo {

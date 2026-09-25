@@ -53,7 +53,7 @@
           <div *ngFor="let item of items(); let i = index"
             class="border rounded-lg p-3 transition-colors"
             [ngClass]="item.checked ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'">
-            <div class="flex items-center gap-3 mb-2">
+            <div class="flex items-start sm:items-center gap-x-3 gap-y-2 mb-2 flex-wrap sm:flex-nowrap">
               <!-- Checkbox tipo normal -->
               <ng-container *ngIf="!item.tipo || item.tipo === 'checkbox'">
                 <button (click)="toggleItem(i)"
@@ -61,7 +61,7 @@
                   [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white dark:bg-gray-800'">
                   <span *ngIf="item.checked">✓</span>
                 </button>
-                <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
+                <span class="text-sm flex-1 min-w-0 pt-0.5 sm:pt-0 break-words" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
               </ng-container>
               <!-- Ítem de catálogo: dropdown -->
               <ng-container *ngIf="item.tipo === 'catalogo'">
@@ -72,12 +72,12 @@
                     class="w-full px-2.5 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-800"
                     [ngClass]="item.valor ? 'border-purple-300 dark:border-purple-600' : 'border-gray-200 dark:border-gray-700'">
                     <option value="">— Seleccionar —</option>
-                    <option *ngFor="let el of elementosDeCatalogo(item.catalogoId)" [value]="el.valor">{{ el.valor }}</option>
+                    <option *ngFor="let el of elementosDeCatalogo(item.catalogoId, item.valor)" [value]="el.valor">{{ el.valor }}{{ el.activo ? '' : ' (desactivado)' }}</option>
                   </select>
                 </div>
               </ng-container>
               <!-- Botones de estado (ambos tipos) -->
-              <div class="flex gap-1 shrink-0">
+              <div class="flex gap-1 shrink-0 w-full sm:w-auto pl-9 sm:pl-0">
                 <button (click)="setItemEstado(i, 'ok')" title="Sin problemas"
                   class="px-2 py-0.5 text-xs rounded-full border transition-all"
                   [ngClass]="item.estado === 'ok' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 text-gray-400 hover:border-green-400 hover:text-green-600'">

@@ -215,9 +215,12 @@
       <div class="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
         <div *ngFor="let equipo of equipos()" class="px-4 py-4">
           <div class="flex items-start justify-between gap-2 mb-2">
-            <div>
+            <div class="min-w-0">
               <div class="font-medium text-gray-800 dark:text-gray-100 text-sm">{{ equipo.nombre }}</div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
+              <div *ngIf="catalogosSeleccionados(equipo).length" class="flex flex-wrap gap-1 mt-1">
+                <span *ngFor="let c of catalogosSeleccionados(equipo)" class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded max-w-full truncate" [title]="c.label + ': ' + c.valor">📚 {{ c.label }}: <span class="font-medium">{{ c.valor }}</span></span>
+              </div>
             </div>
             <span *ngIf="!equipo.tarea!.activa" class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full shrink-0">Inactiva</span>
             <span *ngIf="equipo.tarea!.activa" class="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-600 px-2 py-0.5 rounded-full shrink-0">Activa</span>
@@ -253,6 +256,9 @@
             <td class="px-5 py-3">
               <div class="font-medium text-gray-800 dark:text-gray-100">{{ equipo.nombre }}</div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ equipo.descripcion }}</div>
+              <div *ngIf="catalogosSeleccionados(equipo).length" class="flex flex-wrap gap-1 mt-1">
+                <span *ngFor="let c of catalogosSeleccionados(equipo)" class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded" [title]="c.label + ': ' + c.valor">📚 {{ c.label }}: <span class="font-medium">{{ c.valor }}</span></span>
+              </div>
             </td>
             <td class="px-5 py-3 text-gray-600 dark:text-gray-400">
               <span *ngIf="equipo.tarea!.tipo === 'recurrente'" class="text-xs bg-violet-50 dark:bg-violet-900/20 text-violet-600 px-2 py-0.5 rounded">⏰ Recurrente</span>
@@ -301,6 +307,7 @@
         <span *ngIf="equipo.tarea?.tipo === 'recurrente'" class="text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-1.5 py-0.5 rounded" title="Tarea recurrente: {{ diasSemanaLabel(equipo.tarea!.diasSemana) }}">⏰ Recurrente<ng-container *ngIf="!modoFecha() && proximasFechas7Dias(equipo.tarea).length"> · {{ proximasFechas7Dias(equipo.tarea).join(' · ') }}</ng-container></span>
         <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}{{ (equipo.tarea!.plazo ?? 1) > 1 ? ' · Vence: ' + fechaVencimientoTarea(equipo.tarea) : '' }}">📅 {{ modoFecha() ? equipo.tarea!.fechaEspecifica : proximaFechaTarea(equipo.tarea) || equipo.tarea!.fechaEspecifica }}<ng-container *ngIf="(equipo.tarea!.plazo ?? 1) > 1"> · Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
         <span *ngIf="equipo.fechaVencimiento" class="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">⏳ Vence {{ equipo.fechaVencimiento }}</span>
+        <span *ngFor="let c of catalogosSeleccionados(equipo)" class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded max-w-full truncate" [title]="c.label + ': ' + c.valor">📚 {{ c.label }}: <span class="font-medium">{{ c.valor }}</span></span>
       </div>
       <div *ngIf="equipo.ultimaRevision && itemStats(equipo).total > 0" class="mb-3">
         <div class="flex rounded-full overflow-hidden h-2 gap-px">
@@ -315,17 +322,13 @@
           <span *ngIf="itemStats(equipo).problema > 0" class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-red-500 rounded-full inline-block"></span>{{ itemStats(equipo).problema }} prob</span>
         </div>
       </div>
-      <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 flex-wrap">
+      <div class="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
         <ng-container *ngIf="!equipo.archivado">
           <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
           <button (click)="abrirModalEditarEquipo(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
         </ng-container>
-        <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar tarea' }}">⏰</button>
-        <button *ngIf="auth.canManage()" (click)="abrirModalConvertir(equipo)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors" title="Guardar ítems de este checklist como plantilla reutilizable">📋 Plantilla</button>
-        <button (click)="abrirModalExportarEquipo(equipo, $event)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
-        <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
-        <button *ngIf="filtroActivo() === 'archivado'" (click)="desachivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
-        <button *ngIf="auth.canManage()" (click)="eliminarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
+        <button *ngIf="equipo.archivado" (click)="desachivarEquipo(equipo.id)" class="flex items-center gap-1 px-3 py-1.5 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
+        <button (click)="abrirMenuAcciones(equipo, $event)" class="ml-auto px-2.5 py-1.5 text-sm leading-none border rounded-lg transition-colors" [ngClass]="menuAcciones()?.equipo?.id === equipo.id ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'" title="Más acciones" aria-label="Más acciones">⋯</button>
       </div>
     </div>
   </div>
@@ -365,18 +368,17 @@
             </div>
           </div>
         </div>
+        <div *ngIf="catalogosSeleccionados(equipo).length" class="flex flex-wrap gap-1 pl-6 mb-2">
+          <span *ngFor="let c of catalogosSeleccionados(equipo)" class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded max-w-full truncate" [title]="c.label + ': ' + c.valor">📚 {{ c.label }}: <span class="font-medium">{{ c.valor }}</span></span>
+        </div>
         <!-- Fila 3: acciones -->
-        <div class="flex gap-1.5 pl-6 flex-wrap">
+        <div class="flex items-center gap-1.5 pl-6">
           <ng-container *ngIf="!equipo.archivado">
             <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
             <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
           </ng-container>
-          <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
-          <button *ngIf="auth.canManage()" (click)="abrirModalConvertir(equipo)" class="px-2.5 py-1 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">📋 Plantilla</button>
-          <button (click)="abrirModalExportarEquipo(equipo, $event)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
-          <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦 Archivar</button>
-          <button *ngIf="filtroActivo() === 'archivado'" (click)="desachivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
-          <button *ngIf="auth.canManage()" (click)="eliminarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️ Eliminar</button>
+          <button *ngIf="equipo.archivado" (click)="desachivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
+          <button (click)="abrirMenuAcciones(equipo, $event)" class="ml-auto px-2.5 py-1 text-sm leading-none border rounded-lg transition-colors" [ngClass]="menuAcciones()?.equipo?.id === equipo.id ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'" title="Más acciones" aria-label="Más acciones">⋯</button>
         </div>
       </div>
     </div>
@@ -406,6 +408,9 @@
                 <span *ngIf="equipo.tarea?.tipo === 'fecha_especifica'" class="text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded" title="Fecha: {{ equipo.tarea!.fechaEspecifica }}{{ (equipo.tarea!.plazo ?? 1) > 1 ? ' · Vence: ' + fechaVencimientoTarea(equipo.tarea) : '' }}">📅 {{ modoFecha() ? '' : (proximaFechaTarea(equipo.tarea) || equipo.tarea!.fechaEspecifica) }}<ng-container *ngIf="!modoFecha() && (equipo.tarea!.plazo ?? 1) > 1"> · Vence {{ fechaVencimientoTarea(equipo.tarea) }}</ng-container></span>
               </div>
               <div *ngIf="equipo.descripcion" class="text-xs text-gray-400 mt-0.5">{{ equipo.descripcion }}</div>
+              <div *ngIf="catalogosSeleccionados(equipo).length" class="flex flex-wrap gap-1 mt-1">
+                <span *ngFor="let c of catalogosSeleccionados(equipo)" class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded" [title]="c.label + ': ' + c.valor">📚 {{ c.label }}: <span class="font-medium">{{ c.valor }}</span></span>
+              </div>
             </td>
             <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ equipo.tecnicoAsignadoNombre || '—' }}</td>
             <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{{ equipo.items.length }}</td>
@@ -430,17 +435,13 @@
             </td>
             <td class="px-4 py-3 text-xs text-gray-400">{{ equipo.ultimaRevision ? (equipo.ultimaRevision.creadoEn | date:'dd/MM/yy HH:mm') : '—' }}</td>
             <td class="px-4 py-3">
-              <div class="flex gap-1.5 justify-end flex-wrap">
+              <div class="flex items-center gap-1.5 justify-end">
                 <ng-container *ngIf="!equipo.archivado">
                   <button (click)="abrirModalRevision(equipo)" [disabled]="(modoFecha() && esFechaFutura()) || tareaEsFutura(equipo)" class="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" [title]="(modoFecha() && esFechaFutura()) ? 'No se puede revisar una fecha futura' : tareaEsFutura(equipo) ? 'La tarea aún no está programada para hoy' : ''">Revisar</button>
                   <button (click)="abrirModalEditarEquipo(equipo)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
                 </ng-container>
-                <button *ngIf="auth.canManage()" (click)="abrirModalTarea(equipo)" class="px-2.5 py-1 text-xs border rounded-lg transition-colors" [ngClass]="equipo.tarea ? 'border-violet-300 text-violet-700 dark:border-violet-600 dark:text-violet-300 hover:bg-violet-50' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50'" title="{{ equipo.tarea ? 'Editar programación' : 'Programar' }}">⏰</button>
-                <button *ngIf="auth.canManage()" (click)="abrirModalConvertir(equipo)" class="px-2.5 py-1 text-xs border border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors" title="Convertir en plantilla">📋</button>
-                <button (click)="abrirModalExportarEquipo(equipo, $event)" class="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors">⬇️</button>
-                <button *ngIf="filtroActivo() === 'terminado'" (click)="archivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">📦</button>
-                <button *ngIf="filtroActivo() === 'archivado'" (click)="desachivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩</button>
-                <button *ngIf="auth.canManage()" (click)="eliminarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">🗑️</button>
+                <button *ngIf="equipo.archivado" (click)="desachivarEquipo(equipo.id)" class="px-2.5 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors">↩ Restaurar</button>
+                <button (click)="abrirMenuAcciones(equipo, $event)" class="px-2.5 py-1 text-sm leading-none border rounded-lg transition-colors" [ngClass]="menuAcciones()?.equipo?.id === equipo.id ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'" title="Más acciones" aria-label="Más acciones">⋯</button>
               </div>
             </td>
           </tr>
@@ -571,9 +572,16 @@
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">📚 Catálogos</label>
         <div class="border border-indigo-100 dark:border-indigo-800 rounded-lg mb-2 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
           <ng-container *ngFor="let item of formEquipo.items; let i = index">
-            <div *ngIf="item.tipo === 'catalogo'" class="flex items-center justify-between px-3 py-2">
-              <span class="text-sm text-indigo-700 dark:text-indigo-300 font-medium">{{ item.label }}</span>
-              <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors text-xs">✕</button>
+            <div *ngIf="item.tipo === 'catalogo'" class="px-3 py-2 space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-sm text-indigo-700 dark:text-indigo-300 font-medium min-w-0 truncate">{{ item.label }}</span>
+                <button (click)="quitarItem(i)" class="text-gray-300 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
+              </div>
+              <select [(ngModel)]="item.valor"
+                class="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-800">
+                <option [ngValue]="undefined">— El técnico lo elige al revisar —</option>
+                <option *ngFor="let el of elementosDeCatalogo(item.catalogoId, item.valor)" [ngValue]="el.valor">{{ el.valor }}{{ el.activo ? '' : ' (desactivado)' }}</option>
+              </select>
             </div>
           </ng-container>
           <div *ngIf="!tieneAlgunCatalogoEnForm" class="px-3 py-2 text-xs text-gray-400 text-center">Sin catálogos asociados</div>
@@ -867,7 +875,7 @@
               class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-800"
               [ngClass]="item.valor ? 'border-purple-300 dark:border-purple-600' : 'border-gray-200 dark:border-gray-700'">
               <option value="">— Seleccionar —</option>
-              <option *ngFor="let el of elementosDeCatalogo(item.catalogoId)" [value]="el.valor">{{ el.valor }}</option>
+              <option *ngFor="let el of elementosDeCatalogo(item.catalogoId, item.valor)" [value]="el.valor">{{ el.valor }}{{ el.activo ? '' : ' (desactivado)' }}</option>
             </select>
           </div>
         </ng-container>
@@ -889,15 +897,15 @@
               'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800': item.checked && !item.estado,
               'border-gray-200 dark:border-gray-700': !item.checked && !item.estado
             }">
-            <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <div class="flex items-start sm:items-center gap-x-2 gap-y-2 mb-2 flex-wrap sm:flex-nowrap">
               <!-- Checkbox tipo normal -->
               <ng-container *ngIf="!item.tipo || item.tipo === 'checkbox'">
                 <button (click)="toggleItem(i)" class="w-6 h-6 rounded-md border-2 flex items-center justify-center text-white text-sm shrink-0 transition-all" [ngClass]="item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white dark:bg-gray-800'">
                   <span *ngIf="item.checked">✓</span>
                 </button>
-                <span class="text-sm flex-1" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
+                <span class="text-sm flex-1 min-w-0 pt-0.5 sm:pt-0 break-words" [ngClass]="item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'">{{ item.label }}</span>
               </ng-container>
-              <div class="flex gap-1 shrink-0">
+              <div class="flex gap-1 shrink-0 w-full sm:w-auto pl-8 sm:pl-0">
                 <button (click)="setItemEstado(i, 'ok')" title="Sin problemas"
                   class="px-2 py-0.5 text-xs rounded-full border transition-all"
                   [ngClass]="item.estado === 'ok' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 text-gray-400 hover:border-green-400 hover:text-green-600'">
@@ -915,8 +923,8 @@
                 </button>
               </div>
             </div>
-            <div class="pl-9 space-y-2">
-              <div *ngIf="item.observacionGuia" class="p-2 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-700">
+            <div class="pl-8 space-y-2 min-w-0">
+              <div *ngIf="item.observacionGuia" class="p-2 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-700 [overflow-wrap:anywhere]">
   📋 Guia: {{ item.observacionGuia }}
 </div>
 <div *ngIf="item.archivosGuia && item.archivosGuia.length > 0" class="flex flex-wrap gap-2 mb-1">
@@ -1181,4 +1189,33 @@
       </button>
     </div>
   </div>
+</div>
+<!-- MENÚ DE ACCIONES DEL EQUIPO (⋯) -->
+<div *ngIf="menuAcciones() as m" role="menu"
+  class="fixed z-40 w-52 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg text-sm"
+  [style.top.px]="m.top" [style.bottom.px]="m.bottom" [style.right.px]="m.right"
+  (click)="$event.stopPropagation()">
+  <button *ngIf="auth.canManage()" role="menuitem" (click)="cerrarMenuAcciones(); abrirModalTarea(m.equipo)"
+    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60">
+    <span class="w-4 text-center">⏰</span>{{ m.equipo.tarea ? 'Editar programación' : 'Programar' }}
+  </button>
+  <button *ngIf="auth.canManage()" role="menuitem" (click)="cerrarMenuAcciones(); abrirModalConvertir(m.equipo)"
+    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60">
+    <span class="w-4 text-center">📋</span>Guardar como plantilla
+  </button>
+  <button role="menuitem" (click)="cerrarMenuAcciones(); abrirModalExportarEquipo(m.equipo, $event)"
+    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60">
+    <span class="w-4 text-center">⬇️</span>Exportar
+  </button>
+  <button *ngIf="filtroActivo() === 'terminado' && !m.equipo.archivado" role="menuitem" (click)="cerrarMenuAcciones(); archivarEquipo(m.equipo.id)"
+    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/60">
+    <span class="w-4 text-center">📦</span>Archivar
+  </button>
+  <ng-container *ngIf="auth.canManage()">
+    <div class="my-1 border-t border-gray-100 dark:border-gray-700"></div>
+    <button role="menuitem" (click)="cerrarMenuAcciones(); eliminarEquipo(m.equipo.id)"
+      class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+      <span class="w-4 text-center">🗑️</span>Eliminar
+    </button>
+  </ng-container>
 </div>

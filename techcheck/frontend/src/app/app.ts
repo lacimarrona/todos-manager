@@ -3,11 +3,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
+import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ConfirmDialogComponent],
   template: `
     @if (auth.isLogged()) {
       <div class="flex min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -122,6 +123,7 @@ import { ThemeService } from './core/services/theme.service';
     } @else {
       <router-outlet />
     }
+    <app-confirm-dialog />
   `
 })
 export class App implements OnInit {

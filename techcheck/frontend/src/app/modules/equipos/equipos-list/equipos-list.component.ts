@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, signal, computed, ViewChild, ElementRef, HostListener, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { ConfirmService } from '../../../core/services/confirm.service';
 import { Proyecto, ProyectoForm, ProyectoPermiso, Equipo, EquipoForm, ItemEquipo, Plantilla, Tecnico, RevisionForm, ItemRevision, EstadoRevision, EstadoItem, ArchivoAdjunto, GrupoElemento, TareaNoCumplida, TareaProgramada, TareaForm, TipoTarea } from '../../../core/models/models';
 import { ProyectosService } from '../../../core/services/proyectos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
@@ -572,12 +573,14 @@ export class EquiposListComponent implements OnInit {
           const guiaArchivos = typeof equipoItem === 'string' ? [] : (equipoItem.archivosGuia || []);
           const tipo = typeof equipoItem === 'string' ? 'checkbox' : (equipoItem.tipo || 'checkbox');
           const catalogoId = typeof equipoItem === 'string' ? undefined : equipoItem.catalogoId;
+          const valorPredef = typeof equipoItem === 'string' ? '' : (equipoItem.valor || '');
           const revItem = revisionMap.get(label);
           if (revItem) {
             const notaStr = revItem.nota || '';
-            return { ...revItem, tipo, catalogoId, nota: notaStr, notas: notaStr ? notaStr.split('\n') : [''], archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
+            const valor = revItem.valor || valorPredef;
+            return { ...revItem, tipo, catalogoId, valor, checked: tipo === 'catalogo' ? !!valor : revItem.checked, nota: notaStr, notas: notaStr ? notaStr.split('\n') : [''], archivos: revItem.archivos || [], observacionGuia: guia || revItem.observacionGuia || '', archivosGuia: guiaArchivos.length ? guiaArchivos : (revItem.archivosGuia || []) };
           }
-          return { label, tipo, catalogoId, checked: false, nota: '', notas: [''], estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos, valor: '' };
+          return { label, tipo, catalogoId, checked: tipo === 'catalogo' && !!valorPredef, nota: '', notas: [''], estado: null, archivos: [], observacionGuia: guia, archivosGuia: guiaArchivos, valor: valorPredef };
         }));
         this.tecnicoId = ultima.tecnicoId || '';
         this.estado = ultima.estado;
@@ -589,13 +592,13 @@ export class EquiposListComponent implements OnInit {
           label: typeof i === 'string' ? i : i.label,
           tipo: typeof i === 'string' ? 'checkbox' : (i.tipo || 'checkbox'),
           catalogoId: typeof i === 'string' ? undefined : i.catalogoId,
-          checked: false,
+          checked: typeof i !== 'string' && i.tipo === 'catalogo' && !!i.valor,
           nota: '',
           notas: [''],
           archivos: [],
           observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
           archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || []),
-          valor: '',
+          valor: typeof i === 'string' ? '' : (i.valor || ''),
         })));
         this.revisionRetomadaId = '';
       }
@@ -604,13 +607,13 @@ export class EquiposListComponent implements OnInit {
         label: typeof i === 'string' ? i : i.label,
         tipo: typeof i === 'string' ? 'checkbox' : (i.tipo || 'checkbox'),
         catalogoId: typeof i === 'string' ? undefined : i.catalogoId,
-        checked: false,
+        checked: typeof i !== 'string' && i.tipo === 'catalogo' && !!i.valor,
         nota: '',
         notas: [''],
         archivos: [],
         observacionGuia: typeof i === 'string' ? '' : i.observacionGuia,
         archivosGuia: typeof i === 'string' ? [] : (i.archivosGuia || []),
-        valor: '',
+        valor: typeof i === 'string' ? '' : (i.valor || ''),
       })));
       this.revisionRetomadaId = '';
     }
@@ -625,29 +628,40 @@ export class EquiposListComponent implements OnInit {
     });
   }
 
-  cerrarModalRevision() {
-    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+  private readonly confirmSvc = inject(ConfirmService);
+
+  async cerrarModalRevision() {
+    if (await this.confirmSvc.confirmarSalida()) {
       this.mostrarModalRevision.set(false);
     }
   }
 
-  cerrarModalEquipo() {
-    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+  async cerrarModalEquipo() {
+    if (await this.confirmSvc.confirmarSalida()) {
       this.mostrarModalEquipo.set(false);
       this.mostrarPanelCatalogo = false;
       this.catalogoExpandido = null;
     }
   }
 
-  cerrarModalProyecto() {
-    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+  async cerrarModalProyecto() {
+    if (await this.confirmSvc.confirmarSalida()) {
       this.mostrarModalProyecto.set(false);
     }
   }
 
-  elementosDeCatalogo(catalogoId?: string): { valor: string }[] {
+  catalogosSeleccionados(equipo: Equipo): { label: string; valor: string }[] {
+    const revItems = equipo.ultimaRevision?.items || [];
+    return (equipo.items || [])
+      .filter(i => typeof i !== 'string' && i.tipo === 'catalogo')
+      .map(i => ({ label: i.label, valor: revItems.find(r => r.label === i.label)?.valor || i.valor || '' }))
+      .filter(c => !!c.valor);
+  }
+
+  elementosDeCatalogo(catalogoId?: string, valorActual?: string): { valor: string; activo: boolean }[] {
     if (!catalogoId) return [];
-    return this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
+    const elementos = this.catalogos().find(c => c.id === catalogoId)?.elementos || [];
+    return elementos.filter(e => e.activo || e.valor === valorActual);
   }
 
   updateValor(idx: number, valor: string) {
@@ -1196,6 +1210,34 @@ export class EquiposListComponent implements OnInit {
         this.mostrarModalExportarProyecto.set(false);
       }
     });
+  }
+
+  menuAcciones = signal<{ equipo: Equipo; top: number | null; bottom: number | null; right: number } | null>(null);
+
+  abrirMenuAcciones(equipo: Equipo, event: MouseEvent) {
+    event.stopPropagation();
+    if (this.menuAcciones()?.equipo.id === equipo.id) { this.cerrarMenuAcciones(); return; }
+    const r = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const abreArriba = r.bottom + 240 > window.innerHeight && r.top > 240;
+    this.menuAcciones.set({
+      equipo,
+      top: abreArriba ? null : r.bottom + 4,
+      bottom: abreArriba ? window.innerHeight - r.top + 4 : null,
+      right: Math.max(8, window.innerWidth - r.right),
+    });
+  }
+
+  private readonly cerrarMenuAlHacerScroll = (() => {
+    const fn = () => this.cerrarMenuAcciones();
+    document.addEventListener('scroll', fn, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('scroll', fn, true));
+  })();
+
+  @HostListener('document:click')
+  @HostListener('window:resize')
+  @HostListener('document:keydown.escape')
+  cerrarMenuAcciones() {
+    if (this.menuAcciones()) this.menuAcciones.set(null);
   }
 
   abrirModalExportarEquipo(equipo: Equipo, event: Event) {

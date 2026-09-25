@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { ConfirmService } from '../../../core/services/confirm.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Plantilla, PlantillaForm, ItemPlantilla, ArchivoAdjunto, Equipo, Proyecto, GrupoElemento } from '../../../core/models/models';
@@ -168,8 +169,10 @@ export class PlantillasListComponent implements OnInit {
     this.mostrarModal.set(true);
   }
 
-  cerrarModal() {
-    if (confirm('¿Estás seguro de salir? Los cambios no guardados se perderán.')) {
+  private readonly confirmSvc = inject(ConfirmService);
+
+  async cerrarModal() {
+    if (await this.confirmSvc.confirmarSalida()) {
       this.mostrarModal.set(false);
     }
   }

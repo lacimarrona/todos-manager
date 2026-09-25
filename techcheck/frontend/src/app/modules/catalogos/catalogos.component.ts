@@ -157,6 +157,12 @@ export class CatalogosComponent implements OnInit {
     });
   }
 
+  toggleActivoElemento(e: ElementoGrupo) {
+    const g = this.grupoActivo();
+    if (!g) return;
+    this.svc.updateElemento(g.id, e.id, { activo: !e.activo }).subscribe({ next: () => this.cargar() });
+  }
+
   eliminarElemento(e: ElementoGrupo) {
     const g = this.grupoActivo();
     if (!g) return;
