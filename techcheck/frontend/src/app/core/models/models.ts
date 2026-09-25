@@ -138,6 +138,7 @@ export interface Revision {
   creadoEn: string;
   actualizadoEn: string;
   equipoNombre?: string;
+  pendienteSync?: boolean;
 }
 
 export interface RevisionForm {

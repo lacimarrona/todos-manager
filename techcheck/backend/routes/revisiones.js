@@ -3,6 +3,8 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/dataAccess');
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // GET /api/revisiones?equipoId=&tecnicoId=&estado=
 router.get('/', (req, res) => {
   try {
@@ -49,15 +51,27 @@ router.get('/:id', (req, res) => {
 // POST /api/revisiones
 router.post('/', (req, res) => {
   try {
-    const { equipoId, tecnicoId, tecnicoNombre, estado, items, observacionGeneral, fotos } = req.body;
+    const { id, equipoId, tecnicoId, tecnicoNombre, estado, items, observacionGeneral, fotos, creadoEn } = req.body;
     if (!equipoId) return res.status(400).json({ success: false, message: 'equipoId es requerido' });
     if (!estado) return res.status(400).json({ success: false, message: 'estado es requerido' });
+
+    // Revisiones hechas sin conexión llegan con su id generado en el dispositivo;
+    // si el envío se repite, se devuelve la ya creada en vez de duplicarla.
+    const idCliente = typeof id === 'string' && UUID_RE.test(id) ? id : null;
+    if (idCliente) {
+      const existente = db.getRevisionById(idCliente);
+      if (existente) return res.status(200).json({ success: true, data: existente });
+    }
 
     const equipo = db.getEquipoById(equipoId);
     if (!equipo) return res.status(404).json({ success: false, message: 'Equipo no encontrado' });
 
+    const fechaCliente = typeof creadoEn === 'string' && !isNaN(Date.parse(creadoEn)) && Date.parse(creadoEn) <= Date.now()
+      ? new Date(creadoEn).toISOString()
+      : null;
+
     const nueva = {
-      id: uuidv4(),
+      id: idCliente || uuidv4(),
       equipoId,
       tecnicoId: tecnicoId || null,
       tecnicoNombre: tecnicoNombre || '',
@@ -65,7 +79,7 @@ router.post('/', (req, res) => {
       items: items || [],
       observacionGeneral: observacionGeneral?.trim() || '',
       fotos: fotos || [],
-      creadoEn: new Date().toISOString(),
+      creadoEn: fechaCliente || new Date().toISOString(),
       actualizadoEn: new Date().toISOString()
     };
 

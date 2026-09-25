@@ -4,11 +4,13 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
+import { OfflineBannerComponent } from './shared/offline-banner.component';
+import { OfflineService } from './core/offline/offline.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ConfirmDialogComponent, OfflineBannerComponent],
   template: `
     @if (auth.isLogged()) {
       <div class="flex min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -27,6 +29,15 @@ import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
             <div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">✓</div>
             <span class="text-white font-semibold text-sm">TechCheck</span>
           </div>
+          @if (!offline.enLinea()) {
+            <span class="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-400/15 text-amber-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Sin conexión
+            </span>
+          } @else if (offline.pendientes().length) {
+            <span class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-sky-400/15 text-sky-300 tabular-nums">
+              {{ offline.pendientes().length }} por subir
+            </span>
+          }
         </header>
 
         <!-- Overlay backdrop móvil -->
@@ -116,7 +127,8 @@ import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
           </div>
         </nav>
 
-        <main class="lg:ml-56 flex-1 pt-14 lg:pt-0">
+        <main class="lg:ml-56 flex-1 min-w-0 pt-14 lg:pt-0">
+          <app-offline-banner />
           <router-outlet />
         </main>
       </div>
@@ -128,7 +140,7 @@ import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 })
 export class App implements OnInit {
   sidebarAbierto = signal(false);
-  constructor(public auth: AuthService, public theme: ThemeService) {}
+  constructor(public auth: AuthService, public theme: ThemeService, public offline: OfflineService) {}
 
   ngOnInit() {
     this.theme.init();

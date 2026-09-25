@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { throwError, switchMap, catchError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { StorageService } from '../services/storage.service';
+import { esErrorDeRed } from '../offline/offline.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const auth    = inject(AuthService);
@@ -26,7 +27,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, nex
             return next(retried);
           }),
           catchError(refreshErr => {
-            auth._clearSession();
+            if (!esErrorDeRed(refreshErr)) auth._clearSession();
             return throwError(() => refreshErr);
           })
         );

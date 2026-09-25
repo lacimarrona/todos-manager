@@ -3,6 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { StorageService } from '../services/storage.service';
+import { esErrorDeRed } from '../offline/offline.service';
 
 export const authGuard: CanActivateFn = () => {
   const auth    = inject(AuthService);
@@ -11,6 +12,12 @@ export const authGuard: CanActivateFn = () => {
 
   // Ya está logueado en memoria
   if (auth.isLogged()) return true;
+
+  const sinSesion = (err: unknown) => {
+    if (esErrorDeRed(err) && auth.restaurarSesionOffline()) return of(true);
+    router.navigate(['/auth/login']);
+    return of(false);
+  };
 
   // Hay token en sessionStorage (recarga de página)
   if (storage.getToken()) {
@@ -21,7 +28,7 @@ export const authGuard: CanActivateFn = () => {
         return auth.refresh().pipe(
           switchMap(() => auth.loadMe()),
           map(() => true),
-          catchError(() => { router.navigate(['/auth/login']); return of(false); })
+          catchError(sinSesion)
         );
       })
     );
@@ -31,6 +38,6 @@ export const authGuard: CanActivateFn = () => {
   return auth.refresh().pipe(
     switchMap(() => auth.loadMe()),
     map(() => true),
-    catchError(() => { router.navigate(['/auth/login']); return of(false); })
+    catchError(sinSesion)
   );
 };

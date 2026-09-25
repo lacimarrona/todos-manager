@@ -1,10 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, share, switchMap, of, map } from 'rxjs';
+import { Observable, tap, share, switchMap, of, map, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, Usuario, ApiResponse } from '../models/models';
 import { StorageService } from './storage.service';
+import { OfflineService } from '../offline/offline.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -36,7 +37,22 @@ export class AuthService {
     private http: HttpClient,
     private storage: StorageService,
     private router: Router,
+    private offline: OfflineService,
   ) {}
+
+  private recordarParaOffline() {
+    const u = this._user();
+    if (u) this.offline.recordarUsuario(u, this._permisos());
+  }
+
+  /** Sin conexión con el servidor: entra con el último usuario que inició sesión en este dispositivo. */
+  restaurarSesionOffline(): boolean {
+    const guardado = this.offline.usuarioOffline();
+    if (!guardado) return false;
+    this._user.set(guardado.user);
+    this._permisos.set(guardado.permisos || []);
+    return true;
+  }
 
   checkSetupNeeded(): Observable<boolean> {
     return this.http.get<ApiResponse<{ needsSetup: boolean }>>(`${this.authUrl}/setup-needed`).pipe(
@@ -51,6 +67,7 @@ export class AuthService {
       tap(res => {
         this.storage.setToken(res.data.access_token);
         this._user.set(res.data.user);
+        this.recordarParaOffline();
       })
     );
   }
@@ -71,7 +88,8 @@ export class AuthService {
           );
         }
         return of(res);
-      })
+      }),
+      tap(() => this.recordarParaOffline()),
     );
   }
 
@@ -80,6 +98,7 @@ export class AuthService {
       this._refreshObs = this.http.post<{ success: boolean; data: { access_token: string } }>(
         `${this.authUrl}/refresh`, {}, { withCredentials: true }
       ).pipe(
+        timeout(10000),
         tap(res => this.storage.setToken(res.data.access_token)),
         share(),
       );
@@ -104,13 +123,14 @@ export class AuthService {
           );
         }
         return of(res);
-      })
+      }),
+      tap(() => this.recordarParaOffline()),
     );
   }
 
   loadMisPermisos(): Observable<string[]> {
     return this.http.get<ApiResponse<string[]>>(`${this.authUrl}/mis-permisos`, { withCredentials: true }).pipe(
-      tap(r => this._permisos.set(r.data || [])),
+      tap(r => { this._permisos.set(r.data || []); this.recordarParaOffline(); }),
       map(r => r.data || [])
     );
   }
@@ -128,6 +148,7 @@ export class AuthService {
   }
 
   _clearSession(): void {
+    this.offline.olvidarUsuario();
     this.storage.clearToken();
     this._user.set(null);
     this._permisos.set([]);
