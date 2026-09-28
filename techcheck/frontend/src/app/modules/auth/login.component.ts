@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { esErrorDeRed } from '../../core/offline/offline.service';
 
 @Component({
   selector: 'app-login',
@@ -45,7 +46,9 @@ export class LoginComponent implements OnInit {
     this.auth.login({ username: this.username, password: this.password }).subscribe({
       next: () => this.router.navigate(['/']),
       error: (err) => {
-        this.error.set(err?.error?.message || 'Credenciales inválidas');
+        this.error.set(esErrorDeRed(err)
+          ? 'Sin conexión con el servidor. Para iniciar sesión necesitas conexión.'
+          : err?.error?.message || 'Credenciales inválidas');
         this.cargando.set(false);
       },
     });

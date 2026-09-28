@@ -53,7 +53,7 @@ router.get('/:id', (req, res) => {
 // POST /api/equipos
 router.post('/', (req, res) => {
   try {
-    const { nombre, descripcion, items, plantillaId, proyectoIds,tecnicoAsignadoId } = req.body;
+    const { nombre, descripcion, items, plantillaId, proyectoIds, tecnicoAsignadoId, fechaVencimiento } = req.body;
     if (!nombre) return res.status(400).json({ success: false, message: 'El nombre es requerido' });
 
     let itemsFinales = items || [];
@@ -72,6 +72,7 @@ router.post('/', (req, res) => {
       creadoEn: new Date().toISOString(),
       actualizadoEn: new Date().toISOString(),
       tecnicoAsignadoId: tecnicoAsignadoId || null,
+      fechaVencimiento: fechaVencimiento || null,
       archivado: false,
     };
     const creado = db.createEquipo(nuevo);
@@ -116,6 +117,7 @@ router.put('/:id', (req, res) => {
     if (req.body.descripcion !== undefined) patch.descripcion = req.body.descripcion;
     if (req.body.items !== undefined) patch.items = req.body.items;
     if (req.body.tecnicoAsignadoId !== undefined) patch.tecnicoAsignadoId = req.body.tecnicoAsignadoId;
+    if (req.body.fechaVencimiento !== undefined) patch.fechaVencimiento = req.body.fechaVencimiento || null;
     const actualizado = db.updateEquipo(req.params.id, patch);
     res.json({ success: true, data: actualizado });
   } catch (err) {

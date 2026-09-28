@@ -88,14 +88,15 @@ router.get('/:id/equipos', (req, res) => {
     } else if (filtro === 'pendiente') {
       const hoyPend = new Date().toISOString().slice(0, 10);
       const noCumplidasPend = sqliteDb.prepare(
-        'SELECT DISTINCT equipo_id FROM tareas_no_cumplidas WHERE proyecto_id = ?'
+        'SELECT DISTINCT equipo_id, tarea_id FROM tareas_no_cumplidas WHERE proyecto_id = ?'
       ).all(req.params.id);
-      const noCumplidasEquipos = new Set(noCumplidasPend.map(r => r.equipo_id));
+      const noCumplidasTarea = new Set(noCumplidasPend.map(r => `${r.equipo_id}|${r.tarea_id}`));
 
       resultado = enriquecidos.filter(e => {
         if (e.archivado) return false;
-        // Si tiene no_cumplida Y su tarea es fecha_especifica → va a "no ejecutadas", no a pendientes
-        if (noCumplidasEquipos.has(e.id) && e.tarea?.tipo === 'fecha_especifica') return false;
+        // Si su tarea actual (fecha_especifica) quedó sin cumplir → va a "no ejecutadas", no a pendientes.
+        // Registros de tareas anteriores del mismo equipo no cuentan.
+        if (e.tarea?.tipo === 'fecha_especifica' && noCumplidasTarea.has(`${e.id}|${e.tarea.id}`)) return false;
         // Si tiene fecha de vencimiento vencida → va a "no ejecutadas"
         if (e.fechaVencimiento && e.fechaVencimiento < hoyPend) return false;
         if (!e.ultimaRevision) return true;

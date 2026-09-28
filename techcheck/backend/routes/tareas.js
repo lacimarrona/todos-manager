@@ -3,6 +3,11 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/dataAccess');
 
+function normalizarPlazo(plazo) {
+  const n = Number(plazo);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, 365) : 1;
+}
+
 // GET /api/tareas
 router.get('/', (req, res) => {
   try {
@@ -48,7 +53,7 @@ router.post('/', (req, res) => {
     if (req.user.rol === 'tecnico' && !db.tienePemisoEspecial(req.user.sub, 'asignar_tareas')) {
       return res.status(403).json({ success: false, message: 'Sin permiso para programar tareas' });
     }
-    const { equipoId, tecnicoId, hora, diasSemana, activa, fechaInicio, fechaFin, tipo, fechaEspecifica } = req.body;
+    const { equipoId, tecnicoId, hora, diasSemana, activa, fechaInicio, fechaFin, tipo, fechaEspecifica, plazo } = req.body;
     if (!equipoId) return res.status(400).json({ success: false, message: 'equipoId es requerido' });
 
     const tipoValido = tipo || 'recurrente';
@@ -73,6 +78,7 @@ router.post('/', (req, res) => {
       fechaFin: fechaFin || null,
       tipo: tipoValido,
       fechaEspecifica: fechaEspecifica || null,
+      plazo: normalizarPlazo(plazo),
     });
     res.status(201).json({ success: true, data: nueva });
   } catch (err) {
@@ -85,8 +91,11 @@ router.put('/:id', (req, res) => {
   try {
     const tarea = db.getTareaById(req.params.id);
     if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
-    const { hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica } = req.body;
-    const actualizada = db.updateTarea(req.params.id, { hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica });
+    const { hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica, plazo } = req.body;
+    const actualizada = db.updateTarea(req.params.id, {
+      hora, diasSemana, tecnicoId, activa, fechaInicio, fechaFin, tipo, fechaEspecifica,
+      plazo: plazo === undefined ? undefined : normalizarPlazo(plazo),
+    });
     res.json({ success: true, data: actualizada });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
